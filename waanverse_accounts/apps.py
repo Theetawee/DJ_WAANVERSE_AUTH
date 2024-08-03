@@ -4,4 +4,4 @@ from django.apps import AppConfig
 class AccountsConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "waanverse_accounts"
-    label = "accounts"
+    label = "waanverse_accounts"
