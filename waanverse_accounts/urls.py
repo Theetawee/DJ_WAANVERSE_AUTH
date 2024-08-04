@@ -2,7 +2,7 @@ from django.urls import path
 from .views import (
     refresh_token_view,
     login_view,
-    collect_email,
+    reverify_email,
     verify_email,
     signup_view,
     user_info,
@@ -13,17 +13,14 @@ from .views import (
     deactivate_mfa,
     logout_view,
     mfa_login,
-    check_username_availability,
     reset_password,
-    email_test,
     verify_reset_password,
-    update_user_info,
 )
 
 urlpatterns = [
     path("login", login_view, name="login"),
     path("token/refresh", refresh_token_view, name="refresh_token"),
-    path("email", collect_email, name="email"),
+    path("reverify_email", reverify_email, name="reverify_email"),
     path("verify/email", verify_email, name="verify_email"),
     path("signup", signup_view, name="signup"),
     path("me", user_info, name="user_info"),
@@ -34,13 +31,6 @@ urlpatterns = [
     path("mfa/deactivate", deactivate_mfa, name="deactivate_mfa"),
     path("logout", logout_view, name="logout"),
     path("mfa/login", mfa_login, name="verify_mfa_auth"),
-    path(
-        "check",
-        check_username_availability,
-        name="check_username_avalibility",
-    ),
     path("reset", reset_password, name="reset_password"),
-    path("em", email_test),
     path("reset/verify", verify_reset_password, name="verify_reset_password"),
-    path("update", update_user_info, name="update_user_info"),
 ]

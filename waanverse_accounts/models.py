@@ -1,17 +1,43 @@
 """
 Custom user model     """
 
+from .settings import accounts_config
 from django.utils import timezone
 from datetime import timedelta
-
+import secrets
+from django.utils.translation import gettext_lazy as _
 
 from django.db import models
 
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+
+class MultiFactorAuth(models.Model):
+    account = models.OneToOneField(User, related_name="mfa", on_delete=models.CASCADE)
+    activated = models.BooleanField(default=False)
+    activated_at = models.DateTimeField(null=True, blank=True)
+    recovery_codes = models.JSONField(default=list, blank=True)
+    secret_key = models.CharField(max_length=255, null=True, blank=True)
+
+    def generate_recovery_codes(self):
+        # Get the number of recovery codes from settings
+        count = int(getattr(accounts_config, "MFA_RECOVERY_CODES_COUNT", 10))
+        return [str(secrets.randbelow(10**7)).zfill(7) for _ in range(count)]
+
+    def set_recovery_codes(self):
+        self.recovery_codes = self.generate_recovery_codes()
+        self.save()
+
+    def __str__(self):
+        return f"Account: {self.account} - Activated: {self.activated}"
+
 
 class EmailConfirmationCode(models.Model):
-    email = models.EmailField(max_length=255, unique=True, db_index=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     code = models.CharField(max_length=6)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now=True)
 
     @property
     def is_expired(self):
@@ -19,7 +45,7 @@ class EmailConfirmationCode(models.Model):
         return timezone.now() > expiration_time
 
     def __str__(self):
-        return f"Email: {self.email} - Code: {self.code}"
+        return f"Email: {self.user.email} - Code: {self.code}"
 
 
 class UserLoginActivity(models.Model):
@@ -54,3 +80,15 @@ class ResetPasswordCode(models.Model):
 
     def __str__(self):
         return f"Email: {self.email} - Code: {self.code}"
+
+
+class EmailAddress(models.Model):
+    email = models.EmailField(_("email address"), max_length=254)
+    verified = models.BooleanField(default=False)
+    primary = models.BooleanField(default=False)
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="email_address"
+    )
+
+    def __str__(self):
+        return self.email

@@ -1,18 +1,16 @@
 from rest_framework import serializers, exceptions
 from django.contrib.auth import authenticate, user_logged_in
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import EmailConfirmationCode, ResetPasswordCode
+from .models import EmailConfirmationCode, ResetPasswordCode, MultiFactorAuth
 from .utils import (
-    generate_confirmation_code,
     generate_password_reset_code,
     dispatch_email,
+    user_email_address,
+    handle_email_verification,
 )
 from django.utils import timezone
 from datetime import timedelta
 from django.utils.translation import gettext_lazy as _
-from django.conf import settings
-from django.core.validators import RegexValidator
-from django.core.exceptions import ValidationError as DjangoValidationError
 from django.contrib.auth.models import update_last_login
 
 from typing import Optional, Type, Dict, Any
@@ -20,31 +18,33 @@ from rest_framework_simplejwt.tokens import Token
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.serializers import PasswordField
 from django.contrib.auth import get_user_model
-
+from .settings import accounts_config
+from .validators import validate_username as username_validator
 
 Account = get_user_model()
 
 
 class TokenObtainSerializer(serializers.Serializer):
     token_class: Optional[Type[Token]] = None
-
     default_error_messages = {
         "no_active_account": _("No active account found with the given credentials")
     }
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.fields["username"] = serializers.CharField(write_only=True, required=True)
+        self.fields["login_field"] = serializers.CharField(
+            write_only=True, required=True
+        )
         self.fields["password"] = PasswordField()
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[Any, Any]:
-        username = attrs.get("username")
+        login_field = attrs.get("login_field")
         password = attrs["password"]
 
-        if username:
-            authenticate_kwargs = {"username": username, "password": password}
+        if login_field:
+            authenticate_kwargs = {"login_field": login_field, "password": password}
         else:
-            raise exceptions.ValidationError(_("Must include a username"))
+            raise exceptions.ValidationError(_("Must include valid login credentials."))
 
         try:
             authenticate_kwargs["request"] = self.context["request"]
@@ -70,19 +70,32 @@ class LoginSerializer(TokenObtainSerializer):
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, str]:
         data = super().validate(attrs)
-        refresh = self.get_token(self.user)
-        data["refresh"] = str(refresh)
-        data["access"] = str(refresh.access_token)
-        data["user"] = self.user
-        data["mfa"] = self.user.mfa_activated
-        user_logged_in.send(
-            sender=self.user.__class__,
-            request=self.context["request"],
-            user=self.user,
-        )
+        email_address = user_email_address(self.user)
 
-        if api_settings.UPDATE_LAST_LOGIN:
+        try:
+            account_mfa = MultiFactorAuth.objects.get(account=self.user)
+            data["mfa"] = account_mfa.activated
+        except MultiFactorAuth.DoesNotExist:
+            data["mfa"] = False
+
+        refresh = self.get_token(self.user)
+        data["refresh_token"] = str(refresh)
+        data["access_token"] = str(refresh.access_token)
+        data["user"] = self.user
+
+        if not data["mfa"] and email_address and email_address.verified:
+            user_logged_in.send(
+                sender=self.user.__class__,
+                request=self.context["request"],
+                user=self.user,
+            )
             update_last_login(None, self.user)
+
+        if email_address and email_address.verified:
+            data["email_verified"] = True
+        else:
+            data["email_verified"] = False
+            handle_email_verification(self.user)
         return data
 
 
@@ -96,51 +109,42 @@ class AccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
         fields = [
-            "mfa_activated",
-            "name",
             "username",
             "email",
-            "phone",
-            "profile_image",
-            "date_of_birth",
-            "pronouns",
-            "custom_pronouns",
-            "date_joined",
-            "last_login",
-            "is_active",
-            "is_staff",
         ]
-        read_only_fields = ["date_joined", "last_login"]
 
 
-class SignupEmailVerifySerializer(serializers.Serializer):
+class ReVerifyEmailSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
 
     def validate_email(self, email):
-        if Account.objects.filter(email=email).exists():
-            raise serializers.ValidationError("Email already exists")
+        try:
+            user = Account.objects.get(email=email)
+        except Account.DoesNotExist:
+            raise serializers.ValidationError(
+                "No account is associated with this email address."
+            )
+
+        email_address = user_email_address(user)
+        if email_address.verified:
+            raise serializers.ValidationError("Email is already verified.")
+
         return email
 
     def create(self, validated_data):
         email = validated_data["email"]
-        code = generate_confirmation_code()
-        if EmailConfirmationCode.objects.filter(email=email).exists():
-            EmailConfirmationCode.objects.filter(email=email).delete()
         try:
-            new_block = EmailConfirmationCode.objects.create(email=email, code=code)
-            dispatch_email(
-                subject="Email verification code",
-                context={"code": code},
-                template="verify_email",
-                email=email,
-            )
-            return new_block
+            user = Account.objects.get(email=email)
+            handle_email_verification(user)
+            return email
         except Exception as e:
-            raise serializers.ValidationError(str(e))
+            raise serializers.ValidationError(
+                "An error occurred while sending verification email: " + str(e)
+            )
 
 
 class VerifyEmailSerializer(serializers.Serializer):
-    code = serializers.CharField(required=True, max_length=6)
+    code = serializers.CharField(required=True)
     email = serializers.EmailField(required=True)
 
     def validate(self, data):
@@ -148,91 +152,83 @@ class VerifyEmailSerializer(serializers.Serializer):
         email = data.get("email")
 
         try:
-            block = EmailConfirmationCode.objects.get(email=email, code=code)
+            user = Account.objects.get(email=email)
+            block = EmailConfirmationCode.objects.get(user=user, code=code)
+
         except EmailConfirmationCode.DoesNotExist:
             raise serializers.ValidationError("Invalid code")
 
         # Check if the code has expired
-        if timezone.now() - block.created_at > timedelta(minutes=10):
+        if (
+            timezone.now() - block.created_at
+            > accounts_config["EMAIL_VERIFICATION_CODE_LIFETIME"]
+        ):
             block.delete()
             raise serializers.ValidationError("Code expired")
 
         # Delete the used code
         block.delete()
-
+        VerifyEmailSerializer.verify_email(user)
         return data
+
+    @staticmethod
+    def verify_email(user):
+        email_address = user_email_address(user)
+        email_address.verified = True
+        email_address.save()
 
 
 class SignupSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
     username = serializers.CharField(required=True, max_length=10)
-    name = serializers.CharField(required=True, max_length=255)
     password1 = serializers.CharField(required=True, write_only=True)
     password2 = serializers.CharField(required=True, write_only=True)
-    date_of_birth = serializers.DateField(required=True)
-    pronouns = serializers.ChoiceField(choices=Account.PRONOUNS, required=True)
-    custom_pronouns = serializers.CharField(
-        required=False, allow_blank=True, max_length=255
-    )
 
     def validate_email(self, email):
+        """Validate that the email does not already exist."""
         if Account.objects.filter(email=email).exists():
             raise serializers.ValidationError(_("Email already exists."))
         return email
 
     def validate_username(self, username):
+        """Validate the username according to custom rules and ensure it's unique."""
         username = username.lower()
-
-        # Username regex validator
-        regex_validator = RegexValidator(
-            regex=r"^[A-Za-z][A-Za-z0-9_]{3,29}$",
-            message=_(
-                "Username can only contain letters, numbers, and underscores, and must be between 4 and 30 characters long."
-            ),
-        )
-        try:
-            regex_validator(username)
-        except DjangoValidationError:
-            raise serializers.ValidationError(
-                _(
-                    "Username can only contain letters, numbers, and underscores, and must be between 4 and 30 characters long."
-                )
-            )
-
-        # Check for existing username
+        valid, message = username_validator(username)
+        if not valid:
+            raise serializers.ValidationError(message)
         if Account.objects.filter(username=username).exists():
             raise serializers.ValidationError(_("Username already exists."))
-
-        # Check blacklisted usernames
-        blacklisted_usernames = getattr(settings, "BLACKLISTED_USERNAMES", [])
-        if username in blacklisted_usernames:
-            raise serializers.ValidationError(_("This username is not allowed."))
-
         return username
 
     def validate(self, data):
+        """Validate that the passwords match."""
         if data.get("password1") != data.get("password2"):
             raise serializers.ValidationError(_("Passwords do not match."))
         return data
 
     def create(self, validated_data):
+        """Create a new user and return JWT tokens and user data."""
         validated_data["username"] = validated_data["username"].lower()
         password = validated_data.pop("password1")
-        user = Account.objects.create_user(
-            email=validated_data["email"],
-            username=validated_data["username"],
-            name=validated_data["name"],
-            date_of_birth=validated_data["date_of_birth"],
-            pronouns=validated_data["pronouns"],
-            custom_pronouns=validated_data.get("custom_pronouns", None),
-            password=password,
-        )
-        refresh = RefreshToken.for_user(user)
-        return {
-            "refresh": str(refresh),
-            "access": str(refresh.access_token),
-            "user": AccountSerializer(user).data,
-        }
+        validated_data.pop("password2")
+
+        try:
+            user = Account.objects.create_user(
+                email=validated_data["email"],
+                username=validated_data["username"],
+                **self.get_additional_fields(validated_data),
+                password=password,
+            )
+            handle_email_verification(user)
+            user_email_address(user)
+        except Exception as e:
+            raise serializers.ValidationError(f"Error creating user: {e}")
+
+        return user
+
+    def get_additional_fields(self, validated_data):
+        """Override this method to provide additional fields for user creation."""
+        return {}
 
 
 class MfaCodeSerializer(serializers.Serializer):
@@ -254,7 +250,7 @@ class LogoutSerializer(serializers.Serializer):
             request = self.context.get("request")
             if request:
                 refresh = request.COOKIES.get(
-                    settings.BROWSER_CONFIG["REFRESH_COOKIE_NAME"]
+                    accounts_config["REFRESH_TOKEN_COOKIE_NAME"]
                 )
                 if not refresh:
                     raise serializers.ValidationError("Refresh token is required.")
@@ -362,17 +358,3 @@ class VerifyResetPasswordSerializer(serializers.Serializer):
         ).delete()
 
         return user
-
-
-class UserUpdateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Account
-        fields = [
-            "name",
-            "email",
-            "phone",
-            "profile_image",
-            "date_of_birth",
-            "pronouns",
-            "custom_pronouns",
-        ]

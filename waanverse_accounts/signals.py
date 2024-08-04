@@ -1,20 +1,15 @@
 from django.contrib.auth import user_logged_in, user_login_failed
 from django.dispatch import receiver
 from .models import UserLoginActivity
-from .utils import get_client_ip
-from django.core.mail import send_mail
-from django.template.loader import render_to_string
-from django.utils.html import strip_tags
-from django.conf import settings
-from django.utils import timezone
+from .utils import get_client_ip, dispatch_email
+from .settings import accounts_config
+from django.core.exceptions import ImproperlyConfigured
 
 
 @receiver(user_logged_in)
 def log_user_logged_in_success(sender, user, request, **kwargs):
     try:
         ip_address = get_client_ip(request)
-        subject = "Security alert"
-        title = "A new login has been detected"
         user_agent_info = (request.META.get("HTTP_USER_AGENT", "<unknown>")[:255],)
         user_login_activity_log = UserLoginActivity(
             login_IP=ip_address,
@@ -23,37 +18,24 @@ def log_user_logged_in_success(sender, user, request, **kwargs):
             status=UserLoginActivity.SUCCESS,
         )
         user_login_activity_log.save()
+
         context = {
             "ip_address": ip_address,
-            "subject": subject,
-            "title": title,
-            "year": timezone.now().year,
             "username": user.username,
+            "user_agent": user_login_activity_log.user_agent_info,
             "email": user.email,
             "time": user_login_activity_log.login_datetime,
-            "name": user.name,
         }
-
-        receiver_email = user.email
-        template_name = "emails/successful_login.html"
-        convert_to_html_content = render_to_string(
-            template_name=template_name, context=context
-        )
-        plain_message = strip_tags(convert_to_html_content)
-        if settings.DEBUG is False:
-            send_mail(
-                subject=subject,
-                message=plain_message,
-                from_email=settings.EMAIL_HOST_USER,
-                recipient_list=[
-                    receiver_email,
-                ],
-                html_message=convert_to_html_content,
-                fail_silently=True,
+        if accounts_config["EMAIL_ON_LOGIN"]:
+            dispatch_email(
+                subject="New Login Alert",
+                email=user.email,
+                template="successful_login",
+                context=context,
             )
 
     except Exception as e:
-        print(e)
+        raise ImproperlyConfigured(e)
 
 
 @receiver(user_login_failed)

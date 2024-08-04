@@ -2,18 +2,59 @@ from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.authentication import JWTAuthentication as Head
 from rest_framework.exceptions import AuthenticationFailed
-from django.conf import settings
-from django.db.models import Q
+from .settings import accounts_config
 
 User = get_user_model()
 
 
 class CustomAuthBackend(BaseBackend):
-    def authenticate(self, request, username=None, password=None, **kwargs):
+    def authenticate(self, request, login_field=None, password=None, **kwargs):
+        # Determine which authentication methods are in use
+        use_username = "username" in accounts_config["AUTHENTICATION_METHODS"]
+        use_email = "email" in accounts_config["AUTHENTICATION_METHODS"]
+        use_phone_number = "phone_number" in accounts_config["AUTHENTICATION_METHODS"]
+
+        if not (use_username or use_email or use_phone_number):
+            return None
+
+        # Check each method in order of priority
+        if use_username and login_field:
+            user = self._authenticate_with_username(login_field, password)
+            if user is not None:
+                return user
+
+        if use_email and login_field:
+            user = self._authenticate_with_email(login_field, password)
+            if user is not None:
+                return user
+
+        if use_phone_number and login_field:
+            user = self._authenticate_with_phone_number(login_field, password)
+            if user is not None:
+                return user
+
+        return None
+
+    def _authenticate_with_username(self, username, password):
         try:
-            user = User.objects.get(
-                Q(username=username) | Q(email=username) | Q(phone=username)
-            )
+            user = User.objects.get(username=username)
+            if user.check_password(password):
+                return user
+        except User.DoesNotExist:
+            return None
+
+    def _authenticate_with_email(self, email, password):
+        try:
+            user = User.objects.get(email=email)
+            if user.check_password(password):
+                return user
+        except User.DoesNotExist:
+            return None
+
+    def _authenticate_with_phone_number(self, phone_number, password):
+        try:
+            print(phone_number)
+            user = User.objects.get(phone_number__exact=phone_number)
             if user.check_password(password):
                 return user
         except User.DoesNotExist:
@@ -23,6 +64,10 @@ class CustomAuthBackend(BaseBackend):
         try:
             return User.objects.get(pk=user_id)
         except User.DoesNotExist:
+            return None
+        except Exception as e:
+            # Log the exception or handle it accordingly
+            print(f"An error occurred while fetching the user: {e}")
             return None
 
 
@@ -34,15 +79,14 @@ class JWTAuthentication(Head):
             return auth
 
         # If no token is found in the header, try to get it from cookies
-        access_token = request.COOKIES.get(
-            settings.BROWSER_CONFIG["ACCESS_COOKIE_NAME"]
-        )
+        access_token = request.COOKIES.get(accounts_config["ACCESS_TOKEN_COOKIE_NAME"])
         if access_token:
             try:
                 validated_token = self.get_validated_token(access_token)
                 user = self.get_user(validated_token)
                 return (user, validated_token)
             except AuthenticationFailed as e:
+
                 raise e
 
         return None

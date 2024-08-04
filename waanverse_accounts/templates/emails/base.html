@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Waanverse Accounts.</title>
+        <style>
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            body {
+                font-family: Arial, Helvetica, sans-serif;
+                margin: 0;
+                padding: 10px 0;
+                background-color: #f0f0f0;
+            }
+            .container {
+                max-width: 600px;
+                margin: 0 auto;
+                background-color: #ffffff;
+                border-radius: 8px;
+                overflow: hidden;
+            }
+            .content {
+                padding: 20px;
+            }
+            p,
+            li {
+                margin-bottom: 15px;
+                font-size: 1rem;
+            }
+            .code {
+                color: #1a1a1a;
+                font-weight: 600;
+                font-size: 1.2rem;
+            }
+        </style>
+    </head>
+    <body>
+        {% now "Y" as year %}
+        <div class="container">
+            <div style="background-color: #1a1a1a; padding: 10px 0">
+                <div style="display: flex; align-items: end; flex-direction: row; justify-content: center; background-color: #1a1a1a; padding: 20px">
+                    <img height="40px" width="40px" style="display: block; border-radius: 5px" src="https://theetawee.github.io/COMPANY-FILES/images/180.png" alt="Waanverse Logo" title="Waanverse Logo" />
+                    <p style="color: #ffffff; justify-self: end; margin: auto 0px; margin-bottom: 5px; font-size: 16px">aanverse Accounts</p>
+                </div>
+            </div>
+            <div class="content">{% block content %} {% endblock %}</div>
+            <div class="content">
+                <span>Best Regards;</span>
+                <p><strong>{{PLATFORM_NAME}} Team</strong></p>
+            </div>
+            <div style="background-color: #1a1a1a; color: #dddada; padding: 20px; font-size: 0.8rem">
+                <p style="margin-bottom: 10px">This is an automated message. Please do not reply.</p>
+                <p style="margin-bottom: 20px">If you have any questions or require assistance, feel free to <a href="mailto:support@waanverse.com">contact our support team</a>.</p>
+                <p style="text-align: center">Copyright &copy; {{year}} {{PLATFORM_NAME}} All rights reserved.</p>
+            </div>
+        </div>
+    </body>
+</html>
