@@ -1,21 +1,60 @@
-MIT License
+# Waanverse Labs Inc. Internal Use License
 
-Copyright (c) 2024 Khaotungkulmethee Pattawee
+## Product Name: Waanverse Authentication Package
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+---
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+## License Agreement
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+This Waanverse Authentication Package (hereinafter referred to as "Software") is licensed for use exclusively within Waanverse Labs Inc. (hereinafter referred to as "Company"). By using this Software, you agree to comply with the terms and conditions set forth in this License Agreement. Any use of the Software signifies your acceptance of this License Agreement and the Company’s User Agreement, which can be found at [Waanverse User Agreement](https://www.waanverse.com/en-us/policies/user-agreement/).
+
+### 1. Grant of License
+- The Software is licensed, not sold. The Company grants you a non-exclusive, non-transferable, and revocable license to use the Software solely for internal purposes within the Company.
+
+### 2. Scope of Use
+- The Software may be used, modified, and maintained by authorized personnel within the Company.
+- Distribution or sharing of the Software outside of the Company is strictly prohibited without explicit written permission from the Company.
+
+### 3. Restrictions
+- You may not reverse engineer, decompile, or disassemble the Software, except to the extent expressly permitted by applicable law.
+- Unauthorized use, reproduction, or distribution of the Software is strictly prohibited.
+
+### 4. Modifications
+- Any modifications made to the Software must be documented and stored in the Company’s internal repository.
+- Modifications and derivative works remain subject to the terms of this License Agreement.
+
+### 5. Intellectual Property
+- The Software and any copies or modifications thereof are the intellectual property of the Company.
+- All rights not expressly granted to you in this License Agreement are reserved by the Company.
+
+### 6. User Agreement
+- By using the Software, you agree to the terms and conditions of the Company’s User Agreement, available at [Waanverse User Agreement](https://www.waanverse.com/en-us/policies/user-agreement/).
+
+### 7. Termination
+- This License Agreement is effective until terminated. The Company may terminate this License Agreement at any time if you fail to comply with its terms.
+- Upon termination, you must cease all use of the Software and destroy all copies of the Software in your possession or control.
+
+### 8. Disclaimer of Warranty
+- The Software is provided "as is" without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and non-infringement.
+- The Company does not warrant that the Software will meet your requirements or that the operation of the Software will be uninterrupted or error-free.
+
+### 9. Limitation of Liability
+- In no event shall the Company be liable for any damages arising out of or in connection with the use or inability to use the Software, including but not limited to direct, indirect, incidental, special, or consequential damages.
+
+### 10. Governing Law
+- This License Agreement shall be governed by and construed in accordance with the laws of the jurisdiction in which the Company is located, without regard to its conflict of law principles.
+
+---
+
+By using the Waanverse Authentication Package, you acknowledge that you have read, understood, and agree to be bound by the terms and conditions of this License Agreement and the Company’s User Agreement.
+
+For any inquiries or permissions, please contact: [support@waanverse.com]
+
+---
+
+**Waanverse Labs Inc.**  
+[www.waanverse.com](https://www.waanverse.com)
+
+---
+
+This License Agreement is subject to change at the discretion of Waanverse Labs Inc. Please review the latest version at the provided link to the User Agreement.
