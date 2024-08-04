@@ -4,6 +4,7 @@ from .models import (
     UserLoginActivity,
     ResetPasswordCode,
     EmailAddress,
+    MultiFactorAuth,
 )
 from django.conf import settings
 
@@ -27,9 +28,14 @@ if "unfold" in settings.INSTALLED_APPS:
     class EmailAddressAdminClass(ModelAdmin):
         pass
 
+    @admin.register(MultiFactorAuth)
+    class MultiFactorAuthAdminClass(ModelAdmin):
+        pass
+
 else:
 
     admin.site.register(EmailConfirmationCode)
     admin.site.register(UserLoginActivity)
     admin.site.register(ResetPasswordCode)
     admin.site.register(EmailAddress)
+    admin.site.register(MultiFactorAuth)

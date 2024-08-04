@@ -8,7 +8,7 @@ class LoginViewTests(TestSetup):
         response = self.client.post(
             self.url,
             {
-                "username": "testuser",
+                "login_field": "testuser",
                 "password": "testpassword123",
             },
         )

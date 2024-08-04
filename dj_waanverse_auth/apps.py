@@ -5,9 +5,9 @@ from django.apps import AppConfig
 
 class AccountsConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
-    name = "waanverse_accounts"
-    label = "waanverse_accounts"
-    verbose_name = "Waanverse Accounts"
+    name = "dj_waanverse_auth"
+    label = "dj_waanverse_auth"
+    verbose_name = "Waanverse Auth"
 
     def ready(self):
         from .signals import log_user_logged_in_failed, log_user_logged_in_success

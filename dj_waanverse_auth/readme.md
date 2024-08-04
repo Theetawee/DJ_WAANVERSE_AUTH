@@ -42,13 +42,13 @@ In addition to adding Waanverse Accounts to your `INSTALLED_APPS`, you need to c
 
 ```python
 AUTHENTICATION_BACKENDS = [
-    "waanverse_accounts.backends.CustomAuthBackend",
+    "dj_waanverse_auth.backends.CustomAuthBackend",
     "django.contrib.auth.backends.ModelBackend",
 ]
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "waanverse_accounts.backends.JWTAuthentication",
+        "dj_waanverse_auth.backends.JWTAuthentication",
     ),
 }
 ```
@@ -72,7 +72,7 @@ DEFAULT_ACCOUNTS_CONFIG = {
     "COOKIE_HTTP_ONLY": True,
     "MFA_COOKIE_NAME": "mfa",
     "MFA_COOKIE_LIFETIME": timedelta(minutes=2),
-    "USER_CLAIM_SERIALIZER": "waanverse_accounts.serializers.BasicAccountSerializer",
+    "USER_CLAIM_SERIALIZER": "dj_waanverse_auth.serializers.BasicAccountSerializer",
 }
 ```
 
@@ -97,7 +97,7 @@ from django.urls import path, include
 
 urlpatterns = [
     # ... your other url patterns ...
-    path('accounts/', include('waanverse_accounts.urls')),
+    path('accounts/', include('dj_waanverse_auth.urls')),
 ]
 ```
 

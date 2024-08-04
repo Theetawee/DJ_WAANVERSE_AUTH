@@ -1,8 +1,8 @@
 from django.test import TestCase
 from rest_framework.test import APIClient
 from django.urls import reverse
-from waanverse_accounts.models import Account
-from django.conf import settings
+from dj_waanverse_auth.models import Account
+from dj_waanverse_auth.settings import accounts_config
 
 
 class TestSetup(TestCase):
@@ -18,7 +18,7 @@ class TestSetup(TestCase):
             pronouns="H",
             phone="1234567890",
         )
-        self.access_cookie_name = settings.BROWSER_CONFIG["ACCESS_COOKIE_NAME"]
-        self.refresh_cookie_name = settings.BROWSER_CONFIG["REFRESH_COOKIE_NAME"]
+        self.access_cookie_name = accounts_config["ACCESS_TOKEN_COOKIE_NAME"]
+        self.refresh_cookie_name = accounts_config["REFRESH_TOKEN_COOKIE_NAME"]
         self.url = reverse("login")
         return super().setUp()

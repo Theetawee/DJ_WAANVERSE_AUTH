@@ -1,0 +1,4 @@
+run pip install dj-waanverse-auth
+
+
+to install the package
