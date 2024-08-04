@@ -1,4 +1,8 @@
 run pip install dj-waanverse-auth
 
+configure restframework according to the docs 
 
 to install the package
+run migrtions
+
+add urls to the urls file
