@@ -12,6 +12,7 @@ from .utils import (
     handle_user_login,
     generate_tokens,
     get_email_verification_status,
+    get_client_ip,
 )
 from django.utils import timezone
 from datetime import timedelta
@@ -403,7 +404,6 @@ class DeactivateMfaSerializer(serializers.Serializer):
             # Remove used recovery code
             mfa.recovery_codes.remove(code)
             mfa.save()
-
         attrs["user"] = user
         return attrs
 
@@ -413,5 +413,24 @@ class DeactivateMfaSerializer(serializers.Serializer):
         mfa.activated = False
         mfa.secret_key = None
         mfa.recovery_codes = []
-        mfa.save()
-        return {"detail": "MFA has been deactivated."}
+        try:
+            if accounts_config["MFA_EMAIL_ALERTS"]:
+                dispatch_email(
+                    email=user.email,
+                    template="deactivate_mfa",
+                    subject="MFA Deactivated",
+                    context={
+                        "username": user.username,
+                        "email": user.email,
+                        "time": timezone.now(),
+                        "ip_address": get_client_ip(self.context["request"]),
+                        "user_agent": self.context["request"].META.get(
+                            "HTTP_USER_AGENT", "<unknown>"
+                        )[:255],
+                    },
+                )
+            mfa.save()
+            return {"detail": "MFA has been deactivated."}
+
+        except Exception as e:
+            raise serializers.ValidationError(str(e))

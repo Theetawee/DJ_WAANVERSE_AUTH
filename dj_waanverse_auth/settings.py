@@ -27,6 +27,7 @@ DEFAULT_ACCOUNTS_CONFIG = {
     "MFA_ISSUER": "Waanverse Labs Inc.",
     "BLACKLIST_AFTER_ROTATION": False,
     "MFA_CODE_LENGTH": 6,
+    "MFA_EMAIL_ALERTS": True,
 }
 
 # Merge user-provided settings with the default settings

@@ -1,5 +1,5 @@
 {% extends 'emails/base.html' %} {% load waanverse_tags %} {% block content %}
-<div style="padding: 20px 10px; line-height: 1.6; color: #333">
+<div>
     <p>Hello {{ name|default:'there' }},</p>
 
     <p>Your security is very important to us. We have noticed a successful login into your account on {{PLATFORM_NAME}}.</p>
@@ -15,7 +15,6 @@
 
     <p style="margin-bottom: 20px">If this was you, you can ignore this alert. If you notice any suspicious activity, please change your password and enable two-factor authentication. If you have any questions or require assistance, feel free to contact our support team.</p>
 
-    <p>Thank you,</p>
-    <p><strong>Waanverse Accounts Team</strong></p>
+    
 </div>
 {% endblock %}
