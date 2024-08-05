@@ -22,7 +22,7 @@ setup(
         "Intended Audience :: Developers",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
-    packages=find_packages(exclude=["demo", "test"]),
+    packages=find_packages(exclude=["demo", "tests"]),
     include_package_data=True,
     python_requires=">=3.11.9, <4.0",
     install_requires=[
