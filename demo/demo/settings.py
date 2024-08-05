@@ -156,4 +156,5 @@ EMAIL_USE_TLS = True
 
 WAANVERSE_AUTH = {
     "SIGNUP_SERIALIZER": "accounts.serializers.SignupSerializer",
+    "CONFIRMATION_CODE_LENGTH": 5,
 }

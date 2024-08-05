@@ -99,32 +99,19 @@ def dispatch_email(context, email, subject, template):
 
 
 def handle_email_verification(user):
-    """Generates and send the email verification code to user email
+    """Generates and sends the email verification code to the user's email.
 
     Args:
-        user (User): The user to which the email verification code will be sent
-
-    Raises:
-        ValueError: If the length of the code is less than 2
+        user (User): The user to which the email verification code will be sent.
 
     Returns:
-        EmailConfirmationCode: The email verification code
+        EmailConfirmationCode: The email verification code.
     """
     length = accounts_config["CONFIRMATION_CODE_LENGTH"]
-    if length < 2:
-        raise ValueError(
-            "Length must be at least 2 to include both letters and numbers."
-        )
 
-    letters = random.sample(string.ascii_letters, 1)  # Ensure at least one letter
-    numbers = random.sample(string.digits, 1)  # Ensure at least one number
-    remaining_chars = random.choices(string.ascii_letters + string.digits, k=length - 2)
+    # Generate a numeric code
+    code = "".join(random.choices(string.digits, k=length))
 
-    # Combine and shuffle to ensure randomness
-    code_chars = letters + numbers + remaining_chars
-    random.shuffle(code_chars)
-
-    code = "".join(code_chars)
     try:
         user_code, created = EmailConfirmationCode.objects.get_or_create(user=user)
         user_code.code = code
@@ -137,6 +124,7 @@ def handle_email_verification(user):
         )
     except Exception as e:
         raise ValueError(f"Could not create a confirmation code. Error: {e}")
+
     return user_code
 
 

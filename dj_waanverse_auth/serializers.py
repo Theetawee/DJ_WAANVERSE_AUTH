@@ -157,7 +157,10 @@ class VerifyEmailSerializer(serializers.Serializer):
 
         except EmailConfirmationCode.DoesNotExist:
             raise serializers.ValidationError("Invalid code")
-
+        except Exception:
+            raise serializers.ValidationError(
+                "Unable to validate code. Please make sure you are validating the correct email address and code."
+            )
         # Check if the code has expired
         if (
             timezone.now() - block.created_at

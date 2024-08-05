@@ -102,7 +102,7 @@ def reverify_email(request):
     if serializer.is_valid():
         email = serializer.save()
         return Response(
-            {"email": email},
+            {"email": email, "status": "email-sent"},
             status=status.HTTP_200_OK,
         )
 
