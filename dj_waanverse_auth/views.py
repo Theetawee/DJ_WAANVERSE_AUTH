@@ -11,7 +11,7 @@ from .serializers import (
     VerifyResetPasswordSerializer,
 )
 from django.contrib.auth import user_logged_in
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from .utils import set_cookies, get_serializer, reset_response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
@@ -60,9 +60,8 @@ def login_view(request):
 
         response = Response(response_data, status=response_status)
         response = set_cookies(
-            response, access_token=access_token, refresh_token=refresh_token
+            response=response, access_token=access_token, refresh_token=refresh_token
         )
-        reset_response(response)
         return response
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -146,7 +145,8 @@ def signup_view(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(["GET"])
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def enable_mfa(request):
     try:
         user = request.user

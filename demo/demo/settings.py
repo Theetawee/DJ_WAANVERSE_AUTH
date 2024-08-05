@@ -157,4 +157,10 @@ EMAIL_USE_TLS = True
 WAANVERSE_AUTH = {
     "SIGNUP_SERIALIZER": "accounts.serializers.SignupSerializer",
     "CONFIRMATION_CODE_LENGTH": 5,
+    "EMAIL_ON_LOGIN": False,
+}
+
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": ("dj_waanverse_auth.backends.JWTAuthentication",),
 }
