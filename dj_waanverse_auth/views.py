@@ -220,9 +220,27 @@ def verify_mfa(request):
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def mfa_activated(request):
-    recovery_code = request.user.recovery_codes
-    return Response(data={"recovery_codes": recovery_code}, status=status.HTTP_200_OK)
+def mfa_status(request):
+    user = request.user
+    try:
+        mfa_account = MultiFactorAuth.objects.get(account=user)
+        return Response(
+            data={
+                "mfa_status": mfa_account.activated,
+                "recovery_codes": mfa_account.recovery_codes,
+            },
+            status=status.HTTP_200_OK,
+        )
+    except MultiFactorAuth.DoesNotExist:
+        return Response(
+            data={"mfa_status": False, "recovery_codes": []},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+    except Exception as e:
+        return Response(
+            data={"error": f"An error occurred: {str(e)}"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
 
 @api_view(["POST"])
