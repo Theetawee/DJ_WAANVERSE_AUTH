@@ -3,8 +3,10 @@ certifi==2024.7.4
 cffi==1.16.0
 charset-normalizer==3.3.2
 cryptography==43.0.0
--e git+https://github.com/Theetawee/WAANVERSE_ACCOUNTS.git@b91a117f1b9a48570ca52a3039d1f99f9443a87d#egg=dj_waanverse_auth
+-e git+https://github.com/Theetawee/WAANVERSE_ACCOUNTS.git@e096d1cb8b91bda313827b77b39555e336eabf59#egg=dj_waanverse_auth
 Django==5.0.7
+django-dotenv==1.4.2
+django-unfold==0.34.0
 djangorestframework==3.15.2
 djangorestframework-simplejwt==5.3.1
 idna==3.7

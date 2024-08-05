@@ -10,6 +10,7 @@ from importlib import import_module
 from django.contrib.auth.signals import user_logged_in
 from django.contrib.auth.models import update_last_login
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.settings import api_settings
 
 
 def set_cookies(
@@ -24,12 +25,8 @@ def set_cookies(
     - refresh_token (str): The refresh token.
     - mfa (str): The id of the user that is used to authenticate after MFA authentication.
     """
-    access_token_lifetime = settings.SIMPLE_JWT.get(
-        "ACCESS_TOKEN_LIFETIME"
-    ).total_seconds()
-    refresh_token_lifetime = settings.SIMPLE_JWT.get(
-        "REFRESH_TOKEN_LIFETIME"
-    ).total_seconds()
+    access_token_lifetime = api_settings.ACCESS_TOKEN_LIFETIME.total_seconds()
+    refresh_token_lifetime = api_settings.REFRESH_TOKEN_LIFETIME.total_seconds()
 
     if access_token:
         response.set_cookie(

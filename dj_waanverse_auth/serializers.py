@@ -15,10 +15,9 @@ from .utils import (
 from django.utils import timezone
 from datetime import timedelta
 from django.utils.translation import gettext_lazy as _
-
+from rest_framework_simplejwt.settings import api_settings
 from typing import Optional, Type, Dict, Any
 from rest_framework_simplejwt.tokens import Token
-from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.serializers import PasswordField
 from django.contrib.auth import get_user_model
 from .settings import accounts_config
@@ -263,11 +262,13 @@ class LogoutSerializer(serializers.Serializer):
         return attrs
 
     def save(self, **kwargs):
-        try:
-            if self.token:
-                RefreshToken(self.token).blacklist()
-        except Exception as e:
-            raise serializers.ValidationError(str(e))
+        if api_settings.BLACKLIST_AFTER_ROTATION:
+
+            try:
+                if self.token:
+                    RefreshToken(self.token).blacklist()
+            except Exception as e:
+                raise serializers.ValidationError(str(e))
 
 
 class ResetPasswordSerializer(serializers.Serializer):

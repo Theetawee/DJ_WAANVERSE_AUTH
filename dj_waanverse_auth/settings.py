@@ -1,11 +1,7 @@
-"""
-Handles dj_waanverse_auth settings. refer to documentation
-"""
-
 from datetime import timedelta
-
 from django.conf import settings
 
+# Default settings for the package
 DEFAULT_ACCOUNTS_CONFIG = {
     "AUTHENTICATION_METHODS": ["username"],
     "MFA_RECOVERY_CODES_COUNT": 2,
@@ -29,8 +25,9 @@ DEFAULT_ACCOUNTS_CONFIG = {
     "PLATFORM_NAME": "Waanverse Accounts",
     "EMAIL_VERIFICATION_CODE_LIFETIME": timedelta(minutes=10),
     "MFA_ISSUER": "Waanverse Labs Inc.",
+    "BLACKLIST_AFTER_ROTATION": False,
 }
 
-APP_ACCOUNTS_CONFIG = getattr(settings, "WAANVERSE_AUTH", {})
-
-accounts_config = {**DEFAULT_ACCOUNTS_CONFIG, **APP_ACCOUNTS_CONFIG}
+# Merge user-provided settings with the default settings
+USER_SETTINGS = getattr(settings, "WAANVERSE_AUTH", {})
+accounts_config = {**DEFAULT_ACCOUNTS_CONFIG, **USER_SETTINGS}
