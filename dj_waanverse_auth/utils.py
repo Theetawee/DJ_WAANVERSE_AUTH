@@ -5,8 +5,11 @@ from django.core.mail import send_mail
 import random
 import string
 from .settings import accounts_config
-from .models import EmailAddress, EmailConfirmationCode
+from .models import EmailAddress, EmailConfirmationCode, MultiFactorAuth
 from importlib import import_module
+from django.contrib.auth.signals import user_logged_in
+from django.contrib.auth.models import update_last_login
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 def set_cookies(
@@ -96,12 +99,16 @@ def dispatch_email(context, email, subject, template):
 
 
 def handle_email_verification(user):
-    """
-    Generates a confirmation code with a mix of letters and numbers.
+    """Generates and send the email verification code to user email
 
+    Args:
+        user (User): The user to which the email verification code will be sent
+
+    Raises:
+        ValueError: If the length of the code is less than 2
 
     Returns:
-    - str: The generated confirmation code.
+        EmailConfirmationCode: The email verification code
     """
     length = accounts_config["CONFIRMATION_CODE_LENGTH"]
     if length < 2:
@@ -167,6 +174,15 @@ def get_serializer(path):
 
 
 def user_email_address(user):
+    """
+    Get or create the email address for the user.
+
+    Args:
+        user (User): The user object to get or create the email address for.
+
+    Returns:
+        EmailAddress: The email address object for the user.
+    """
     email_address, created = EmailAddress.objects.get_or_create(user=user, primary=True)
 
     if created:
@@ -178,5 +194,74 @@ def user_email_address(user):
 
 
 def reset_response(response):
+    """
+    Remove the refresh and access token cookies from the response.
+
+    Args:
+        response (Response): The response object to remove the cookies from.
+    """
     response.delete_cookie(accounts_config["ACCESS_TOKEN_COOKIE_NAME"])
     response.delete_cookie(accounts_config["REFRESH_TOKEN_COOKIE_NAME"])
+
+
+def get_email_verification_status(user):
+    """
+    Checks if the email address associated with the user is verified.
+
+    Args:
+        user (User): The user object to check.
+
+    Returns:
+        bool: True if the email address is verified, False otherwise.
+    """
+    email_address = user_email_address(user)
+    if email_address and email_address.verified:
+        return True
+    return False
+
+
+def handle_user_login(context, user):
+    """
+    Handle user login.
+
+    Args:
+        context (any): The context object passed to the signal handler.
+        user (User): The user object that was logged in.
+    """
+    user_logged_in.send(
+        sender=user.__class__,
+        request=context["request"],
+        user=user,
+    )
+    update_last_login(None, user)
+
+
+def check_mfa_status(user):
+    """
+    Checks if the user has MFA enabled.
+
+    Args:
+        user (User): The user object to check
+
+    Returns:
+        bool: True if MFA is enabled, False otherwise
+    """
+    try:
+        account_mfa = MultiFactorAuth.objects.get(account=user)
+        return account_mfa.activated
+    except MultiFactorAuth.DoesNotExist:
+        return False
+
+
+def generate_tokens(user):
+    """
+    Generates access and refresh tokens for the given user.
+
+    Args:
+        user (User): The user object to generate tokens for.
+
+    Returns:
+        dict: A dictionary containing the access and refresh tokens.
+    """
+    refresh = RefreshToken.for_user(user)
+    return {"refresh_token": str(refresh), "access_token": str(refresh.access_token)}

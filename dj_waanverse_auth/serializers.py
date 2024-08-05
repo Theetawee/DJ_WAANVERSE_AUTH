@@ -1,17 +1,20 @@
 from rest_framework import serializers, exceptions
-from django.contrib.auth import authenticate, user_logged_in
+from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import EmailConfirmationCode, ResetPasswordCode, MultiFactorAuth
+from .models import EmailConfirmationCode, ResetPasswordCode
 from .utils import (
     generate_password_reset_code,
     dispatch_email,
     user_email_address,
     handle_email_verification,
+    check_mfa_status,
+    handle_user_login,
+    generate_tokens,
+    get_email_verification_status,
 )
 from django.utils import timezone
 from datetime import timedelta
 from django.utils.translation import gettext_lazy as _
-from django.contrib.auth.models import update_last_login
 
 from typing import Optional, Type, Dict, Any
 from rest_framework_simplejwt.tokens import Token
@@ -68,33 +71,33 @@ class TokenObtainSerializer(serializers.Serializer):
 class LoginSerializer(TokenObtainSerializer):
     token_class = RefreshToken
 
-    def validate(self, attrs: Dict[str, Any]) -> Dict[str, str]:
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         data = super().validate(attrs)
-        email_address = user_email_address(self.user)
-        try:
-            account_mfa = MultiFactorAuth.objects.get(account=self.user)
-            data["mfa"] = account_mfa.activated
-        except MultiFactorAuth.DoesNotExist:
-            data["mfa"] = False
+        verified_email_rule = accounts_config["VERIFY_EMAIL"]
+        user_email_address(self.user)
 
-        refresh = self.get_token(self.user)
-        data["refresh_token"] = str(refresh)
-        data["access_token"] = str(refresh.access_token)
+        # Check MFA status
+        data["mfa"] = check_mfa_status(self.user)
+
+        # Generate tokens
+        tokens = generate_tokens(self.user)
+        data.update(tokens)
+
+        # Add user data
         data["user"] = self.user
 
-        if not data["mfa"] and email_address and email_address.verified:
-            user_logged_in.send(
-                sender=self.user.__class__,
-                request=self.context["request"],
-                user=self.user,
-            )
-            update_last_login(None, self.user)
+        # Handle login and last login update if MFA is not activated and email verification rule is not enforced
+        if not data["mfa"] and not verified_email_rule:
+            handle_user_login(self.context, self.user)
+            data["email_verified"] = True
 
-        if email_address and email_address.verified:
+        # Handle email verification status
+        elif get_email_verification_status(self.user):
             data["email_verified"] = True
         else:
             data["email_verified"] = False
             handle_email_verification(self.user)
+
         return data
 
 
