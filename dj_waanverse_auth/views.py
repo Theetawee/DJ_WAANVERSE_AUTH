@@ -422,21 +422,24 @@ def mfa_login(request):
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def reset_password(request):
+    if request.user.is_authenticated:
+        return Response(
+            {"msg": "You are already authenticated."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
     serializer = ResetPasswordSerializer(data=request.data)
     if serializer.is_valid():
         reset_code = serializer.save()
-        attempts = reset_code.attempts
-        email = reset_code.email
         return Response(
-            status=status.HTTP_200_OK,
-            data={
-                "msg": "Password reset successfully",
-                "attempts": attempts,
-                "email": email,
+            {
+                "msg": "Password reset code has been sent successfully.",
+                "attempts": reset_code.attempts,
+                "email": reset_code.email,
             },
+            status=status.HTTP_200_OK,
         )
-    else:
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST"])

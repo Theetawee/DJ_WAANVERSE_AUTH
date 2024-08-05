@@ -135,19 +135,12 @@ def get_client_ip(request):
 
 
 def generate_password_reset_code():
-    digits = random.choice(string.digits)
-    uppercase = random.choice(string.ascii_uppercase)
-    lowercase = random.choice(string.ascii_lowercase)
+    length = accounts_config["CONFIRMATION_CODE_LENGTH"]
 
-    # Generate the remaining 3 characters randomly from all allowed characters
-    remaining_characters = string.ascii_letters + string.digits
-    remaining = "".join(random.choice(remaining_characters) for _ in range(3))
+    # Generate a numeric code
+    code = "".join(random.choices(string.digits, k=length))
 
-    # Combine all characters and shuffle
-    code_list = list(digits + uppercase + lowercase + remaining)
-    random.shuffle(code_list)
-
-    return "".join(code_list)
+    return code
 
 
 def get_serializer(path):

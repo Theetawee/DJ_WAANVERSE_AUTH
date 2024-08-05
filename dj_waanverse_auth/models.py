@@ -6,7 +6,6 @@ from django.utils import timezone
 from datetime import timedelta
 import secrets
 from django.utils.translation import gettext_lazy as _
-
 from django.db import models
 
 from django.contrib.auth import get_user_model
@@ -70,14 +69,22 @@ class UserLoginActivity(models.Model):
 
 class ResetPasswordCode(models.Model):
     email = models.EmailField(max_length=255, unique=True, db_index=True)
-    code = models.CharField(max_length=6, unique=True)
+    code = models.CharField(max_length=6)
     created_at = models.DateTimeField(auto_now_add=True)
-    attempts = models.IntegerField(default=1)
+    attempts = models.IntegerField(default=0)
 
     @property
     def is_expired(self):
-        expiration_time = self.created_at + timedelta(minutes=10)
+        expiration_time = (
+            self.created_at + accounts_config["RESET_PASSWORD_CODE_LIFETIME"]
+        )
         return timezone.now() > expiration_time
+
+    @property
+    def cooldown_remaining(self):
+        # Calculate cooldown end time
+        cooldown_end_time = self.created_at + accounts_config["PASSWORD_RESET_COOLDOWN"]
+        return max(cooldown_end_time - timezone.now(), timedelta(seconds=0))
 
     def __str__(self):
         return f"Email: {self.email} - Code: {self.code}"

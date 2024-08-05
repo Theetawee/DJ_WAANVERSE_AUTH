@@ -28,6 +28,8 @@ DEFAULT_ACCOUNTS_CONFIG = {
     "BLACKLIST_AFTER_ROTATION": False,
     "MFA_CODE_LENGTH": 6,
     "MFA_EMAIL_ALERTS": False,
+    "RESET_PASSWORD_CODE_LIFETIME": timedelta(minutes=10),
+    "PASSWORD_RESET_COOLDOWN": timedelta(minutes=5),
 }
 
 # Merge user-provided settings with the default settings

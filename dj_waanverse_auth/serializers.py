@@ -280,46 +280,54 @@ class ResetPasswordSerializer(serializers.Serializer):
 
     def validate_email(self, email):
         if not Account.objects.filter(email=email).exists():
-            raise serializers.ValidationError(
-                _("Something went wrong. Please try again.")
-            )
+            raise serializers.ValidationError(_("Something went wrong. Please try again or contact support."))
         return email
 
     def save(self, **kwargs):
-        """
-        Password reset code is generated freely and quickly for the first 3 attempts after which the user will have to wait for one hour to try again.
-        """
         email = self.validated_data["email"]
         code = generate_password_reset_code()
+        attempt_count = 1
 
         try:
-            existing_code = ResetPasswordCode.objects.get(email=email)
-            attempts = existing_code.attempts
-            created_at = existing_code.created_at
-
-            if attempts >= 3:
-                cooldown_end_time = created_at + timedelta(hours=1)
-                if timezone.now() < cooldown_end_time:
-                    raise serializers.ValidationError(
-                        _("Too many attempts. Please try again after an hour.")
-                    )
-            existing_code.delete()
-            new_password_reset = ResetPasswordCode.objects.create(
-                email=email, code=code, attempts=attempts + 1
+            # Get the most recent reset code entry
+            last_reset_code = ResetPasswordCode.objects.filter(email=email).latest(
+                "created_at"
             )
+            if last_reset_code.is_expired:
+                last_reset_code.delete()  # Delete expired code
+            else:
+                if last_reset_code.attempts >= 3:
+                    if last_reset_code.cooldown_remaining > timedelta(seconds=0):
+                        raise serializers.ValidationError(
+                            _(
+                                "Too many attempts. Please try again after the cooldown period."
+                            )
+                        )
+                    else:
+                        # If cooldown period is over, reset attempts
+                        attempt_count = last_reset_code.attempts + 1
+                        last_reset_code.delete()  # Delete old code
+                else:
+                    attempt_count = last_reset_code.attempts + 1
+                    last_reset_code.delete()  # Delete old code
 
         except ResetPasswordCode.DoesNotExist:
-            new_password_reset = ResetPasswordCode.objects.create(
-                email=email, code=code
-            )
-        email_context = {"code": new_password_reset.code, "email": email}
+            # No previous reset code found, so start with the first attempt
+            attempt_count = 1
+
+        # Create and save a new reset code
+        reset_code = ResetPasswordCode(email=email, code=code, attempts=attempt_count)
+        reset_code.save()
+
+        # Send the email with the new reset code
+        email_context = {"code": reset_code.code, "email": email}
         dispatch_email(
             email=email,
             context=email_context,
             template="password_reset",
             subject="Password Reset Code - Waanverse Accounts.",
         )
-        return new_password_reset
+        return reset_code
 
 
 class VerifyResetPasswordSerializer(serializers.Serializer):
