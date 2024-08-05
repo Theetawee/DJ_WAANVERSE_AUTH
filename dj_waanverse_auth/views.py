@@ -176,6 +176,7 @@ def enable_mfa(request):
 
 
 @api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def verify_mfa(request):
     user = request.user
     try:
@@ -205,12 +206,14 @@ def verify_mfa(request):
 
 
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def mfa_activated(request):
     recovery_code = request.user.recovery_codes
     return Response(data={"recovery_codes": recovery_code}, status=status.HTTP_200_OK)
 
 
 @api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def regenerate_recovery_codes(request):
     request.user.set_recovery_codes()
     request.user.save()
@@ -220,6 +223,7 @@ def regenerate_recovery_codes(request):
 
 
 @api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def deactivate_mfa(request):
     user = request.user
     password = request.data.get("password")
@@ -246,6 +250,7 @@ def deactivate_mfa(request):
 
 
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def user_info(request):
     AccountSerializer = get_serializer(accounts_config["USER_DETAIL_SERIALIZER"])
     user = request.user
@@ -255,6 +260,7 @@ def user_info(request):
 
 
 @api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def logout_view(request):
     serializer = LogoutSerializer(data=request.data, context={"request": request})
     if serializer.is_valid():
@@ -313,7 +319,7 @@ def mfa_login(request):
         refresh = RefreshToken.for_user(user)
         access = refresh.access_token
 
-    elif code in user.recovery_codes:
+    elif code in mfa_account.recovery_codes:
         # Recovery code is valid
         mfa_account.recovery_codes.remove(code)  # Remove used recovery code
         mfa_account.save()
