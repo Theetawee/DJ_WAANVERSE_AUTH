@@ -1,10 +1,13 @@
 from .test_setup import TestSetup
 from rest_framework import status
+from dj_waanverse_auth.settings import accounts_config
 
 
 class LoginViewTests(TestSetup):
 
     def test_login(self):
+        accounts_config["VERIFY_EMAIL"] = False
+
         response = self.client.post(
             self.url,
             {
@@ -12,7 +15,6 @@ class LoginViewTests(TestSetup):
                 "password": "testpassword",
             },
         )
-        print(response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("access_token", response.data)
         self.assertIn("refresh_token", response.data)

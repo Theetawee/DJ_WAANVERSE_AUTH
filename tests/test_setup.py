@@ -19,6 +19,14 @@ class TestSetup(TestCase):
             date_of_birth="1990-01-01",
             phone_number="1234567890",
         )
+        self.user2 = Account.objects.create_user(
+            email="test2@example.com",
+            username="testuser2",
+            name="Test User 2",
+            password="testpassword123",
+            date_of_birth="1990-01-01",
+            phone_number=None,
+        )
         self.access_cookie_name = accounts_config["ACCESS_TOKEN_COOKIE_NAME"]
         self.refresh_cookie_name = accounts_config["REFRESH_TOKEN_COOKIE_NAME"]
         self.url = reverse("login")
