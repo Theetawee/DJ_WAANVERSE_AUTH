@@ -152,3 +152,8 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = os.environ.get("SMTP_EMAIL")
 EMAIL_HOST_PASSWORD = os.environ.get("SMTP_PASSWORD")
 EMAIL_USE_TLS = True
+
+
+WAANVERSE_AUTH = {
+    "SIGNUP_SERIALIZER": "accounts.serializers.SignupSerializer",
+}

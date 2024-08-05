@@ -30,39 +30,42 @@ Account = get_user_model()
 @permission_classes([AllowAny])
 def login_view(request):
     USER_CLAIM_SERIALIZER = get_serializer(accounts_config["USER_CLAIM_SERIALIZER"])
-    # Any changes to the main login view may affect the mfa login view
     serializer = LoginSerializer(data=request.data, context={"request": request})
+
     if serializer.is_valid():
         mfa = serializer.validated_data.get("mfa", False)
         refresh_token = serializer.validated_data.get("refresh_token", "")
         access_token = serializer.validated_data.get("access_token", "")
         user = serializer.validated_data.get("user", None)
         email_verified = serializer.validated_data.get("email_verified", False)
-        if mfa is True:
-            response = Response(status=status.HTTP_200_OK, data={"mfa": user.id})
+
+        # Handle response based on email verification and MFA
+        if not email_verified:
+            response_data = {"email": user.email, "status": "unverified"}
+            response_status = status.HTTP_200_OK
+        elif mfa:
+            response_data = {"mfa": user.id}
+            response_status = status.HTTP_200_OK
+            response = Response(response_data, status=response_status)
             response = set_cookies(mfa=user.id, response=response)
             reset_response(response)
-        elif email_verified is False:
-            response = Response(
-                {"email": user.email, "status": "unverified"}, status=status.HTTP_200_OK
-            )
-            reset_response(response)
+            return response
         else:
-            response = Response(
-                {
-                    "access_token": access_token,
-                    "refresh_token": refresh_token,
-                    "user": USER_CLAIM_SERIALIZER(user).data,
-                },
-                status=status.HTTP_200_OK,
-            )
+            response_data = {
+                "access_token": access_token,
+                "refresh_token": refresh_token,
+                "user": USER_CLAIM_SERIALIZER(user).data,
+            }
+            response_status = status.HTTP_200_OK
 
-            response = set_cookies(
-                response, access_token=access_token, refresh_token=refresh_token
-            )
+        response = Response(response_data, status=response_status)
+        response = set_cookies(
+            response, access_token=access_token, refresh_token=refresh_token
+        )
+        reset_response(response)
         return response
-    else:
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST"])

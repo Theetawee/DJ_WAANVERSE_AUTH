@@ -73,28 +73,27 @@ class LoginSerializer(TokenObtainSerializer):
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         data = super().validate(attrs)
-        verified_email_rule = accounts_config["VERIFY_EMAIL"]
-        user_email_address(self.user)
+        # Add user data
+        data["user"] = self.user
+
         # Check email verification status
         email_verified = get_email_verification_status(self.user)
         data["email_verified"] = email_verified
 
-        if verified_email_rule and not email_verified:
+        if not email_verified:
             handle_email_verification(self.user)
             data["mfa"] = False  # MFA is reported as off if email is not verified
             return data
 
-        # Check MFA status if email is verified or verification is not required
+        # Check MFA status if email is verified
         data["mfa"] = check_mfa_status(self.user)
 
         # Generate tokens
         tokens = generate_tokens(self.user)
         data.update(tokens)
 
-        # Add user data
-        data["user"] = self.user
-
-        if not data["mfa"] and not verified_email_rule:
+        # Handle user login if MFA is not required
+        if not data["mfa"]:
             handle_user_login(self.context, self.user)
 
         return data
@@ -220,8 +219,9 @@ class SignupSerializer(serializers.Serializer):
                 **self.get_additional_fields(validated_data),
                 password=password,
             )
-            handle_email_verification(user)
             user_email_address(user)
+
+            handle_email_verification(user)
         except Exception as e:
             raise serializers.ValidationError(f"Error creating user: {e}")
 
