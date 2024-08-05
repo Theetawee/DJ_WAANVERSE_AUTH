@@ -1,13 +1,18 @@
+
 from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.authentication import JWTAuthentication as Head
 from rest_framework.exceptions import AuthenticationFailed
-from .settings import accounts_config
+from dj_waanverse_auth.settings import accounts_config
 
 User = get_user_model()
 
 
 class CustomAuthBackend(BaseBackend):
+    """
+    Waanverse authentication backend that allows for multiple authentication methods.(username, email, phone_number) refer to docs
+    """
+
     def authenticate(self, request, login_field=None, password=None, **kwargs):
         # Determine which authentication methods are in use
         use_username = "username" in accounts_config["AUTHENTICATION_METHODS"]
