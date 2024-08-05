@@ -13,7 +13,6 @@ class CustomAuthBackend(BaseBackend):
         use_username = "username" in accounts_config["AUTHENTICATION_METHODS"]
         use_email = "email" in accounts_config["AUTHENTICATION_METHODS"]
         use_phone_number = "phone_number" in accounts_config["AUTHENTICATION_METHODS"]
-
         if not (use_username or use_email or use_phone_number):
             return None
 

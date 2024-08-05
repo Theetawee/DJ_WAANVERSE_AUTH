@@ -24,6 +24,7 @@ DEFAULT_ACCOUNTS_CONFIG = {
     "PLATFORM_NAME": "Waanverse Accounts",
     "EMAIL_VERIFICATION_CODE_LIFETIME": timedelta(minutes=10),
     "MFA_ISSUER": "Waanverse Labs Inc.",
+    "VERIFY_EMAIL": False,
 }
 
 APP_ACCOUNTS_CONFIG = getattr(settings, "ACCOUNTS_CONFIG", {})

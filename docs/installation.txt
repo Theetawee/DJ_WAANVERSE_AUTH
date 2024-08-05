@@ -6,3 +6,34 @@ to install the package
 run migrtions
 
 add urls to the urls file
+
+add the custom backends
+
+add the default authentication in restframework
+
+
+REST_FRAMEWORK = {
+    ...
+    "DEFAULT_AUTHENTICATION_CLASSES": ("dj_waanverse_auth.backends.JWTAuthentication",),
+    ...
+}
+
+
+set up the simplejwt settings minly the life times
+
+
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=110),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    ...
+}
+
+
+add the middleware 
+
+    "dj_waanverse_auth.middleware.CookiesHandlerMiddleware",
+
+
+
+configure the smtp settings in the settings.py

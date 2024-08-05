@@ -71,7 +71,6 @@ class LoginSerializer(TokenObtainSerializer):
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, str]:
         data = super().validate(attrs)
         email_address = user_email_address(self.user)
-
         try:
             account_mfa = MultiFactorAuth.objects.get(account=self.user)
             data["mfa"] = account_mfa.activated
