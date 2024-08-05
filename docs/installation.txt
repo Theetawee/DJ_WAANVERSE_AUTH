@@ -11,7 +11,7 @@ add the custom backends
 
 add the default authentication in restframework
 
-
+ensure the templates are configured as well.
 REST_FRAMEWORK = {
     ...
     "DEFAULT_AUTHENTICATION_CLASSES": ("dj_waanverse_auth.backends.JWTAuthentication",),

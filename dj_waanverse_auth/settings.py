@@ -1,5 +1,10 @@
-from django.conf import settings
+"""
+Handles dj_waanverse_auth settings. refer to documentation
+"""
+
 from datetime import timedelta
+
+from django.conf import settings
 
 DEFAULT_ACCOUNTS_CONFIG = {
     "AUTHENTICATION_METHODS": ["username"],
