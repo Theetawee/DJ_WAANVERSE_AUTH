@@ -10,11 +10,11 @@ from .views import (
     verify_mfa,
     mfa_activated,
     regenerate_recovery_codes,
-    deactivate_mfa,
     logout_view,
     mfa_login,
     reset_password,
     verify_reset_password,
+    DeactivateMfaView,
 )
 
 urlpatterns = [
@@ -28,7 +28,7 @@ urlpatterns = [
     path("mfa/verify", verify_mfa, name="verify_mfa"),
     path("mfa/activated", mfa_activated, name="mfa_activated"),
     path("mfa/regenerate", regenerate_recovery_codes, name="regenerate_codes"),
-    path("mfa/deactivate", deactivate_mfa, name="deactivate_mfa"),
+    path("mfa/deactivate", DeactivateMfaView.as_view(), name="deactivate_mfa"),
     path("logout", logout_view, name="logout"),
     path("mfa/login", mfa_login, name="verify_mfa_auth"),
     path("reset", reset_password, name="reset_password"),

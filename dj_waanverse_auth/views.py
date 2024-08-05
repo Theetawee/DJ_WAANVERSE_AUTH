@@ -9,6 +9,7 @@ from .serializers import (
     LogoutSerializer,
     ResetPasswordSerializer,
     VerifyResetPasswordSerializer,
+    DeactivateMfaSerializer,
 )
 from django.contrib.auth import user_logged_in
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -22,6 +23,8 @@ from django.contrib.auth.models import update_last_login
 from django.utils.translation import gettext_lazy as _
 from .settings import accounts_config
 from .models import MultiFactorAuth
+from rest_framework.views import APIView
+
 
 Account = get_user_model()
 
@@ -148,21 +151,23 @@ def signup_view(request):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def enable_mfa(request):
+    user = request.user
     try:
-        user = request.user
         account_mfa, created = MultiFactorAuth.objects.get_or_create(account=user)
 
         if not account_mfa.secret_key:
             # Ensure the generated key is unique
-            while True:
+            unique_key_generated = False
+            while not unique_key_generated:
                 potential_key = pyotp.random_base32()
                 if not MultiFactorAuth.objects.filter(
                     secret_key=potential_key
                 ).exists():
                     account_mfa.secret_key = potential_key
-                    break
+                    unique_key_generated = True
 
-        otp_url = pyotp.totp.TOTP(account_mfa.secret_key, digits=6).provisioning_uri(
+        # Generate the OTP provisioning URI
+        otp_url = pyotp.TOTP(account_mfa.secret_key, digits=6).provisioning_uri(
             user.username, issuer_name=accounts_config["MFA_ISSUER"]
         )
 
@@ -171,8 +176,16 @@ def enable_mfa(request):
         return Response(
             {"url": otp_url, "key": account_mfa.secret_key}, status=status.HTTP_200_OK
         )
+    except MultiFactorAuth.DoesNotExist:
+        return Response(
+            {"error": "MFA configuration could not be created."},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
     except Exception as e:
-        return Response(status=status.HTTP_400_BAD_REQUEST, data={"error": str(e)})
+        return Response(
+            {"error": f"An error occurred: {str(e)}"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
 
 @api_view(["POST"])
@@ -222,31 +235,19 @@ def regenerate_recovery_codes(request):
     )
 
 
-@api_view(["POST"])
-@permission_classes([IsAuthenticated])
-def deactivate_mfa(request):
-    user = request.user
-    password = request.data.get("password")
+class DeactivateMfaView(APIView):
+    permission_classes = [IsAuthenticated]
 
-    if not password:
-        return Response(
-            {"msg": "Please provide us with a valid password to continue."},
-            status=status.HTTP_400_BAD_REQUEST,
+    def post(self, request, *args, **kwargs):
+        serializer = DeactivateMfaSerializer(
+            data=request.data, context={"request": request}
         )
-
-    if user.check_password(password):
-        user.mfa_activated = False
-        user.mfa_secret = None
-        user.save()
-        return Response(
-            {"msg": "Multi-factor authentication has been deactivated successfully"},
-            status=status.HTTP_200_OK,
-        )
-    else:
-        return Response(
-            {"msg": "Incorrect password please try again."},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {"detail": "MFA has been deactivated."}, status=status.HTTP_200_OK
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["GET"])

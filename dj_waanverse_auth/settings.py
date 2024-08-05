@@ -26,6 +26,7 @@ DEFAULT_ACCOUNTS_CONFIG = {
     "EMAIL_VERIFICATION_CODE_LIFETIME": timedelta(minutes=10),
     "MFA_ISSUER": "Waanverse Labs Inc.",
     "BLACKLIST_AFTER_ROTATION": False,
+    "MFA_CODE_LENGTH": 6,
 }
 
 # Merge user-provided settings with the default settings

@@ -1,7 +1,8 @@
+import pyotp
 from rest_framework import serializers, exceptions
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import EmailConfirmationCode, ResetPasswordCode
+from .models import EmailConfirmationCode, ResetPasswordCode, MultiFactorAuth
 from .utils import (
     generate_password_reset_code,
     dispatch_email,
@@ -22,6 +23,7 @@ from rest_framework_simplejwt.serializers import PasswordField
 from django.contrib.auth import get_user_model
 from .settings import accounts_config
 from .validators import validate_username as username_validator
+from django.contrib.auth.hashers import check_password
 
 Account = get_user_model()
 
@@ -238,9 +240,10 @@ class MfaCodeSerializer(serializers.Serializer):
     code = serializers.CharField(required=True)
 
     def validate_code(self, value):
-        # Ensure the code is a 6-digit integer
-        if len(str(value)) != 6:
-            raise serializers.ValidationError("The OTP code must be 6 digits.")
+        if len(str(value)) != accounts_config["MFA_CODE_LENGTH"]:
+            raise serializers.ValidationError(
+                f"The OTP code must be {accounts_config['MFA_CODE_LENGTH']} digits."
+            )
         return value
 
 
@@ -363,3 +366,49 @@ class VerifyResetPasswordSerializer(serializers.Serializer):
         ).delete()
 
         return user
+
+
+class DeactivateMfaSerializer(serializers.Serializer):
+    code = serializers.CharField(required=True)
+    password = serializers.CharField(required=True)
+
+    def validate_code(self, value):
+        if len(str(value)) != accounts_config["MFA_CODE_LENGTH"]:
+            raise serializers.ValidationError(
+                f"The OTP code must be {accounts_config['MFA_CODE_LENGTH']} digits."
+            )
+        return value
+
+    def validate(self, attrs):
+        user = self.context["request"].user
+        code = attrs.get("code")
+        password = attrs.get("password")
+
+        # Validate password
+        if not check_password(password, user.password):
+            raise serializers.ValidationError("Invalid password.")
+
+        # Validate MFA code
+        try:
+            mfa = MultiFactorAuth.objects.get(account=user, activated=True)
+        except MultiFactorAuth.DoesNotExist:
+            raise serializers.ValidationError("MFA is not enabled for this account.")
+
+        # Verify the code using pyotp
+        totp = pyotp.TOTP(mfa.secret_key)
+        if not totp.verify(code):
+            # Fallback to recovery codes if pyotp verification fails
+            if code not in mfa.recovery_codes:
+                raise serializers.ValidationError("Invalid MFA code.")
+            # Remove used recovery code
+            mfa.recovery_codes.remove(code)
+            mfa.save()
+
+        attrs["user"] = user
+        return attrs
+
+    def save(self, **kwargs):
+        user = self.validated_data["user"]
+        mfa = MultiFactorAuth.objects.get(account=user, activated=True)
+        mfa.delete()
+        return {"detail": "MFA has been deactivated."}
