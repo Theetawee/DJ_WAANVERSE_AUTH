@@ -246,11 +246,37 @@ def mfa_status(request):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def regenerate_recovery_codes(request):
-    request.user.set_recovery_codes()
-    request.user.save()
-    return Response(
-        status=status.HTTP_200_OK, data={"msg": "Codes generated successfully"}
-    )
+    user = request.user
+    try:
+        # Retrieve the MultiFactorAuth instance
+        mfa_account = MultiFactorAuth.objects.get(account=user)
+
+        if not mfa_account.activated:
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST,
+                data={"error": "MFA is not activated. Please activate MFA first."},
+            )
+
+        # Generate new recovery codes
+        mfa_account.set_recovery_codes()
+        mfa_account.save()
+
+        return Response(
+            status=status.HTTP_200_OK,
+            data={"msg": "Recovery codes generated successfully"},
+        )
+    except MultiFactorAuth.DoesNotExist:
+        return Response(
+            status=status.HTTP_400_BAD_REQUEST,
+            data={"error": "MFA configuration not found. Please activate MFA first."},
+        )
+    except Exception as e:
+        return Response(
+            status=status.HTTP_400_BAD_REQUEST,
+            data={
+                "error": f"An error occurred while generating recovery codes: {str(e)}"
+            },
+        )
 
 
 class DeactivateMfaView(APIView):

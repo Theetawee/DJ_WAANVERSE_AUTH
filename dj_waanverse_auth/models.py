@@ -20,6 +20,7 @@ class MultiFactorAuth(models.Model):
     activated_at = models.DateTimeField(null=True, blank=True)
     recovery_codes = models.JSONField(default=list, blank=True)
     secret_key = models.CharField(max_length=255, null=True, blank=True)
+    last_updated = models.DateTimeField(auto_now=True)
 
     def generate_recovery_codes(self):
         # Get the number of recovery codes from settings

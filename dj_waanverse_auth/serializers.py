@@ -410,5 +410,8 @@ class DeactivateMfaSerializer(serializers.Serializer):
     def save(self, **kwargs):
         user = self.validated_data["user"]
         mfa = MultiFactorAuth.objects.get(account=user, activated=True)
-        mfa.delete()
+        mfa.activated = False
+        mfa.secret_key = None
+        mfa.recovery_codes = []
+        mfa.save()
         return {"detail": "MFA has been deactivated."}
