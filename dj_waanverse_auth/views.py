@@ -13,7 +13,13 @@ from .serializers import (
 )
 from django.contrib.auth import user_logged_in
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from .utils import set_cookies, get_serializer, reset_response
+from .utils import (
+    set_cookies,
+    get_serializer,
+    reset_response,
+    dispatch_email,
+    get_client_ip,
+)
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 import pyotp
@@ -24,7 +30,7 @@ from django.utils.translation import gettext_lazy as _
 from .settings import accounts_config
 from .models import MultiFactorAuth
 from rest_framework.views import APIView
-
+from django.utils import timezone
 
 Account = get_user_model()
 
@@ -260,7 +266,21 @@ def regenerate_recovery_codes(request):
         # Generate new recovery codes
         mfa_account.set_recovery_codes()
         mfa_account.save()
-
+        if accounts_config["MFA_EMAIL_ALERTS"]:
+            dispatch_email(
+                email=user.email,
+                template="regenerate_codes",
+                subject="New MFA Recovery Codes Generated",
+                context={
+                    "username": user.username,
+                    "email": user.email,
+                    "time": timezone.now(),
+                    "ip_address": get_client_ip(request),
+                    "user_agent": request.META.get("HTTP_USER_AGENT", "<unknown>")[
+                        :255
+                    ],
+                },
+            )
         return Response(
             status=status.HTTP_200_OK,
             data={"msg": "Recovery codes generated successfully"},
