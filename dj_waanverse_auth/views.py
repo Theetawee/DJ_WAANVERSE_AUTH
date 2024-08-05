@@ -320,7 +320,6 @@ def user_info(request):
     AccountSerializer = get_serializer(accounts_config["USER_DETAIL_SERIALIZER"])
     user = request.user
     serializer = AccountSerializer(user)
-    print("called")
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 

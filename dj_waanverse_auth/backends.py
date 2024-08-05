@@ -57,7 +57,6 @@ class CustomAuthBackend(BaseBackend):
 
     def _authenticate_with_phone_number(self, phone_number, password):
         try:
-            print(phone_number)
             user = User.objects.get(phone_number__exact=phone_number)
             if user.check_password(password):
                 return user
@@ -69,9 +68,8 @@ class CustomAuthBackend(BaseBackend):
             return User.objects.get(pk=user_id)
         except User.DoesNotExist:
             return None
-        except Exception as e:
+        except Exception:
             # Log the exception or handle it accordingly
-            print(f"An error occurred while fetching the user: {e}")
             return None
 
 

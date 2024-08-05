@@ -49,6 +49,6 @@ def log_user_logged_in_failed(sender, credentials, request, **kwargs):
             status=UserLoginActivity.FAILED,
         )
         user_login_activity_log.save()
-    except Exception as e:
+    except Exception:
         # log the error
-        print(e)
+        pass
