@@ -75,8 +75,16 @@ class LoginSerializer(TokenObtainSerializer):
         data = super().validate(attrs)
         verified_email_rule = accounts_config["VERIFY_EMAIL"]
         user_email_address(self.user)
+        # Check email verification status
+        email_verified = get_email_verification_status(self.user)
+        data["email_verified"] = email_verified
 
-        # Check MFA status
+        if verified_email_rule and not email_verified:
+            handle_email_verification(self.user)
+            data["mfa"] = False  # MFA is reported as off if email is not verified
+            return data
+
+        # Check MFA status if email is verified or verification is not required
         data["mfa"] = check_mfa_status(self.user)
 
         # Generate tokens
@@ -86,17 +94,8 @@ class LoginSerializer(TokenObtainSerializer):
         # Add user data
         data["user"] = self.user
 
-        # Handle login and last login update if MFA is not activated and email verification rule is not enforced
         if not data["mfa"] and not verified_email_rule:
             handle_user_login(self.context, self.user)
-            data["email_verified"] = True
-
-        # Handle email verification status
-        elif get_email_verification_status(self.user):
-            data["email_verified"] = True
-        else:
-            data["email_verified"] = False
-            handle_email_verification(self.user)
 
         return data
 

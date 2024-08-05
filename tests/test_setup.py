@@ -3,7 +3,7 @@ from rest_framework.test import APIClient
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from dj_waanverse_auth.settings import accounts_config
-from dj_waanverse_auth.models import EmailAddress
+from dj_waanverse_auth.models import EmailAddress, MultiFactorAuth
 from rest_framework import status
 
 Account = get_user_model()
@@ -29,6 +29,16 @@ class TestSetup(TestCase):
             date_of_birth="1990-01-01",
             phone_number=None,
         )
+        self.user3 = Account.objects.create_user(
+            email="test3@example.com",
+            username="testuser3",
+            name="Test User 3",
+            password="testpassword123",
+            date_of_birth="1990-01-01",
+            phone_number=None,
+        )
+
+        MultiFactorAuth.objects.create(account=self.user3, activated=True)
 
         EmailAddress.objects.create(
             user=self.user2, email="test2@example.com", primary=True, verified=True
@@ -36,6 +46,7 @@ class TestSetup(TestCase):
 
         self.access_cookie_name = accounts_config["ACCESS_TOKEN_COOKIE_NAME"]
         self.refresh_cookie_name = accounts_config["REFRESH_TOKEN_COOKIE_NAME"]
+        self.mfa_cookie_name = accounts_config["MFA_COOKIE_NAME"]
         self.url = reverse("login")
         return super().setUp()
 
@@ -46,7 +57,7 @@ class TestSetup(TestCase):
         self.assertIn("refresh_token", response.data)
         self.assertIn(self.access_cookie_name, response.cookies)
         self.assertIn(self.refresh_cookie_name, response.cookies)
-
+        self.assertNotIn(self.mfa_cookie_name, response.cookies)
         # Retrieve the cookies
         access_cookie = response.cookies[self.access_cookie_name]
         refresh_cookie = response.cookies[self.refresh_cookie_name]
