@@ -1,4 +1,5 @@
 include LICENSE
 include README.md
-recursive-include accounts/templates
+recursive-include dj_waanverse_auth/templates *
 recursive-include docs *
+recursive-exclude tests *

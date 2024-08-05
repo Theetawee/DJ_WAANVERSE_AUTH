@@ -1,37 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 
-setup(
-    name="dj_waanverse_auth",
-    version="0.0.0.dev1",
-    author="Waanverse Labs Inc.",
-    author_email="software@waanverse.com",
-    description="A comprehensive Waanverse Labs Inc. internal package for managing user accounts and authentication",
-    long_description=open("README.md").read(),
-    long_description_content_type="text/markdown",
-    maintainer="K. Pattawee",
-    maintainer_email="tawee@waanverse.com",
-    license="Internal Use License",
-    url="https://docs.waanverse.com/dj_waanverse_auth",
-    keywords="django, user accounts, authentication, JWT, MFA",
-    classifiers=[
-        "Programming Language :: Python :: 3.11",
-        "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
-        "Framework :: Django",
-        "Environment :: Web Environment",
-        "Intended Audience :: Developers",
-        "Topic :: Software Development :: Libraries :: Python Modules",
-    ],
-    packages=find_packages(exclude=["demo", "tests"]),
-    include_package_data=True,
-    python_requires=">=3.11.9, <4.0",
-    install_requires=[
-        "Django>=5.0.7,<6.0.0",
-        "djangorestframework>=3.15.2",
-        "djangorestframework-simplejwt>=5.3.1",
-        "pyotp>=2.9.0",
-        "user-agents>=2.2.0",
-        "cryptography>=43.0.0",
-        "requests>=2.32.3",
-    ],
-)
+if __name__ == "__main__":
+    setup()
