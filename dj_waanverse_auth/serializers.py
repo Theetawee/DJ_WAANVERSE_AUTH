@@ -333,8 +333,8 @@ class ResetPasswordSerializer(serializers.Serializer):
 class VerifyResetPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
     code = serializers.CharField(required=True)
-    new_password1 = serializers.CharField(required=True)
-    new_password2 = serializers.CharField(required=True)
+    new_password1 = serializers.CharField(required=True, write_only=True)
+    new_password2 = serializers.CharField(required=True, write_only=True)
 
     def validate(self, data):
         email = data.get("email")
@@ -366,9 +366,13 @@ class VerifyResetPasswordSerializer(serializers.Serializer):
         new_password = self.validated_data["new_password1"]
 
         # Update the user's password
-        user = Account.objects.get(email=email)
-        user.set_password(new_password)
-        user.save()
+        try:
+            user = Account.objects.get(email=email)
+            user.set_password(new_password)
+            user.save()
+        except Account.DoesNotExist:
+            raise serializers.ValidationError(_("User with this email does not exist."))
+
         # Delete the used reset code
         ResetPasswordCode.objects.filter(
             email=email, code=self.validated_data["code"]
