@@ -6,3 +6,4 @@ omit=
     */tests/*
     */settings.py
     */migrations/*
+    demo/*
