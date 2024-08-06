@@ -37,3 +37,8 @@ add the middleware
 
 
 configure the smtp settings in the settings.py
+
+
+
+running tests 
+coverage run demo/manage.py test -v 2 && coverage report && coverage html
