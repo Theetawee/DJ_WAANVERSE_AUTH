@@ -38,6 +38,21 @@ class TestSetup(TestCase):
             phone_number=None,
         )
 
+        self.user4 = Account.objects.create_user(
+            email="test4@example.com",
+            username="testuser4",
+            name="Test User 4",
+            password="testpassword123",
+            date_of_birth="1990-01-01",
+            phone_number=None,
+        )
+
+        EmailAddress.objects.create(
+            email="test4@example.com", user=self.user4, primary=True, verified=True
+        )
+
+        MultiFactorAuth.objects.create(account=self.user4, activated=True)
+
         MultiFactorAuth.objects.create(account=self.user3, activated=True)
 
         EmailAddress.objects.create(

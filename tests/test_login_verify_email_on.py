@@ -1,13 +1,12 @@
 from .test_setup import TestSetup
 from rest_framework import status
-from dj_waanverse_auth.settings import accounts_config
 from django.core import mail
+from dj_waanverse_auth.settings import accounts_config
 
 
 class LoginViewTests(TestSetup):
 
     def test_login_not_verified(self):
-        accounts_config["VERIFY_EMAIL"] = True
 
         response = self.client.post(
             self.url,
@@ -29,8 +28,7 @@ class LoginViewTests(TestSetup):
         self.assertEqual(response.data["email"], "test@example.com")
 
     def test_login_verified(self):
-        accounts_config["VERIFY_EMAIL"] = True
-
+        accounts_config["EMAIL_ON_LOGIN"] = False
         response = self.client.post(
             self.url,
             {
