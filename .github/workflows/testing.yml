@@ -1,4 +1,4 @@
-name: Django CI
+name: DJ Waanverse Auth Testing
 
 on:
   push:
@@ -13,7 +13,7 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: [3.11.9]
 
     steps:
     - uses: actions/checkout@v4
@@ -27,4 +27,11 @@ jobs:
         pip install -r requirements.txt
     - name: Run Tests
       run: |
-        python manage.py test
+        python demo/manage.py test
+    - name: Lint with flake8
+      run: |
+        pip install flake8
+        flake8
+    - name: Coverage report
+      run: |
+        coverage run demo/manage.py test -v 2 && coverage report 

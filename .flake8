@@ -1,4 +1,17 @@
 [flake8]
-extend-ignore = E501 F403 F405
-exclude = .git,__pycache__,docs/source/conf.py,old,build,dist,core/settings/base.py
+# per-file-ignores =
+
+
+exclude = 
+    .git, 
+    __pycache__, 
+    docs/source/conf.py, 
+    old, 
+    build, 
+    dist, 
+    core/settings/base.py, 
+    env/**,
+    env
+    .\env\**
+    .\env
 max-complexity = 10
