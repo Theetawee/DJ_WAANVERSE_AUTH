@@ -63,6 +63,7 @@ class TestSetup(TestCase):
         self.refresh_cookie_name = accounts_config["REFRESH_TOKEN_COOKIE_NAME"]
         self.mfa_cookie_name = accounts_config["MFA_COOKIE_NAME"]
         self.url = reverse("login")
+        self.userInfo_url = reverse("user_info")
         return super().setUp()
 
     def assert_tokens_and_cookies(self, response):
