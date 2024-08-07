@@ -296,7 +296,10 @@ class ResetPasswordSerializer(serializers.Serializer):
             if last_reset_code.is_expired:
                 last_reset_code.delete()  # Delete expired code
             else:
-                if last_reset_code.attempts >= 3:
+                if (
+                    last_reset_code.attempts
+                    >= accounts_config["PASSWORD_RESET_MAX_ATTEMPTS"]
+                ):
                     if last_reset_code.cooldown_remaining > timedelta(seconds=0):
                         raise serializers.ValidationError(
                             _(

@@ -30,6 +30,7 @@ DEFAULT_ACCOUNTS_CONFIG = {
     "MFA_EMAIL_ALERTS": False,
     "RESET_PASSWORD_CODE_LIFETIME": timedelta(minutes=10),
     "PASSWORD_RESET_COOLDOWN": timedelta(minutes=5),
+    "PASSWORD_RESET_MAX_ATTEMPTS": 3,
 }
 
 # Merge user-provided settings with the default settings
