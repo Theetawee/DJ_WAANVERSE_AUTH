@@ -6,7 +6,7 @@ charset-normalizer==3.3.2
 colorama==0.4.6
 coverage==7.6.1
 cryptography==43.0.0
--e git+https://github.com/Theetawee/WAANVERSE_ACCOUNTS.git@2d2e1e978e5a1b4d4fcbb1fc234205bfc21b21ba#egg=dj_waanverse_auth
+-e git+https://${GH_TOKEN}@github.com/Theetawee/WAANVERSE_ACCOUNTS.git@2d2e1e978e5a1b4d4fcbb1fc234205bfc21b21ba#egg=dj_waanverse_auth
 Django==5.0.7
 django-dotenv==1.4.2
 django-unfold==0.34.0
