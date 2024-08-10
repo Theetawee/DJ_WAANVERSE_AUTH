@@ -1,20 +1,9 @@
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
-from django.contrib.auth.models import Group
-from unfold.admin import ModelAdmin
-from unfold.forms import (AdminPasswordChangeForm, UserChangeForm,
-                          UserCreationForm)
-
 from .models import Account
 
-admin.site.unregister(Group)
 
-
-class AccountAdmin(UserAdmin, ModelAdmin):
+class AccountAdmin(admin.ModelAdmin):
     # Define the fields to be displayed in the list view
-    add_form = UserCreationForm
-    form = UserChangeForm
-    change_password_form = AdminPasswordChangeForm
     list_display = (
         "email",
         "is_active",
@@ -43,7 +32,7 @@ class AccountAdmin(UserAdmin, ModelAdmin):
                     "date_of_birth",
                     "phone_number",
                     "profile_image",
-                     )
+                )
             },
         ),
         (
@@ -54,7 +43,7 @@ class AccountAdmin(UserAdmin, ModelAdmin):
     )
 
     # Define which fields to include in filter options
-    list_filter = ("is_active", "is_staff", "is_superuser", "date_of_birth", )
+    list_filter = ("is_active", "is_staff", "is_superuser", "date_of_birth")
 
     # Specify filters and additional options for the admin interface
     filter_horizontal = ()
@@ -77,26 +66,6 @@ class AccountAdmin(UserAdmin, ModelAdmin):
             },
         ),
     )
-
-    # Ensure `USER_ADMIN` correctly handles permissions
-    def get_fieldsets(self, request, obj=None):
-        if obj:
-            return super().get_fieldsets(request, obj)
-        return (
-            (None, {"fields": ("email", "password1", "password2")}),
-            (
-                "Personal info",
-                {
-                    "fields": (
-                        "name",
-                        "username",
-                        "date_of_birth",
-                        "phone_number",
-                        "profile_image",
-                    )
-                },
-            ),
-        )
 
 
 admin.site.register(Account, AccountAdmin)
