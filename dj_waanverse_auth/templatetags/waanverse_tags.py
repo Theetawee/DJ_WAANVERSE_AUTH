@@ -1,8 +1,7 @@
-from django import template
 import requests
-from user_agents import parse
+from django import template
 from django.core.cache import cache
-
+from user_agents import parse
 
 register = template.Library()
 

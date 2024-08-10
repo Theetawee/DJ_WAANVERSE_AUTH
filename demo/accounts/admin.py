@@ -1,9 +1,11 @@
 from django.contrib import admin
-from .models import Account
 from django.contrib.auth.admin import UserAdmin
-from unfold.admin import ModelAdmin
 from django.contrib.auth.models import Group
-from unfold.forms import UserCreationForm, AdminPasswordChangeForm, UserChangeForm
+from unfold.admin import ModelAdmin
+from unfold.forms import (AdminPasswordChangeForm, UserChangeForm,
+                          UserCreationForm)
+
+from .models import Account
 
 admin.site.unregister(Group)
 

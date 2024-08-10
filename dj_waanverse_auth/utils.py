@@ -1,16 +1,18 @@
-from django.conf import settings
-from django.template.loader import render_to_string
-from django.utils.html import strip_tags
-from django.core.mail import send_mail
 import random
 import string
-from .settings import accounts_config
-from .models import EmailAddress, EmailConfirmationCode, MultiFactorAuth
 from importlib import import_module
-from django.contrib.auth.signals import user_logged_in
+
+from django.conf import settings
 from django.contrib.auth.models import update_last_login
-from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth.signals import user_logged_in
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 from rest_framework_simplejwt.settings import api_settings
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from .models import EmailAddress, EmailConfirmationCode, MultiFactorAuth
+from .settings import accounts_config
 
 
 def set_cookies(

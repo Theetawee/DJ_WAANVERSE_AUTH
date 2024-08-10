@@ -1,6 +1,8 @@
 from rest_framework import serializers
-from .models import Account
+
 from dj_waanverse_auth.serializers import SignupSerializer as Core
+
+from .models import Account
 
 
 class BasicAccountSerializer(serializers.ModelSerializer):

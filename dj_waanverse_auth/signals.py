@@ -1,9 +1,10 @@
 from django.contrib.auth import user_logged_in, user_login_failed
-from django.dispatch import receiver
-from .models import UserLoginActivity
-from .utils import get_client_ip, dispatch_email
-from .settings import accounts_config
 from django.core.exceptions import ImproperlyConfigured
+from django.dispatch import receiver
+
+from .models import UserLoginActivity
+from .settings import accounts_config
+from .utils import dispatch_email, get_client_ip
 
 
 @receiver(user_logged_in)

@@ -1,14 +1,15 @@
 """
 Custom user model     """
 
-from .settings import accounts_config
-from django.utils import timezone
-from datetime import timedelta
 import secrets
-from django.utils.translation import gettext_lazy as _
-from django.db import models
+from datetime import timedelta
 
 from django.contrib.auth import get_user_model
+from django.db import models
+from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
+
+from .settings import accounts_config
 
 User = get_user_model()
 

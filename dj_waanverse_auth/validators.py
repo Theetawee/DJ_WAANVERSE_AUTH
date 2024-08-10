@@ -1,4 +1,10 @@
 import re
+import string
+
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
+
 from .settings import accounts_config
 
 BAD_WORDS = [
@@ -290,3 +296,38 @@ def validate_username(username: str) -> tuple:
         return False, "Username should not exceed 30 characters."
 
     return True, ""
+
+
+def password_validator(password, user=None):
+    """
+    Validates the password using Django's built-in validators and additional custom rules.
+    """
+    errors = []
+
+    # Run Django's built-in password validators
+    try:
+        validate_password(password, user)
+    except ValidationError as e:
+        errors.extend(e.messages)
+
+    # Add any additional custom validation rules
+    if not any(char.isdigit() for char in password):
+        errors.append(_("Password must contain at least one digit."))
+
+    if not any(char.isupper() for char in password):
+        errors.append(_("Password must contain at least one uppercase letter."))
+
+    if not any(char.islower() for char in password):
+        errors.append(_("Password must contain at least one lowercase letter."))
+
+    if not any(char in string.punctuation for char in password):
+        errors.append(
+            _(
+                "Password must contain at least one special character (e.g., @, #, $, etc.)."
+            )
+        )
+
+    if errors:
+        raise ValidationError(errors)
+
+    return password

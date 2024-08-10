@@ -1,6 +1,6 @@
 from django.urls import path
-from .views import check_username_availability
 
+from .views import check_username_availability
 
 urlpatterns = [
     path(

@@ -1,21 +1,10 @@
 from django.urls import path
-from .views import (
-    refresh_token_view,
-    login_view,
-    reverify_email,
-    verify_email,
-    signup_view,
-    user_info,
-    enable_mfa,
-    verify_mfa,
-    mfa_status,
-    regenerate_recovery_codes,
-    logout_view,
-    mfa_login,
-    reset_password,
-    verify_reset_password,
-    DeactivateMfaView,
-)
+
+from .views import (DeactivateMfaView, enable_mfa, login_view, logout_view,
+                    mfa_login, mfa_status, refresh_token_view,
+                    regenerate_recovery_codes, reset_password, reverify_email,
+                    signup_view, user_info, verify_email, verify_mfa,
+                    verify_reset_password)
 
 urlpatterns = [
     path("login", login_view, name="login"),

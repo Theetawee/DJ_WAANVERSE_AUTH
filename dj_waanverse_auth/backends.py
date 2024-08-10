@@ -1,8 +1,9 @@
 
-from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth import get_user_model
-from rest_framework_simplejwt.authentication import JWTAuthentication as Head
+from django.contrib.auth.backends import BaseBackend
 from rest_framework.exceptions import AuthenticationFailed
+from rest_framework_simplejwt.authentication import JWTAuthentication as Head
+
 from dj_waanverse_auth.settings import accounts_config
 
 User = get_user_model()

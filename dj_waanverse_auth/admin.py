@@ -1,13 +1,8 @@
-from django.contrib import admin
-from .models import (
-    EmailConfirmationCode,
-    UserLoginActivity,
-    ResetPasswordCode,
-    EmailAddress,
-    MultiFactorAuth,
-)
 from django.conf import settings
+from django.contrib import admin
 
+from .models import (EmailAddress, EmailConfirmationCode, MultiFactorAuth,
+                     ResetPasswordCode, UserLoginActivity)
 
 if "unfold" in settings.INSTALLED_APPS:
     from unfold.admin import ModelAdmin

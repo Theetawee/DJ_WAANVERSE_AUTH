@@ -1,36 +1,24 @@
-from rest_framework.response import Response
+import pyotp
+from django.contrib.auth import get_user_model, logout, user_logged_in
+from django.contrib.auth.models import update_last_login
+from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
-from .serializers import (
-    LoginSerializer,
-    ReVerifyEmailSerializer,
-    VerifyEmailSerializer,
-    MfaCodeSerializer,
-    LogoutSerializer,
-    ResetPasswordSerializer,
-    VerifyResetPasswordSerializer,
-    DeactivateMfaSerializer,
-)
-from django.contrib.auth import user_logged_in
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from .utils import (
-    set_cookies,
-    get_serializer,
-    reset_response,
-    dispatch_email,
-    get_client_ip,
-)
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.exceptions import TokenError
-import pyotp
-from django.contrib.auth import get_user_model
-from django.contrib.auth import logout
-from django.contrib.auth.models import update_last_login
-from django.utils.translation import gettext_lazy as _
-from .settings import accounts_config
-from .models import MultiFactorAuth
+from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.utils import timezone
+from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from .models import MultiFactorAuth
+from .serializers import (DeactivateMfaSerializer, LoginSerializer,
+                          LogoutSerializer, MfaCodeSerializer,
+                          ResetPasswordSerializer, ReVerifyEmailSerializer,
+                          VerifyEmailSerializer, VerifyResetPasswordSerializer)
+from .settings import accounts_config
+from .utils import (dispatch_email, get_client_ip, get_serializer,
+                    reset_response, set_cookies)
 
 Account = get_user_model()
 

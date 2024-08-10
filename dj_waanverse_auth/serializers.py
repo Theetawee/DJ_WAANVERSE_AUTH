@@ -1,30 +1,26 @@
-import pyotp
-from rest_framework import serializers, exceptions
-from django.contrib.auth import authenticate
-from rest_framework_simplejwt.tokens import RefreshToken
-from .models import EmailConfirmationCode, ResetPasswordCode, MultiFactorAuth
-from .utils import (
-    generate_password_reset_code,
-    dispatch_email,
-    user_email_address,
-    handle_email_verification,
-    check_mfa_status,
-    handle_user_login,
-    generate_tokens,
-    get_email_verification_status,
-    get_client_ip,
-)
-from django.utils import timezone
 from datetime import timedelta
-from django.utils.translation import gettext_lazy as _
-from rest_framework_simplejwt.settings import api_settings
-from typing import Optional, Type, Dict, Any
-from rest_framework_simplejwt.tokens import Token
-from rest_framework_simplejwt.serializers import PasswordField
-from django.contrib.auth import get_user_model
-from .settings import accounts_config
-from .validators import validate_username as username_validator
+from typing import Any, Dict, Optional, Type
+
+import pyotp
+from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.hashers import check_password
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
+from rest_framework import exceptions, serializers
+from rest_framework_simplejwt.serializers import PasswordField
+from rest_framework_simplejwt.settings import api_settings
+from rest_framework_simplejwt.tokens import RefreshToken, Token
+
+from .models import EmailConfirmationCode, MultiFactorAuth, ResetPasswordCode
+from .settings import accounts_config
+from .utils import (check_mfa_status, dispatch_email,
+                    generate_password_reset_code, generate_tokens,
+                    get_client_ip, get_email_verification_status,
+                    handle_email_verification, handle_user_login,
+                    user_email_address)
+from .validators import password_validator
+from .validators import validate_username as username_validator
 
 Account = get_user_model()
 
@@ -209,6 +205,10 @@ class SignupSerializer(serializers.Serializer):
         """Validate that the passwords match."""
         if data.get("password1") != data.get("password2"):
             raise serializers.ValidationError(_("Passwords do not match."))
+        try:
+            password_validator(data.get("password1"))
+        except ValidationError as e:
+            raise serializers.ValidationError({"password": e})
         return data
 
     def create(self, validated_data):
@@ -280,7 +280,9 @@ class ResetPasswordSerializer(serializers.Serializer):
 
     def validate_email(self, email):
         if not Account.objects.filter(email=email).exists():
-            raise serializers.ValidationError(_("Something went wrong. Please try again or contact support."))
+            raise serializers.ValidationError(
+                _("Something went wrong. Please try again or contact support.")
+            )
         return email
 
     def save(self, **kwargs):
