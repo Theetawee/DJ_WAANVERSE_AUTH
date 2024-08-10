@@ -12,13 +12,24 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import MultiFactorAuth
-from .serializers import (DeactivateMfaSerializer, LoginSerializer,
-                          LogoutSerializer, MfaCodeSerializer,
-                          ResetPasswordSerializer, ReVerifyEmailSerializer,
-                          VerifyEmailSerializer, VerifyResetPasswordSerializer)
+from .serializers import (
+    DeactivateMfaSerializer,
+    LoginSerializer,
+    LogoutSerializer,
+    MfaCodeSerializer,
+    ResetPasswordSerializer,
+    ReVerifyEmailSerializer,
+    VerifyEmailSerializer,
+    VerifyResetPasswordSerializer,
+)
 from .settings import accounts_config
-from .utils import (dispatch_email, get_client_ip, get_serializer,
-                    reset_response, set_cookies)
+from .utils import (
+    dispatch_email,
+    get_client_ip,
+    get_serializer,
+    reset_response,
+    set_cookies,
+)
 
 Account = get_user_model()
 
@@ -26,7 +37,7 @@ Account = get_user_model()
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def login_view(request):
-    USER_CLAIM_SERIALIZER = get_serializer(accounts_config["USER_CLAIM_SERIALIZER"])
+    USER_CLAIM_SERIALIZER = get_serializer(accounts_config.USER_CLAIM_SERIALIZER_CLASS)
     serializer = LoginSerializer(data=request.data, context={"request": request})
 
     if serializer.is_valid():
@@ -45,7 +56,7 @@ def login_view(request):
             response_status = status.HTTP_200_OK
             response = Response(response_data, status=response_status)
             response = set_cookies(mfa=user.id, response=response)
-            reset_response(response)
+            response = reset_response(response)
             return response
         else:
             response_data = {

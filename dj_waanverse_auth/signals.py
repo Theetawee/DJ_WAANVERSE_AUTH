@@ -27,7 +27,7 @@ def log_user_logged_in_success(sender, user, request, **kwargs):
             "email": user.email,
             "time": user_login_activity_log.login_datetime,
         }
-        if accounts_config["EMAIL_ON_LOGIN"]:
+        if accounts_config.ENABLE_EMAIL_ON_LOGIN:
             dispatch_email(
                 subject="New Login Alert",
                 email=user.email,

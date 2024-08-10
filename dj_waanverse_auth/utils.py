@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.auth.models import update_last_login
 from django.contrib.auth.signals import user_logged_in
 from django.core.mail import send_mail
+from django.http import HttpResponse
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from rest_framework_simplejwt.settings import api_settings
@@ -15,54 +16,70 @@ from .models import EmailAddress, EmailConfirmationCode, MultiFactorAuth
 from .settings import accounts_config
 
 
-def set_cookies(
-    response, access_token=None, refresh_token=None, mfa=None, email_verification=None
-):
+def set_cookie(response: HttpResponse, name: str, value: str, max_age: int, **kwargs):
     """
-    Set a cookie on the response.
+    Set a cookie on the response with given parameters.
 
     Parameters:
     - response (HttpResponse): The response object to set the cookie on.
-    - access_token (str): The access token.
-    - refresh_token (str): The refresh token.
-    - mfa (str): The id of the user that is used to authenticate after MFA authentication.
+    - name (str): The name of the cookie.
+    - value (str): The value of the cookie.
+    - max_age (int): The maximum age of the cookie in seconds.
+    - kwargs: Additional parameters for setting the cookie (e.g., path, domain, secure, httponly, samesite).
     """
-    access_token_lifetime = api_settings.ACCESS_TOKEN_LIFETIME.total_seconds()
-    refresh_token_lifetime = api_settings.REFRESH_TOKEN_LIFETIME.total_seconds()
+    response.set_cookie(
+        name,
+        value,
+        max_age=max_age,
+        path=kwargs.get("path", accounts_config.COOKIE_PATH),
+        domain=kwargs.get("domain", accounts_config.COOKIE_DOMAIN),
+        secure=kwargs.get("secure", accounts_config.COOKIE_SECURE_FLAG),
+        httponly=kwargs.get("httponly", accounts_config.COOKIE_HTTP_ONLY_FLAG),
+        samesite=kwargs.get("samesite", accounts_config.COOKIE_SAMESITE_POLICY),
+    )
+    return response
 
+
+def set_cookies(
+    response: HttpResponse,
+    access_token: str = None,
+    refresh_token: str = None,
+    mfa: str = None,
+) -> HttpResponse:
+    """
+    Set cookies on the response object for access token, refresh token, and MFA.
+
+    Parameters:
+    - response (HttpResponse): The response object to set the cookies on.
+    - access_token (str): The access token to set in the cookie (optional).
+    - refresh_token (str): The refresh token to set in the cookie (optional).
+    - mfa (str): The MFA authentication ID to set in the cookie (optional).
+
+    Returns:
+    - HttpResponse: The modified response object with cookies set.
+    """
     if access_token:
-        response.set_cookie(
-            accounts_config["ACCESS_TOKEN_COOKIE_NAME"],
+        access_token_lifetime = api_settings.ACCESS_TOKEN_LIFETIME.total_seconds()
+        set_cookie(
+            response,
+            accounts_config.ACCESS_TOKEN_COOKIE,
             access_token,
             max_age=int(access_token_lifetime),
-            path=accounts_config["COOKIE_PATH"],
-            domain=accounts_config["COOKIE_DOMAIN"],
-            secure=accounts_config["COOKIE_SECURE"],
-            httponly=accounts_config["COOKIE_HTTP_ONLY"],
-            samesite=accounts_config["COOKIE_SAMESITE"],
         )
 
     if refresh_token:
-        response.set_cookie(
-            accounts_config["REFRESH_TOKEN_COOKIE_NAME"],
+        refresh_token_lifetime = api_settings.REFRESH_TOKEN_LIFETIME.total_seconds()
+        set_cookie(
+            response,
+            accounts_config.REFRESH_TOKEN_COOKIE_NAME,
             refresh_token,
             max_age=int(refresh_token_lifetime),
-            path=accounts_config["COOKIE_PATH"],
-            domain=accounts_config["COOKIE_DOMAIN"],
-            secure=accounts_config["COOKIE_SECURE"],
-            httponly=accounts_config["COOKIE_HTTP_ONLY"],
-            samesite=accounts_config["COOKIE_SAMESITE"],
         )
+
     if mfa:
-        response.set_cookie(
-            accounts_config["MFA_COOKIE_NAME"],
-            mfa,
-            max_age=accounts_config["MFA_COOKIE_LIFETIME"].total_seconds(),
-            path=accounts_config["COOKIE_PATH"],
-            domain=accounts_config["COOKIE_DOMAIN"],
-            secure=accounts_config["COOKIE_SECURE"],
-            httponly=accounts_config["COOKIE_HTTP_ONLY"],
-            samesite=accounts_config["COOKIE_SAMESITE"],
+        mfa_lifetime = accounts_config.MFA_COOKIE_DURATION.total_seconds()
+        set_cookie(
+            response, accounts_config.MFA_COOKIE_NAME, mfa, max_age=int(mfa_lifetime)
         )
 
     return response
@@ -70,7 +87,7 @@ def set_cookies(
 
 def dispatch_email(context, email, subject, template):
     """
-    Sends an email to the sepcified email
+    Sends an email to the specified email
 
     Args:
         context (any): The context of the email which will be passed to the template
@@ -173,15 +190,17 @@ def user_email_address(user):
     return email_address
 
 
-def reset_response(response):
+def reset_response(response: HttpResponse) -> HttpResponse:
     """
     Remove the refresh and access token cookies from the response.
 
     Args:
         response (Response): The response object to remove the cookies from.
     """
-    response.delete_cookie(accounts_config["ACCESS_TOKEN_COOKIE_NAME"])
-    response.delete_cookie(accounts_config["REFRESH_TOKEN_COOKIE_NAME"])
+    response.delete_cookie(accounts_config.ACCESS_TOKEN_COOKIE)
+    response.delete_cookie(accounts_config.REFRESH_TOKEN_COOKIE)
+
+    return response
 
 
 def get_email_verification_status(user):

@@ -14,11 +14,17 @@ from rest_framework_simplejwt.tokens import RefreshToken, Token
 
 from .models import EmailConfirmationCode, MultiFactorAuth, ResetPasswordCode
 from .settings import accounts_config
-from .utils import (check_mfa_status, dispatch_email,
-                    generate_password_reset_code, generate_tokens,
-                    get_client_ip, get_email_verification_status,
-                    handle_email_verification, handle_user_login,
-                    user_email_address)
+from .utils import (
+    check_mfa_status,
+    dispatch_email,
+    generate_password_reset_code,
+    generate_tokens,
+    get_client_ip,
+    get_email_verification_status,
+    handle_email_verification,
+    handle_user_login,
+    user_email_address,
+)
 from .validators import password_validator
 from .validators import validate_username as username_validator
 
@@ -56,7 +62,9 @@ class TokenObtainSerializer(serializers.Serializer):
 
         if not api_settings.USER_AUTHENTICATION_RULE(self.user):
 
-            raise serializers.ValidationError(self.error_messages["no_active_account"])
+            raise serializers.ValidationError(
+                {"msg": self.error_messages["no_active_account"]}
+            )
 
         return {}
 

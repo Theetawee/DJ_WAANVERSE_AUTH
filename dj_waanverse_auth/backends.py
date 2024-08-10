@@ -16,9 +16,9 @@ class CustomAuthBackend(BaseBackend):
 
     def authenticate(self, request, login_field=None, password=None, **kwargs):
         # Determine which authentication methods are in use
-        use_username = "username" in accounts_config["AUTHENTICATION_METHODS"]
-        use_email = "email" in accounts_config["AUTHENTICATION_METHODS"]
-        use_phone_number = "phone_number" in accounts_config["AUTHENTICATION_METHODS"]
+        use_username = "username" in accounts_config.AUTH_METHODS
+        use_email = "email" in accounts_config.AUTH_METHODS
+        use_phone_number = "phone_number" in accounts_config.AUTH_METHODS
         if not (use_username or use_email or use_phone_number):
             return None
 
@@ -82,7 +82,7 @@ class JWTAuthentication(Head):
             return auth
 
         # If no token is found in the header, try to get it from cookies
-        access_token = request.COOKIES.get(accounts_config["ACCESS_TOKEN_COOKIE_NAME"])
+        access_token = request.COOKIES.get(accounts_config.ACCESS_TOKEN_COOKIE)
         if access_token:
             try:
                 validated_token = self.get_validated_token(access_token)
