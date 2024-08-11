@@ -281,3 +281,16 @@ def generate_tokens(user):
     """
     refresh = RefreshToken.for_user(user)
     return {"refresh_token": str(refresh), "access_token": str(refresh.access_token)}
+
+
+def get_user_agent(request):
+    """
+    Get the user agent from the request.
+
+    Args:
+        request (Request): The request object.
+
+    Returns:
+        str: The user agent string.
+    """
+    return request.META.get("HTTP_USER_AGENT", "<unknown>")[:255]

@@ -76,15 +76,15 @@ class ResetPasswordCode(models.Model):
 
     @property
     def is_expired(self):
-        expiration_time = (
-            self.created_at + accounts_config["RESET_PASSWORD_CODE_LIFETIME"]
-        )
+        expiration_time = self.created_at + accounts_config.PASSWORD_RESET_CODE_DURATION
         return timezone.now() > expiration_time
 
     @property
     def cooldown_remaining(self):
         # Calculate cooldown end time
-        cooldown_end_time = self.created_at + accounts_config["PASSWORD_RESET_COOLDOWN"]
+        cooldown_end_time = (
+            self.created_at + accounts_config.PASSWORD_RESET_COOLDOWN_PERIOD
+        )
         return max(cooldown_end_time - timezone.now(), timedelta(seconds=0))
 
     def __str__(self):

@@ -28,6 +28,7 @@ from .utils import (
     EmailThread,
     get_client_ip,
     get_serializer,
+    get_user_agent,
     reset_response,
     set_cookies,
 )
@@ -81,7 +82,7 @@ def login_view(request):
 @permission_classes([AllowAny])
 def refresh_token_view(request):
     refresh_token = request.data.get("refresh") or request.COOKIES.get(
-        accounts_config["REFRESH_TOKEN_COOKIE_NAME"]
+        accounts_config.REFRESH_TOKEN_COOKIE
     )
 
     if not refresh_token:
@@ -140,7 +141,7 @@ def verify_email(request):
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def signup_view(request):
-    SignupSerializer = get_serializer(accounts_config["SIGNUP_SERIALIZER"])
+    SignupSerializer = get_serializer(accounts_config.REGISTRATION_SERIALIZER_CLASS)
     serializer = SignupSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.save()
@@ -177,9 +178,9 @@ def enable_mfa(request):
                     unique_key_generated = True
 
         # Generate the OTP provisioning URI
-        otp_url = pyotp.TOTP(account_mfa.secret_key, digits=6).provisioning_uri(
-            user.username, issuer_name=accounts_config["MFA_ISSUER"]
-        )
+        otp_url = pyotp.TOTP(
+            account_mfa.secret_key, digits=accounts_config.MFA_CODE_DIGITS
+        ).provisioning_uri(user.username, issuer_name=accounts_config.MFA_ISSUER_NAME)
 
         account_mfa.save()
 
@@ -270,7 +271,7 @@ def regenerate_recovery_codes(request):
         # Generate new recovery codes
         mfa_account.set_recovery_codes()
         mfa_account.save()
-        if accounts_config["MFA_EMAIL_ALERTS"]:
+        if accounts_config.MFA_EMAIL_ALERTS_ENABLED:
             thread = EmailThread(
                 email=user.email,
                 template="regenerate_codes",
@@ -280,9 +281,7 @@ def regenerate_recovery_codes(request):
                     "email": user.email,
                     "time": timezone.now(),
                     "ip_address": get_client_ip(request),
-                    "user_agent": request.META.get("HTTP_USER_AGENT", "<unknown>")[
-                        :255
-                    ],
+                    "user_agent": get_user_agent(request),
                 },
             )
             thread.start()
@@ -322,7 +321,7 @@ class DeactivateMfaView(APIView):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def user_info(request):
-    AccountSerializer = get_serializer(accounts_config["USER_DETAIL_SERIALIZER"])
+    AccountSerializer = get_serializer(accounts_config.USER_DETAIL_SERIALIZER_CLASS)
     user = request.user
     serializer = AccountSerializer(user)
     return Response(serializer.data, status=status.HTTP_200_OK)
@@ -356,8 +355,8 @@ def logout_view(request):
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def mfa_login(request):
-    user_id = request.COOKIES.get(accounts_config["MFA_COOKIE_NAME"])
-    User_Claim_Serializer = get_serializer(accounts_config["USER_CLAIM_SERIALIZER"])
+    user_id = request.COOKIES.get(accounts_config.MFA_COOKIE_NAME)
+    User_Claim_Serializer = get_serializer(accounts_config.USER_CLAIM_SERIALIZER_CLASS)
     refresh = None
     access = None
     if not user_id:
@@ -418,7 +417,7 @@ def mfa_login(request):
     response = set_cookies(
         response=response, access_token=access, refresh_token=refresh
     )
-    response.delete_cookie(accounts_config["MFA_COOKIE_NAME"])
+    response.delete_cookie(accounts_config.MFA_COOKIE_NAME)
 
     return response
 

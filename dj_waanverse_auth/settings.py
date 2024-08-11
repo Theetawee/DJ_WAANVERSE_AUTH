@@ -39,7 +39,7 @@ class AccountConfigSchema(TypedDict, total=False):
 class AccountConfig:
     def __init__(self, settings_dict: AccountConfigSchema):
         self.AUTH_METHODS = settings_dict.get("AUTH_METHODS", ["username"])
-        self.MFA_RECOVERY_CODES_COUNT = settings_dict.get("MFA_RECOVERY_CODES_COUNT", 2)
+        self.MFA_RECOVERY_CODES_COUNT = settings_dict.get("MFA_RECOVERY_CODES_COUNT", 10)
         self.ACCESS_TOKEN_COOKIE = settings_dict.get(
             "ACCESS_TOKEN_COOKIE", "access_token"
         )
@@ -84,7 +84,7 @@ class AccountConfig:
         self.BLACKLIST_TOKENS_ON_ROTATION = settings_dict.get(
             "BLACKLIST_TOKENS_ON_ROTATION", False
         )
-        self.MFA_CODE_DIGITS = settings_dict.get("MFA_CODE_DIGITS", 10)
+        self.MFA_CODE_DIGITS = settings_dict.get("MFA_CODE_DIGITS", 6)
         self.MFA_EMAIL_ALERTS_ENABLED = settings_dict.get(
             "MFA_EMAIL_ALERTS_ENABLED", False
         )

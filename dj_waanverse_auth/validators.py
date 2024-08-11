@@ -18,10 +18,10 @@ def validate_username(username: str) -> tuple:
         tuple: A tuple containing a boolean indicating if the username is valid
             and a string containing the error message if the username is invalid.
     """
-    if len(username) < accounts_config["USERNAME_MIN_LENGTH"]:
+    if len(username) < accounts_config.USERNAME_MIN_LENGTH:
         return (
             False,
-            f"Username should be at least {accounts_config['USERNAME_MIN_LENGTH']} characters long.",
+            f"Username should be at least {accounts_config.USERNAME_MIN_LENGTH} characters long.",
         )
 
     if username in accounts_config.DISALLOWED_USERNAMES:

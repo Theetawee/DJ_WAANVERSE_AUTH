@@ -438,7 +438,7 @@ class DeactivateMfaSerializer(serializers.Serializer):
         mfa.secret_key = None
         mfa.recovery_codes = []
         try:
-            if accounts_config["MFA_EMAIL_ALERTS"]:
+            if accounts_config.MFA_EMAIL_ALERTS_ENABLED:
                 thread = EmailThread(
                     email=user.email,
                     template="deactivate_mfa",

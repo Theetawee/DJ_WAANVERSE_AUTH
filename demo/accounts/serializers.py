@@ -25,10 +25,8 @@ class AccountSerializer(serializers.ModelSerializer):
 
 class SignupSerializer(Core):
     name = serializers.CharField(required=True, max_length=255)
-    date_of_birth = serializers.DateField(required=True)
 
     def get_additional_fields(self, validated_data):
         return {
             "name": validated_data["name"],
-            "date_of_birth": validated_data["date_of_birth"],
         }
