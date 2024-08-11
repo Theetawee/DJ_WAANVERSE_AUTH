@@ -72,7 +72,7 @@ def set_cookies(
         refresh_token_lifetime = api_settings.REFRESH_TOKEN_LIFETIME.total_seconds()
         set_cookie(
             response,
-            accounts_config.REFRESH_TOKEN_COOKIE_NAME,
+            accounts_config.REFRESH_TOKEN_COOKIE,
             refresh_token,
             max_age=int(refresh_token_lifetime),
         )
