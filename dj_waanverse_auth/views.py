@@ -101,7 +101,7 @@ def refresh_token_view(request):
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
-def reverify_email(request):
+def resend_verification_email(request):
     """
     Collect email from the user to resend the verification email.
     """
