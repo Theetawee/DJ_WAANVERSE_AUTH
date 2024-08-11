@@ -120,7 +120,7 @@ class AccountSerializer(serializers.ModelSerializer):
         ]
 
 
-class ReVerifyEmailSerializer(serializers.Serializer):
+class ResendVerificationEmailSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
 
     def validate_email(self, email):

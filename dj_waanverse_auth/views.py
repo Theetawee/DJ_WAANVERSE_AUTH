@@ -18,8 +18,8 @@ from .serializers import (
     LoginSerializer,
     LogoutSerializer,
     MfaCodeSerializer,
+    ResendVerificationEmailSerializer,
     ResetPasswordSerializer,
-    ReVerifyEmailSerializer,
     VerifyEmailSerializer,
     VerifyResetPasswordSerializer,
 )
@@ -108,7 +108,7 @@ class ResendEmail(APIView):
         """
         Collect email from the user to resend the verification email.
         """
-        serializer = ReVerifyEmailSerializer(data=request.data)
+        serializer = ResendVerificationEmailSerializer(data=request.data)
         if serializer.is_valid():
             email = serializer.save()
             return Response(
@@ -245,7 +245,7 @@ def mfa_status(request):
     except MultiFactorAuth.DoesNotExist:
         return Response(
             data={"mfa_status": False, "recovery_codes": []},
-            status=status.HTTP_404_NOT_FOUND,
+            status=status.HTTP_200_OK,
         )
     except Exception as e:
         return Response(
