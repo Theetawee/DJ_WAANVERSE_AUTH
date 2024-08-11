@@ -18,7 +18,6 @@ class AccountManager(BaseUserManager):
         email,
         username,
         name,
-        date_of_birth,
         password=None,
         **extra_fields,
     ):
@@ -28,15 +27,12 @@ class AccountManager(BaseUserManager):
             raise ValueError("The Username field must be set")
         if not name:
             raise ValueError("The Name field must be set")
-        if not date_of_birth:
-            raise ValueError("The Date of Birth field must be set")
 
         email = self.normalize_email(email).lower()
         user = self.model(
             email=email,
             username=username,
             name=name,
-            date_of_birth=date_of_birth,
             **extra_fields,
         )
         user.set_password(password)
@@ -48,7 +44,6 @@ class AccountManager(BaseUserManager):
         email,
         username,
         name,
-        date_of_birth,
         password=None,
         **extra_fields,
     ):
@@ -64,7 +59,6 @@ class AccountManager(BaseUserManager):
             email=email,
             username=username,
             name=name,
-            date_of_birth=date_of_birth,
             password=password,
             **extra_fields,
         )
@@ -82,7 +76,7 @@ class Account(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
 
     USERNAME_FIELD = "username"
-    REQUIRED_FIELDS = ["name", "email", "date_of_birth"]
+    REQUIRED_FIELDS = ["name", "email"]
 
     objects = AccountManager()
 

@@ -95,7 +95,7 @@ def dispatch_email(context, email, subject, template):
         subject (str): The subject of the email
         template (str): The name of the template located in the 'emails' folder
     """
-    context["PLATFORM_NAME"] = accounts_config["PLATFORM_NAME"]
+    context["PLATFORM_NAME"] = accounts_config.PLATFORM_NAME
     template_name = f"emails/{template}.html"
     convert_to_html_content = render_to_string(
         template_name=template_name, context=context
@@ -123,7 +123,7 @@ def handle_email_verification(user):
     Returns:
         EmailConfirmationCode: The email verification code.
     """
-    length = accounts_config["CONFIRMATION_CODE_LENGTH"]
+    length = accounts_config.CONFIRMATION_CODE_DIGITS
 
     # Generate a numeric code
     code = "".join(random.choices(string.digits, k=length))
@@ -154,7 +154,7 @@ def get_client_ip(request):
 
 
 def generate_password_reset_code():
-    length = accounts_config["CONFIRMATION_CODE_LENGTH"]
+    length = accounts_config.CONFIRMATION_CODE_DIGITS
 
     # Generate a numeric code
     code = "".join(random.choices(string.digits, k=length))
