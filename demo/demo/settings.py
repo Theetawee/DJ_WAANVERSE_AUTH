@@ -163,4 +163,8 @@ WAANVERSE_AUTH = {
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": ("dj_waanverse_auth.backends.JWTAuthentication",),
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.ScopedRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {"email": "1/minute"},
 }

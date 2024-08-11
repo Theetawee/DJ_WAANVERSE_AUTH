@@ -4,9 +4,10 @@ from django.contrib.auth.models import update_last_login
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -35,6 +36,7 @@ Account = get_user_model()
 
 
 @api_view(["POST"])
+@throttle_classes([UserRateThrottle])
 @permission_classes([AllowAny])
 def login_view(request):
     USER_CLAIM_SERIALIZER = get_serializer(accounts_config.USER_CLAIM_SERIALIZER_CLASS)
@@ -99,21 +101,25 @@ def refresh_token_view(request):
         return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(["POST"])
-@permission_classes([AllowAny])
-def resend_verification_email(request):
-    """
-    Collect email from the user to resend the verification email.
-    """
-    serializer = ReVerifyEmailSerializer(data=request.data)
-    if serializer.is_valid():
-        email = serializer.save()
-        return Response(
-            {"email": email, "status": "email-sent"},
-            status=status.HTTP_200_OK,
-        )
+class ResendEmail(APIView):
+    throttle_scope = "email"
 
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request):
+        """
+        Collect email from the user to resend the verification email.
+        """
+        serializer = ReVerifyEmailSerializer(data=request.data)
+        if serializer.is_valid():
+            email = serializer.save()
+            return Response(
+                {"email": email, "status": "email-sent"},
+                status=status.HTTP_200_OK,
+            )
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+resend_verification_email = ResendEmail.as_view()
 
 
 @api_view(["POST"])
