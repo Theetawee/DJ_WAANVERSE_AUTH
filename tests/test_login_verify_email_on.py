@@ -28,7 +28,7 @@ class LoginViewTests(TestSetup):
         self.assertEqual(response.data["email"], "test@example.com")
 
     def test_login_verified(self):
-        accounts_config["EMAIL_ON_LOGIN"] = False
+        accounts_config.ENABLE_EMAIL_ON_LOGIN = False
         response = self.client.post(
             self.url,
             {

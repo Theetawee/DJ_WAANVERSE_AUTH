@@ -59,9 +59,9 @@ class TestSetup(TestCase):
             user=self.user2, email="test2@example.com", primary=True, verified=True
         )
 
-        self.access_cookie_name = accounts_config["ACCESS_TOKEN_COOKIE_NAME"]
-        self.refresh_cookie_name = accounts_config["REFRESH_TOKEN_COOKIE_NAME"]
-        self.mfa_cookie_name = accounts_config["MFA_COOKIE_NAME"]
+        self.access_cookie_name = accounts_config.ACCESS_TOKEN_COOKIE
+        self.refresh_cookie_name = accounts_config.REFRESH_TOKEN_COOKIE
+        self.mfa_cookie_name = accounts_config.MFA_COOKIE_NAME
         self.url = reverse("login")
         self.userInfo_url = reverse("user_info")
         return super().setUp()

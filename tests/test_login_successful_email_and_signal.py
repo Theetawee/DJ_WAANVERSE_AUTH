@@ -7,7 +7,7 @@ from dj_waanverse_auth.models import UserLoginActivity
 class LoginViewTests(TestSetup):
 
     def test_login_verified(self):
-        accounts_config["EMAIL_ON_LOGIN"] = True
+        accounts_config.ENABLE_EMAIL_ON_LOGIN = True
 
         response = self.client.post(
             self.url,
@@ -24,7 +24,7 @@ class LoginViewTests(TestSetup):
         self.assert_tokens_and_cookies(response)
 
     def test_login_no_login_email(self):
-        accounts_config["EMAIL_ON_LOGIN"] = False
+        accounts_config.ENABLE_EMAIL_ON_LOGIN = False
 
         response = self.client.post(
             self.url,

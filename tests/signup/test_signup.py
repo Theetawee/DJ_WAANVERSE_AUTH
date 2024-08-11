@@ -30,8 +30,8 @@ class TestSignupViews(TestSetup):
             "password": "testpassword",
             "date_of_birth": "1990-01-01",
             "phone_number": "1234567890",
-            "password1": "testpassword1",
-            "password2": "testpassword",
+            "password1": "testP@assword1",
+            "password2": "testP@assword1",
         }
 
         response = self.client.post(self.signup_url, data)
