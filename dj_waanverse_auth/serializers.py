@@ -170,7 +170,7 @@ class VerifyEmailSerializer(serializers.Serializer):
         # Check if the code has expired
         if (
             timezone.now() - block.created_at
-            > accounts_config["EMAIL_VERIFICATION_CODE_LIFETIME"]
+            > accounts_config.EMAIL_VERIFICATION_CODE_DURATION
         ):
             block.delete()
             raise serializers.ValidationError("Code expired")
@@ -249,9 +249,9 @@ class MfaCodeSerializer(serializers.Serializer):
     code = serializers.CharField(required=True)
 
     def validate_code(self, value):
-        if len(str(value)) != accounts_config["MFA_CODE_LENGTH"]:
+        if len(str(value)) != accounts_config.MFA_CODE_DIGITS:
             raise serializers.ValidationError(
-                f"The OTP code must be {accounts_config['MFA_CODE_LENGTH']} digits."
+                f"The OTP code must be {accounts_config.MFA_CODE_DIGITS} digits."
             )
         return value
 
@@ -264,9 +264,7 @@ class LogoutSerializer(serializers.Serializer):
         if not refresh:
             request = self.context.get("request")
             if request:
-                refresh = request.COOKIES.get(
-                    accounts_config["REFRESH_TOKEN_COOKIE_NAME"]
-                )
+                refresh = request.COOKIES.get(accounts_config.REFRESH_TOKEN_COOKIE)
                 if not refresh:
                     raise serializers.ValidationError("Refresh token is required.")
         attrs["refresh"] = refresh
@@ -308,7 +306,7 @@ class ResetPasswordSerializer(serializers.Serializer):
             else:
                 if (
                     last_reset_code.attempts
-                    >= accounts_config["PASSWORD_RESET_MAX_ATTEMPTS"]
+                    >= accounts_config.PASSWORD_RESET_MAX_ATTEMPTS
                 ):
                     if last_reset_code.cooldown_remaining > timedelta(seconds=0):
                         raise serializers.ValidationError(
@@ -400,9 +398,9 @@ class DeactivateMfaSerializer(serializers.Serializer):
     password = serializers.CharField(required=True)
 
     def validate_code(self, value):
-        if len(str(value)) != accounts_config["MFA_CODE_LENGTH"]:
+        if len(str(value)) != accounts_config.MFA_CODE_DIGITS:
             raise serializers.ValidationError(
-                f"The OTP code must be {accounts_config['MFA_CODE_LENGTH']} digits."
+                f"The OTP code must be {accounts_config.MFA_CODE_DIGITS} digits."
             )
         return value
 

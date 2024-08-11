@@ -102,7 +102,6 @@ def refresh_token_view(request):
 
 
 class ResendEmail(APIView):
-    throttle_scope = "email"
 
     def post(self, request):
         """
