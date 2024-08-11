@@ -1,5 +1,6 @@
 import random
 import string
+import threading
 from importlib import import_module
 
 from django.conf import settings
@@ -85,6 +86,18 @@ def set_cookies(
     return response
 
 
+class EmailThread(threading.Thread):
+    def __init__(self, context, email, subject, template):
+        self.context = context
+        self.email = email
+        self.subject = subject
+        self.template = template
+        threading.Thread.__init__(self)
+
+    def run(self):
+        dispatch_email(self.context, self.email, self.subject, self.template)
+
+
 def dispatch_email(context, email, subject, template):
     """
     Sends an email to the specified email
@@ -101,17 +114,19 @@ def dispatch_email(context, email, subject, template):
         template_name=template_name, context=context
     )
     plain_message = strip_tags(convert_to_html_content)
-
-    send_mail(
-        subject=subject,
-        message=plain_message,
-        from_email=settings.EMAIL_HOST_USER,
-        recipient_list=[
-            email,
-        ],
-        html_message=convert_to_html_content,
-        fail_silently=True,
-    )
+    try:
+        send_mail(
+            subject=subject,
+            message=plain_message,
+            from_email=settings.EMAIL_HOST_USER,
+            recipient_list=[
+                email,
+            ],
+            html_message=convert_to_html_content,
+            fail_silently=False,
+        )
+    except Exception as e:
+        raise ValueError(f"Could not send an email. Error: {e}")
 
 
 def handle_email_verification(user):
@@ -132,12 +147,14 @@ def handle_email_verification(user):
         user_code, created = EmailConfirmationCode.objects.get_or_create(user=user)
         user_code.code = code
         user_code.save()
-        dispatch_email(
-            subject="Email Verification",
-            email=user.email,
-            template="verify_email",
+        tread = EmailThread(
             context={"code": code},
+            email=user.email,
+            subject="Email Verification",
+            template="verify_email",
         )
+        tread.start()
+
     except Exception as e:
         raise ValueError(f"Could not create a confirmation code. Error: {e}")
 

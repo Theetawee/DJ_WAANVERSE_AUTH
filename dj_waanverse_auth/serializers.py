@@ -15,8 +15,8 @@ from rest_framework_simplejwt.tokens import RefreshToken, Token
 from .models import EmailConfirmationCode, MultiFactorAuth, ResetPasswordCode
 from .settings import accounts_config
 from .utils import (
+    EmailThread,
     check_mfa_status,
-    dispatch_email,
     generate_password_reset_code,
     generate_tokens,
     get_client_ip,
@@ -334,12 +334,13 @@ class ResetPasswordSerializer(serializers.Serializer):
 
         # Send the email with the new reset code
         email_context = {"code": reset_code.code, "email": email}
-        dispatch_email(
+        thread = EmailThread(
             email=email,
             context=email_context,
             template="password_reset",
             subject="Password Reset Code - Waanverse Accounts.",
         )
+        thread.start()
         return reset_code
 
 
@@ -440,7 +441,7 @@ class DeactivateMfaSerializer(serializers.Serializer):
         mfa.recovery_codes = []
         try:
             if accounts_config["MFA_EMAIL_ALERTS"]:
-                dispatch_email(
+                thread = EmailThread(
                     email=user.email,
                     template="deactivate_mfa",
                     subject="MFA Deactivated",
@@ -454,6 +455,7 @@ class DeactivateMfaSerializer(serializers.Serializer):
                         )[:255],
                     },
                 )
+                thread.start()
             mfa.save()
             return {"detail": "MFA has been deactivated."}
 

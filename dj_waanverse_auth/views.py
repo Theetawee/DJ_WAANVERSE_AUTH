@@ -24,7 +24,7 @@ from .serializers import (
 )
 from .settings import accounts_config
 from .utils import (
-    dispatch_email,
+    EmailThread,
     get_client_ip,
     get_serializer,
     reset_response,
@@ -266,7 +266,7 @@ def regenerate_recovery_codes(request):
         mfa_account.set_recovery_codes()
         mfa_account.save()
         if accounts_config["MFA_EMAIL_ALERTS"]:
-            dispatch_email(
+            thread = EmailThread(
                 email=user.email,
                 template="regenerate_codes",
                 subject="New MFA Recovery Codes Generated",
@@ -280,6 +280,7 @@ def regenerate_recovery_codes(request):
                     ],
                 },
             )
+            thread.start()
         return Response(
             status=status.HTTP_200_OK,
             data={"msg": "Recovery codes generated successfully"},
