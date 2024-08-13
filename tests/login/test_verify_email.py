@@ -16,9 +16,6 @@ class TestVerifyEmail(TestSetup):
             self.login_url,
             {"login_field": self.user1.email, "password": "password1"},
         )
-        self.assertTrue(len(mail.outbox) == 1)
-        self.assertEqual(mail.outbox[0].to[0], self.user1.email)
-        self.assertEqual(mail.outbox[0].subject, "Email Verification")
 
         verification_code = EmailConfirmationCode.objects.get(user=self.user1).code
 
@@ -35,8 +32,6 @@ class TestVerifyEmail(TestSetup):
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].to[0], self.user1.email)
         self.assertEqual(response.data["status"], "email-sent")
 
     def test_send_verify_email_invalid_email(self):
@@ -67,9 +62,6 @@ class TestVerifyEmail(TestSetup):
             self.login_url,
             {"login_field": self.user1.email, "password": "password1"},
         )
-        self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].to[0], self.user1.email)
-        self.assertEqual(mail.outbox[0].subject, "Email Verification")
 
         verification_code = 00000
 

@@ -87,7 +87,7 @@ def refresh_token_view(request):
 
     if not refresh_token:
         return Response(
-            {"detail": "Refresh token is required."}, status=status.HTTP_400_BAD_REQUEST
+            {"msg": "Refresh token is required."}, status=status.HTTP_400_BAD_REQUEST
         )
 
     try:
@@ -95,7 +95,7 @@ def refresh_token_view(request):
         # Generate a new access token
         new_access_token = str(refresh.access_token)
         # Return the new access token in the response
-        response = Response({"access": new_access_token}, status=status.HTTP_200_OK)
+        response = Response({"access_token": new_access_token}, status=status.HTTP_200_OK)
         new_response = set_cookies(access_token=new_access_token, response=response)
         return new_response
     except TokenError as e:
@@ -313,7 +313,7 @@ class DeactivateMfaView(APIView):
         if serializer.is_valid():
             serializer.save()
             return Response(
-                {"detail": "MFA has been deactivated."}, status=status.HTTP_200_OK
+                {"msg": "MFA has been deactivated."}, status=status.HTTP_200_OK
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -343,7 +343,6 @@ def logout_view(request):
             {"detail": "Successfully logged out."}, status=status.HTTP_200_OK
         )
 
-        # Clear cookies
         for cookie in request.COOKIES:
             response.delete_cookie(cookie)
 

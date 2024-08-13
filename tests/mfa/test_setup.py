@@ -3,7 +3,7 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APIClient
 
-from dj_waanverse_auth.models import EmailAddress
+from dj_waanverse_auth.models import EmailAddress, MultiFactorAuth
 
 Account = get_user_model()
 
@@ -13,6 +13,11 @@ class TestSetup(TestCase):
         self.login_url = reverse("login")
         self.activate_url = reverse("activate_mfa")
         self.mfa_status_url = reverse("mfa_status")
+        self.mfa_verify_url = reverse("verify_mfa")
+        self.mfa_activate_url = reverse("activate_mfa")
+        self.mfa_deactivate_url = reverse("deactivate_mfa")
+        self.mfa_login_url = reverse("mfa_login")
+
         self.client = APIClient()
         self.user = Account.objects.create_user(
             username="user1",
@@ -24,6 +29,20 @@ class TestSetup(TestCase):
 
         EmailAddress.objects.create(
             user=self.user, email=self.user.email, verified=True, primary=True
+        ).save()
+
+        self.user2 = Account.objects.create_user(
+            username="user2", password="password2", email="b@b.com", name="user2"
+        )
+
+        EmailAddress.objects.create(
+            user=self.user2, email="b@b.com", verified=True, primary=True
+        ).save()
+
+        MultiFactorAuth.objects.create(
+            account=self.user2,
+            secret_key="MRDSA6IIQMWEPUQV7M5PMULQ2UHGGWK7",
+            activated=True,
         ).save()
 
     def assert_auth_cookies(self, response):

@@ -158,6 +158,7 @@ WAANVERSE_AUTH = {
     "CONFIRMATION_CODE_LENGTH": 5,
     "EMAIL_ON_LOGIN": False,
     "AUTHENTICATION_METHODS": ["email", "username"],
+    "COOKIE_SECURE_FLAG": False,
 }
 
 

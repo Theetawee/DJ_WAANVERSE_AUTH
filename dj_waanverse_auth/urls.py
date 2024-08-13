@@ -31,7 +31,7 @@ urlpatterns = [
     path("mfa/regenerate-codes", regenerate_recovery_codes, name="regenerate_codes"),
     path("mfa/deactivate", DeactivateMfaView.as_view(), name="deactivate_mfa"),
     path("logout", logout_view, name="logout"),
-    path("mfa/login", mfa_login, name="verify_mfa_auth"),
+    path("mfa/login", mfa_login, name="mfa_login"),
     path("password/reset", reset_password, name="reset_password"),
     path("password/reset/new", verify_reset_password, name="verify_reset_password"),
 ]

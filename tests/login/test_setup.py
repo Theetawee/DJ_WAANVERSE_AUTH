@@ -13,6 +13,7 @@ class TestSetup(TestCase):
     def setUp(self):
         self.login_url = reverse("login")
         self.logout_url = reverse("logout")
+        self.refresh_token_url = reverse("refresh_token")
         self.resend_verification_email_url = reverse("resend_verification_email")
         self.verify_email_url = reverse("verify_email")
         self.client = APIClient()
