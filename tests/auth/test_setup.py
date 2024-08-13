@@ -16,6 +16,9 @@ class TestSetup(TestCase):
         self.refresh_token_url = reverse("refresh_token")
         self.resend_verification_email_url = reverse("resend_verification_email")
         self.verify_email_url = reverse("verify_email")
+        self.signup_url = reverse("signup")
+        self.reset_password_url = reverse("reset_password")
+        self.verify_rest_password_url = reverse("verify_reset_password")
         self.client = APIClient()
         self.access_cookie_name = accounts_config.ACCESS_TOKEN_COOKIE
         self.refresh_cookie_name = accounts_config.REFRESH_TOKEN_COOKIE

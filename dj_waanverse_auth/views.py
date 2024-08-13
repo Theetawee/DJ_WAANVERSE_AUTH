@@ -452,7 +452,7 @@ def verify_reset_password(request):
     if serializer.is_valid():
         serializer.save()
         return Response(
-            {"detail": _("Password has been reset successfully.")},
+            {"msg": _("Password has been reset successfully.")},
             status=status.HTTP_200_OK,
         )
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
