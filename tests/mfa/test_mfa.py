@@ -80,3 +80,24 @@ class TestLoginView(TestSetup):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("msg", response.data)
         self.assertEqual(response.data["msg"], "MFA has been deactivated.")
+
+    def test_generate_tokens(self):
+        accounts_config.AUTH_METHODS = ["username"]
+
+        self.client.post(
+            self.login_url,
+            {"login_field": self.user2.username, "password": "password2"},
+            format="json",
+        )
+        base = MultiFactorAuth.objects.get(account=self.user2)
+
+        totp = pyotp.TOTP(base.secret_key)
+        code = totp.now()
+
+        self.client.post(self.mfa_login_url, {"code": code})
+
+        response = self.client.post(self.generate_codes_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("msg", response.data)
+        self.assertEqual(response.data["msg"], "Recovery codes generated successfully")

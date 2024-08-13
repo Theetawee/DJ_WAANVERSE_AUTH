@@ -17,7 +17,7 @@ class TestSetup(TestCase):
         self.mfa_activate_url = reverse("activate_mfa")
         self.mfa_deactivate_url = reverse("deactivate_mfa")
         self.mfa_login_url = reverse("mfa_login")
-
+        self.generate_codes_url = reverse("regenerate_codes")
         self.client = APIClient()
         self.user = Account.objects.create_user(
             username="user1",

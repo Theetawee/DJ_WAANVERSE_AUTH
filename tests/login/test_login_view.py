@@ -40,3 +40,15 @@ class TestLoginView(TestSetup):
         self.assertIn("status", response.data)
         self.assertEqual(response.data["status"], "unverified")
         self.assertEqual(response.data["email"], self.user1.email)
+
+    def test_logout(self):
+        accounts_config.AUTH_METHODS = ["username"]
+        self.client.post(
+            self.login_url,
+            {"login_field": self.user2.username, "password": "password2"},
+            format="json",
+        )
+        response = self.client.post(self.logout_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("msg", response.data)
+        self.assertEqual(response.data["msg"], "Successfully logged out.")

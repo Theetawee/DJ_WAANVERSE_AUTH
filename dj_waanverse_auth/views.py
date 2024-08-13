@@ -340,7 +340,7 @@ def logout_view(request):
         logout(request)
 
         response = Response(
-            {"detail": "Successfully logged out."}, status=status.HTTP_200_OK
+            {"msg": "Successfully logged out."}, status=status.HTTP_200_OK
         )
 
         for cookie in request.COOKIES:
