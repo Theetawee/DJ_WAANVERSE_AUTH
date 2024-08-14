@@ -14,7 +14,7 @@ class TestResetPassword(TestSetup):
         self.assertIn("msg", response.data)
         self.assertIn("attempts", response.data)
         self.assertEqual(
-            response.data["msg"], "Password reset code has been sent successfully."
+            response.data["msg"], self.messages.password_reset_code_sent
         )
 
         self.assertEqual(response.data["email"], self.user1.email)
@@ -33,7 +33,7 @@ class TestResetPassword(TestSetup):
         )
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertIn("msg", res.data)
-        self.assertEqual(res.data["msg"], "Password has been reset successfully.")
+        self.assertEqual(res.data["msg"], self.messages.password_reset_successful)
 
     def test_reset_password_view_invalid_email(self):
         response = self.client.post(

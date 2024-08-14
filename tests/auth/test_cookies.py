@@ -106,7 +106,7 @@ class TestCookies(TestSetup):
         response = self.client.post(self.refresh_token_url)
         self.assertEqual(response.status_code, 400)
         self.assertIn("msg", response.data)
-        self.assertEqual(response.data["msg"], "Refresh token is required.")
+        self.assertEqual(response.data["msg"], self.messages.token_error)
 
     def test_refresh_invalid_cookie(self):
         user_data = {"login_field": self.user2.username, "password": "password2"}
@@ -118,4 +118,4 @@ class TestCookies(TestSetup):
         response = self.client.post(self.refresh_token_url)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("msg", response.data)
-        self.assertEqual(response.data["msg"], "Token is invalid or expired")
+        self.assertEqual(response.data["msg"], self.messages.token_error)

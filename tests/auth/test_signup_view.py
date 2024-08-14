@@ -16,9 +16,9 @@ class TestSignUpView(TestSetup):
             },
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertIn("status", response.data)
+        self.assertIn("msg", response.data)
         self.assertIn("email", response.data)
-        self.assertEqual(response.data["status"], "unverified")
+        self.assertEqual(response.data["msg"], self.messages.status_unverified)
 
     def test_signup_view_invalid_email(self):
         response = self.client.post(

@@ -2,7 +2,6 @@ import pyotp
 from django.contrib.auth import get_user_model, logout, user_logged_in
 from django.contrib.auth.models import update_last_login
 from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -12,6 +11,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from .messages import Messages
 from .models import MultiFactorAuth
 from .serializers import (
     DeactivateMfaSerializer,
@@ -52,7 +52,7 @@ def login_view(request):
 
         # Handle response based on email verification and MFA
         if not email_verified:
-            response_data = {"email": user.email, "status": "unverified"}
+            response_data = {"email": user.email, "msg": Messages.status_unverified}
             response_status = status.HTTP_200_OK
         elif mfa:
             response_data = {"mfa": user.id}
@@ -87,7 +87,7 @@ def refresh_token_view(request):
 
     if not refresh_token:
         return Response(
-            {"msg": "Refresh token is required."}, status=status.HTTP_400_BAD_REQUEST
+            {"msg": Messages.token_error}, status=status.HTTP_400_BAD_REQUEST
         )
 
     try:
@@ -95,11 +95,20 @@ def refresh_token_view(request):
         # Generate a new access token
         new_access_token = str(refresh.access_token)
         # Return the new access token in the response
-        response = Response({"access_token": new_access_token}, status=status.HTTP_200_OK)
+        response = Response(
+            {"access_token": new_access_token}, status=status.HTTP_200_OK
+        )
         new_response = set_cookies(access_token=new_access_token, response=response)
         return new_response
-    except TokenError as e:
-        return Response({"msg": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    except TokenError:
+        return Response(
+            {"msg": Messages.token_error}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    except Exception:
+        return Response(
+            {"msg": Messages.general_msg}, status=status.HTTP_400_BAD_REQUEST
+        )
 
 
 class ResendEmail(APIView):
@@ -112,7 +121,7 @@ class ResendEmail(APIView):
         if serializer.is_valid():
             email = serializer.save()
             return Response(
-                {"email": email, "status": "email-sent"},
+                {"email": email, "msg": Messages.email_sent},
                 status=status.HTTP_200_OK,
             )
 
@@ -132,7 +141,7 @@ def verify_email(request):
     if serializer.is_valid():
         email = serializer.validated_data["email"]
         return Response(
-            {"email": email, "status": "verified"}, status=status.HTTP_200_OK
+            {"email": email, "msg": Messages.status_verified}, status=status.HTTP_200_OK
         )
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -149,7 +158,7 @@ def signup_view(request):
         response = Response(
             {
                 "email": user.email,
-                "status": "unverified",
+                "msg": Messages.status_unverified,
             },
             status=status.HTTP_201_CREATED,
         )
@@ -189,12 +198,12 @@ def enable_mfa(request):
         )
     except MultiFactorAuth.DoesNotExist:
         return Response(
-            {"error": "MFA configuration could not be created."},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            {"msg": Messages.mfa_not_activated},
+            status=status.HTTP_400_BAD_REQUEST,
         )
-    except Exception as e:
+    except Exception:
         return Response(
-            {"error": f"An error occurred: {str(e)}"},
+            {"msg": Messages.general_msg},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -208,7 +217,9 @@ def verify_mfa(request):
     except Exception as e:
         return Response(status=status.HTTP_400_BAD_REQUEST, data={"error": str(e)})
     if mfa_account.activated:
-        return Response({"msg": "MFA already activated"}, status=status.HTTP_200_OK)
+        return Response(
+            {"msg": Messages.mfa_already_activated}, status=status.HTTP_200_OK
+        )
 
     serializer = MfaCodeSerializer(data=request.data)
 
@@ -221,10 +232,12 @@ def verify_mfa(request):
             mfa_account.set_recovery_codes()
             mfa_account.save()
             return Response(
-                {"msg": "2FA enabled successfully"}, status=status.HTTP_200_OK
+                {"msg": Messages.mfa_enabled_success}, status=status.HTTP_200_OK
             )
         else:
-            return Response({"msg": "Invalid OTP"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"msg": Messages.mfa_invalid_otp}, status=status.HTTP_400_BAD_REQUEST
+            )
     else:
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -247,9 +260,9 @@ def mfa_status(request):
             data={"mfa_status": False, "recovery_codes": []},
             status=status.HTTP_200_OK,
         )
-    except Exception as e:
+    except Exception:
         return Response(
-            data={"error": f"An error occurred: {str(e)}"},
+            data={"msg": Messages.general_msg},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -265,7 +278,7 @@ def regenerate_recovery_codes(request):
         if not mfa_account.activated:
             return Response(
                 status=status.HTTP_400_BAD_REQUEST,
-                data={"error": "MFA is not activated. Please activate MFA first."},
+                data={"msg": Messages.mfa_not_activated},
             )
 
         # Generate new recovery codes
@@ -275,7 +288,7 @@ def regenerate_recovery_codes(request):
             thread = EmailThread(
                 email=user.email,
                 template="regenerate_codes",
-                subject="New MFA Recovery Codes Generated",
+                subject=Messages.mfa_code_generated_email_subject,
                 context={
                     "username": user.username,
                     "email": user.email,
@@ -287,19 +300,17 @@ def regenerate_recovery_codes(request):
             thread.start()
         return Response(
             status=status.HTTP_200_OK,
-            data={"msg": "Recovery codes generated successfully"},
+            data={"msg": Messages.mfa_recovery_codes_generated},
         )
     except MultiFactorAuth.DoesNotExist:
         return Response(
             status=status.HTTP_400_BAD_REQUEST,
-            data={"error": "MFA configuration not found. Please activate MFA first."},
+            data={"msg": Messages.mfa_not_activated},
         )
-    except Exception as e:
+    except Exception:
         return Response(
             status=status.HTTP_400_BAD_REQUEST,
-            data={
-                "error": f"An error occurred while generating recovery codes: {str(e)}"
-            },
+            data={"msg": Messages.general_msg},
         )
 
 
@@ -313,7 +324,7 @@ class DeactivateMfaView(APIView):
         if serializer.is_valid():
             serializer.save()
             return Response(
-                {"msg": "MFA has been deactivated."}, status=status.HTTP_200_OK
+                {"msg": Messages.mfa_deactivated}, status=status.HTTP_200_OK
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -334,13 +345,15 @@ def logout_view(request):
     if serializer.is_valid():
         try:
             serializer.save()
-        except Exception as e:
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception:
+            return Response(
+                {"msg": Messages.general_msg}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         logout(request)
 
         response = Response(
-            {"msg": "Successfully logged out."}, status=status.HTTP_200_OK
+            {"msg": Messages.logout_successful}, status=status.HTTP_200_OK
         )
 
         for cookie in request.COOKIES:
@@ -361,8 +374,7 @@ def mfa_login(request):
     if not user_id:
         return Response(
             {
-                "msg": "Unable to verify your account. Please login again.",
-                "invalid_account": True,
+                "msg": Messages.invalid_account,
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
@@ -371,11 +383,13 @@ def mfa_login(request):
         user = Account.objects.get(pk=user_id)
         mfa_account = MultiFactorAuth.objects.get(account=user)
     except Account.DoesNotExist:
-        return Response({"msg": "Invalid account"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {"msg": Messages.invalid_account}, status=status.HTTP_400_BAD_REQUEST
+        )
 
     if not mfa_account.activated:
         return Response(
-            {"msg": "MFA is not activated for this user"},
+            {"msg": Messages.mfa_not_activated},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -394,7 +408,7 @@ def mfa_login(request):
         access = refresh.access_token
     else:
         return Response(
-            {"msg": "Invalid OTP or recovery code"}, status=status.HTTP_400_BAD_REQUEST
+            {"msg": Messages.mfa_invalid_otp}, status=status.HTTP_400_BAD_REQUEST
         )
 
     update_last_login(None, user)
@@ -426,7 +440,7 @@ def mfa_login(request):
 def reset_password(request):
     if request.user.is_authenticated:
         return Response(
-            {"msg": "You are already authenticated."},
+            {"msg": Messages.already_authenticated},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -435,7 +449,7 @@ def reset_password(request):
         reset_code = serializer.save()
         return Response(
             {
-                "msg": "Password reset code has been sent successfully.",
+                "msg": Messages.password_reset_code_sent,
                 "attempts": reset_code.attempts,
                 "email": reset_code.email,
             },
@@ -452,7 +466,7 @@ def verify_reset_password(request):
     if serializer.is_valid():
         serializer.save()
         return Response(
-            {"msg": _("Password has been reset successfully.")},
+            {"msg": Messages.password_reset_successful},
             status=status.HTTP_200_OK,
         )
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

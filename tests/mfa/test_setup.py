@@ -3,6 +3,7 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APIClient
 
+from dj_waanverse_auth.messages import Messages
 from dj_waanverse_auth.models import EmailAddress, MultiFactorAuth
 
 Account = get_user_model()
@@ -26,7 +27,7 @@ class TestSetup(TestCase):
             name="user1",
             phone_number="1234567890",
         )
-
+        self.messages = Messages
         EmailAddress.objects.create(
             user=self.user, email=self.user.email, verified=True, primary=True
         ).save()
