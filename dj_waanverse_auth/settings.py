@@ -108,6 +108,7 @@ accounts_config = AccountConfig({**AccountConfigSchema(), **USER_SETTINGS})
 
 
 if not os.environ.get("GITHUB_ACTIONS").lower() == "true":
+    print(os.environ.get("GITHUB_ACTIONS"))
     # Ensure email settings are configured if necessary
     required_email_settings = [
         "EMAIL_HOST",
