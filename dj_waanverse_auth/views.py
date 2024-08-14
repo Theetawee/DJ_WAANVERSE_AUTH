@@ -99,7 +99,7 @@ def refresh_token_view(request):
         new_response = set_cookies(access_token=new_access_token, response=response)
         return new_response
     except TokenError as e:
-        return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"msg": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ResendEmail(APIView):

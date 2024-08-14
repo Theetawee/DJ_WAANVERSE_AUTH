@@ -1,3 +1,4 @@
+from rest_framework import status
 from rest_framework_simplejwt.settings import api_settings
 
 from dj_waanverse_auth.settings import accounts_config
@@ -106,3 +107,15 @@ class TestCookies(TestSetup):
         self.assertEqual(response.status_code, 400)
         self.assertIn("msg", response.data)
         self.assertEqual(response.data["msg"], "Refresh token is required.")
+
+    def test_refresh_invalid_cookie(self):
+        user_data = {"login_field": self.user2.username, "password": "password2"}
+        res = self.client.post(self.login_url, user_data, format="json")
+
+        # Replace the refresh token cookie with an invalid one
+        res.cookies[accounts_config.REFRESH_TOKEN_COOKIE] = "invalid"
+
+        response = self.client.post(self.refresh_token_url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("msg", response.data)
+        self.assertEqual(response.data["msg"], "Token is invalid or expired")

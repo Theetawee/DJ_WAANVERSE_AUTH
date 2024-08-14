@@ -34,3 +34,40 @@ class TestResetPassword(TestSetup):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertIn("msg", res.data)
         self.assertEqual(res.data["msg"], "Password has been reset successfully.")
+
+    def test_reset_password_view_invalid_email(self):
+        response = self.client.post(
+            self.reset_password_url, {"email": "testing@invalid.com"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_rest_password_view_invalid_code(self):
+        response = self.client.post(
+            self.verify_rest_password_url,
+            {
+                "code": "invalid",
+                "new_password1": "passWord#3",
+                "new_password2": "passWord#3",
+                "email": self.user1.email,
+            },
+        )
+        self.assertEqual(response.data["non_field_errors"][0], "Invalid reset code.")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_reset_password_view_invalid_password(self):
+        self.client.post(self.reset_password_url, {"email": self.user1.email})
+        base = ResetPasswordCode.objects.get(email=self.user1.email)
+
+        response = self.client.post(
+            self.verify_rest_password_url,
+            {
+                "code": base.code,
+                "new_password1": "passWord#3",
+                "new_password2": "passWord#4",
+                "email": self.user1.email,
+            },
+        )
+        self.assertEqual(
+            response.data["passwords"][0], "The two password fields didn't match."
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

@@ -357,7 +357,7 @@ class VerifyResetPasswordSerializer(serializers.Serializer):
         # Check if passwords match
         if new_password1 != new_password2:
             raise serializers.ValidationError(
-                _("The two password fields didn't match.")
+                {"passwords": _("The two password fields didn't match.")}
             )
 
         # Check if reset code exists and is valid
