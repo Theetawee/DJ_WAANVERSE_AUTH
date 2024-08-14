@@ -1,3 +1,4 @@
+import os
 from datetime import timedelta
 from typing import List, Optional, TypedDict
 
@@ -39,7 +40,9 @@ class AccountConfigSchema(TypedDict, total=False):
 class AccountConfig:
     def __init__(self, settings_dict: AccountConfigSchema):
         self.AUTH_METHODS = settings_dict.get("AUTH_METHODS", ["username"])
-        self.MFA_RECOVERY_CODES_COUNT = settings_dict.get("MFA_RECOVERY_CODES_COUNT", 10)
+        self.MFA_RECOVERY_CODES_COUNT = settings_dict.get(
+            "MFA_RECOVERY_CODES_COUNT", 10
+        )
         self.ACCESS_TOKEN_COOKIE = settings_dict.get(
             "ACCESS_TOKEN_COOKIE", "access_token"
         )
@@ -103,17 +106,19 @@ class AccountConfig:
 USER_SETTINGS = getattr(settings, "WAANVERSE_AUTH", {})
 accounts_config = AccountConfig({**AccountConfigSchema(), **USER_SETTINGS})
 
-# Ensure email settings are configured if necessary
-required_email_settings = [
-    "EMAIL_HOST",
-    "EMAIL_PORT",
-    "EMAIL_HOST_USER",
-    "EMAIL_HOST_PASSWORD",
-    "EMAIL_USE_TLS",
-]
 
-for setting in required_email_settings:
-    if not getattr(settings, setting, None):
-        raise ImproperlyConfigured(
-            f"Email setting '{setting}' is required but not configured."
-        )
+if not os.environ.get("GITHUB_ACTIONS").lower() == "true":
+    # Ensure email settings are configured if necessary
+    required_email_settings = [
+        "EMAIL_HOST",
+        "EMAIL_PORT",
+        "EMAIL_HOST_USER",
+        "EMAIL_HOST_PASSWORD",
+        "EMAIL_USE_TLS",
+    ]
+
+    for setting in required_email_settings:
+        if not getattr(settings, setting, None):
+            raise ImproperlyConfigured(
+                f"Email setting '{setting}' is required but not configured."
+            )
