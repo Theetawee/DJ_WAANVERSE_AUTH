@@ -1,4 +1,3 @@
-import os
 from datetime import timedelta
 from typing import List, Optional, TypedDict
 
@@ -107,19 +106,17 @@ USER_SETTINGS = getattr(settings, "WAANVERSE_AUTH", {})
 accounts_config = AccountConfig({**AccountConfigSchema(), **USER_SETTINGS})
 
 
-if not os.getenv("GITHUB_ACTIONS").lower() == "true":
-    print(os.getenv("GITHUB_ACTIONS"))
-    # Ensure email settings are configured if necessary
-    required_email_settings = [
-        "EMAIL_HOST",
-        "EMAIL_PORT",
-        "EMAIL_HOST_USER",
-        "EMAIL_HOST_PASSWORD",
-        "EMAIL_USE_TLS",
-    ]
+# Ensure email settings are configured if necessary
+required_email_settings = [
+    "EMAIL_HOST",
+    "EMAIL_PORT",
+    "EMAIL_HOST_USER",
+    "EMAIL_HOST_PASSWORD",
+    "EMAIL_USE_TLS",
+]
 
-    for setting in required_email_settings:
-        if not getattr(settings, setting, None):
-            raise ImproperlyConfigured(
-                f"Email setting '{setting}' is required but not configured."
-            )
+for setting in required_email_settings:
+    if not getattr(settings, setting, None):
+        raise ImproperlyConfigured(
+            f"Email setting '{setting}' is required but not configured."
+        )
