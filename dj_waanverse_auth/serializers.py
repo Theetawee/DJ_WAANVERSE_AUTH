@@ -4,7 +4,6 @@ from typing import Any, Dict, Optional, Type
 import pyotp
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.hashers import check_password
-from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from rest_framework import exceptions, serializers
@@ -162,18 +161,16 @@ class VerifyEmailSerializer(serializers.Serializer):
             block = EmailConfirmationCode.objects.get(user=user, code=code)
 
         except EmailConfirmationCode.DoesNotExist:
-            raise serializers.ValidationError("Invalid code")
+            raise serializers.ValidationError({"msg": Messages.invalid_email_code})
         except Exception:
-            raise serializers.ValidationError(
-                "Unable to validate code. Please make sure you are validating the correct email address and code."
-            )
+            raise serializers.ValidationError({"msg": Messages.general_msg})
         # Check if the code has expired
         if (
             timezone.now() - block.created_at
             > accounts_config.EMAIL_VERIFICATION_CODE_DURATION
         ):
             block.delete()
-            raise serializers.ValidationError("Code expired")
+            raise serializers.ValidationError(Messages.expired_email_code)
 
         # Delete the used code
         block.delete()
@@ -196,7 +193,7 @@ class SignupSerializer(serializers.Serializer):
     def validate_email(self, email):
         """Validate that the email does not already exist."""
         if Account.objects.filter(email=email).exists():
-            raise serializers.ValidationError(_("Email already exists."))
+            raise serializers.ValidationError(Messages.email_exists)
         return email
 
     def validate_username(self, username):
@@ -206,17 +203,18 @@ class SignupSerializer(serializers.Serializer):
         if not valid:
             raise serializers.ValidationError(message)
         if Account.objects.filter(username=username).exists():
-            raise serializers.ValidationError(_("Username already exists."))
+            raise serializers.ValidationError(Messages.username_exists)
         return username
 
     def validate(self, data):
         """Validate that the passwords match."""
         if data.get("password1") != data.get("password2"):
-            raise serializers.ValidationError(_("Passwords do not match."))
-        try:
-            password_validator(data.get("password1"))
-        except ValidationError as e:
-            raise serializers.ValidationError({"password": e})
+            raise serializers.ValidationError(Messages.passwords_mismatch)
+        password_res, is_valid = password_validator(data.get("password1"))
+        if not is_valid:
+            raise serializers.ValidationError(
+                {"password": Messages.password_validation_error}
+            )
         return data
 
     def create(self, validated_data):
@@ -357,19 +355,19 @@ class VerifyResetPasswordSerializer(serializers.Serializer):
         # Check if passwords match
         if new_password1 != new_password2:
             raise serializers.ValidationError(
-                {"passwords": _("The two password fields didn't match.")}
+                {"passwords": Messages.passwords_mismatch}
             )
 
         # Check if reset code exists and is valid
         try:
             reset_code = ResetPasswordCode.objects.get(email=email, code=code)
         except ResetPasswordCode.DoesNotExist:
-            raise serializers.ValidationError(_("Invalid reset code."))
+            raise serializers.ValidationError(Messages.invalid_email_code)
 
         # Check if the code has expired
         if reset_code.is_expired:
             reset_code.delete()
-            raise serializers.ValidationError(_("The reset code has expired."))
+            raise serializers.ValidationError(Messages.expired_email_code)
 
         return data
 
@@ -383,7 +381,7 @@ class VerifyResetPasswordSerializer(serializers.Serializer):
             user.set_password(new_password)
             user.save()
         except Account.DoesNotExist:
-            raise serializers.ValidationError(_("User with this email does not exist."))
+            raise serializers.ValidationError(Messages.no_account)
 
         # Delete the used reset code
         ResetPasswordCode.objects.filter(
@@ -417,7 +415,7 @@ class DeactivateMfaSerializer(serializers.Serializer):
         try:
             mfa = MultiFactorAuth.objects.get(account=user, activated=True)
         except MultiFactorAuth.DoesNotExist:
-            raise serializers.ValidationError("MFA is not enabled for this account.")
+            raise serializers.ValidationError({"msg": Messages.mfa_not_activated})
 
         # Verify the code using pyotp
         totp = pyotp.TOTP(mfa.secret_key)

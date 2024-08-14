@@ -3,7 +3,6 @@ import string
 
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
-from django.utils.translation import gettext_lazy as _
 
 from .settings import accounts_config
 
@@ -38,36 +37,33 @@ def validate_username(username: str) -> tuple:
     return True, ""
 
 
-def password_validator(password, user=None):
+def password_validator(password: str, user=None) -> tuple:
     """
-    Validates the password using Django's built-in validators and additional custom rules.
-    """
-    errors = []
+    A function that validates the password.
 
-    # Run Django's built-in password validators
+    Args:
+        password (str): The password to validate.
+        user (User, optional): The user associated with the password. Defaults to None.
+
+    Returns:
+        tuple: A tuple containing the validated password and a boolean indicating
+        if the password is valid.
+    """
+
     try:
+        # Run Django's built-in password validators
         validate_password(password, user)
-    except ValidationError as e:
-        errors.extend(e.messages)
 
-    # Add any additional custom validation rules
-    if not any(char.isdigit() for char in password):
-        errors.append(_("Password must contain at least one digit."))
+        # Add any additional custom validation rules
+        if not (
+            any(char.isdigit() for char in password)
+            and any(char.isupper() for char in password)
+            and any(char.islower() for char in password)
+            and any(char in string.punctuation for char in password)
+        ):
+            return password, False
 
-    if not any(char.isupper() for char in password):
-        errors.append(_("Password must contain at least one uppercase letter."))
+    except ValidationError:
+        return password, False
 
-    if not any(char.islower() for char in password):
-        errors.append(_("Password must contain at least one lowercase letter."))
-
-    if not any(char in string.punctuation for char in password):
-        errors.append(
-            _(
-                "Password must contain at least one special character (e.g., @, #, $, etc.)."
-            )
-        )
-
-    if errors:
-        raise ValidationError(errors)
-
-    return password
+    return password, True
