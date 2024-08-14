@@ -118,5 +118,5 @@ required_email_settings = [
 for setting in required_email_settings:
     if not getattr(settings, setting, None):
         raise ImproperlyConfigured(
-            f"Email setting '{setting}' is required but not configured."
+            f"Email setting '{setting}' is required but not configured. Refer to django docs (https://docs.djangoproject.com/en/5.1/topics/email/)"
         )
