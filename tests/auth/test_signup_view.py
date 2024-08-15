@@ -47,5 +47,5 @@ class TestSignUpView(TestSetup):
             },
         )
         self.assertIn("email", response.data)
-        self.assertEqual(response.data["email"][0], "Email already exists.")
+        self.assertEqual(response.data["email"], [self.messages.email_exists])
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

@@ -51,7 +51,7 @@ class TestResetPassword(TestSetup):
                 "email": self.user1.email,
             },
         )
-        self.assertEqual(response.data["non_field_errors"][0], "Invalid reset code.")
+        self.assertEqual(response.data["msg"], [self.messages.invalid_code])
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_reset_password_view_invalid_password(self):
@@ -68,6 +68,6 @@ class TestResetPassword(TestSetup):
             },
         )
         self.assertEqual(
-            response.data["passwords"][0], "The two password fields didn't match."
+            response.data["msg"], [self.messages.password_mismatch]
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

@@ -126,7 +126,7 @@ class ResendVerificationEmailSerializer(serializers.Serializer):
         try:
             user = Account.objects.get(email=email)
         except Account.DoesNotExist:
-            raise serializers.ValidationError({"msg": Messages.no_account})
+            raise serializers.ValidationError(Messages.no_account)
 
         email_address = user_email_address(user)
         if email_address.verified:
@@ -157,7 +157,7 @@ class VerifyEmailSerializer(serializers.Serializer):
             block = EmailConfirmationCode.objects.get(user=user, code=code)
 
         except EmailConfirmationCode.DoesNotExist:
-            raise serializers.ValidationError({"msg": Messages.invalid_email_code})
+            raise serializers.ValidationError({"msg": Messages.invalid_code})
         except Exception:
             raise serializers.ValidationError({"msg": Messages.general_msg})
         # Check if the code has expired
@@ -197,15 +197,15 @@ class SignupSerializer(serializers.Serializer):
         username = username.lower()
         valid, message = username_validator(username)
         if not valid:
-            raise serializers.ValidationError(message)
+            raise serializers.ValidationError({"msg": message})
         if Account.objects.filter(username=username).exists():
-            raise serializers.ValidationError(Messages.username_exists)
+            raise serializers.ValidationError({"msg": Messages.username_exists})
         return username
 
     def validate(self, data):
         """Validate that the passwords match."""
         if data.get("password1") != data.get("password2"):
-            raise serializers.ValidationError(Messages.passwords_mismatch)
+            raise serializers.ValidationError(Messages.password_mismatch)
         password_res, is_valid = password_validator(data.get("password1"))
         if not is_valid:
             raise serializers.ValidationError(
@@ -346,20 +346,18 @@ class VerifyResetPasswordSerializer(serializers.Serializer):
 
         # Check if passwords match
         if new_password1 != new_password2:
-            raise serializers.ValidationError(
-                {"passwords": Messages.passwords_mismatch}
-            )
+            raise serializers.ValidationError({"msg": Messages.password_mismatch})
 
         # Check if reset code exists and is valid
         try:
             reset_code = ResetPasswordCode.objects.get(email=email, code=code)
         except ResetPasswordCode.DoesNotExist:
-            raise serializers.ValidationError(Messages.invalid_email_code)
+            raise serializers.ValidationError({"msg": Messages.invalid_code})
 
         # Check if the code has expired
         if reset_code.is_expired:
             reset_code.delete()
-            raise serializers.ValidationError(Messages.expired_email_code)
+            raise serializers.ValidationError({"msg": Messages.invalid_code})
 
         return data
 

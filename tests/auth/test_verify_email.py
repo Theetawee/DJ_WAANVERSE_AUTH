@@ -51,8 +51,8 @@ class TestVerifyEmail(TestSetup):
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
-            response.data["email"][0],
-            "No account is associated with this email address.",
+            response.data["email"],
+            [self.messages.no_account],
         )
 
     def test_send_and_verify_email_invalid_code(self):
@@ -70,4 +70,4 @@ class TestVerifyEmail(TestSetup):
             {"email": self.user1.email, "code": verification_code},
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["non_field_errors"][0], "Invalid code")
+        self.assertEqual(response.data["msg"], [self.messages.invalid_code])
