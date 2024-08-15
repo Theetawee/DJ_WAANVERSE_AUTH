@@ -1,7 +1,7 @@
 from django.urls import path
 
 from .views import (
-    DeactivateMfaView,
+    deactivate_mfa,
     enable_mfa,
     login_view,
     logout_view,
@@ -29,7 +29,7 @@ urlpatterns = [
     path("mfa/verify", verify_mfa, name="verify_mfa"),
     path("mfa/status", mfa_status, name="mfa_status"),
     path("mfa/regenerate-codes", regenerate_recovery_codes, name="regenerate_codes"),
-    path("mfa/deactivate", DeactivateMfaView.as_view(), name="deactivate_mfa"),
+    path("mfa/deactivate", deactivate_mfa, name="deactivate_mfa"),
     path("logout", logout_view, name="logout"),
     path("mfa/login", mfa_login, name="mfa_login"),
     path("password/reset", reset_password, name="reset_password"),

@@ -2,12 +2,12 @@ import pyotp
 from django.contrib.auth import get_user_model, logout, user_logged_in
 from django.contrib.auth.models import update_last_login
 from django.utils import timezone
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes, throttle_classes
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.throttling import UserRateThrottle
-from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -36,8 +36,36 @@ from .utils import (
 Account = get_user_model()
 
 
+@swagger_auto_schema(
+    method="post",
+    operation_summary="User Login",
+    operation_description="Handle user login, email verification, and MFA.",
+    request_body=LoginSerializer,
+    responses={
+        200: openapi.Response(
+            "Success",
+            openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    "access_token": openapi.Schema(
+                        type=openapi.TYPE_STRING, description="JWT access token"
+                    ),
+                    "refresh_token": openapi.Schema(
+                        type=openapi.TYPE_STRING, description="JWT refresh token"
+                    ),
+                    "user": openapi.Schema(
+                        type=openapi.TYPE_OBJECT, description="User details"
+                    ),
+                    "msg": openapi.Schema(
+                        type=openapi.TYPE_STRING, description="Message"
+                    ),
+                },
+            ),
+        ),
+        400: openapi.Response("Bad Request"),
+    },
+)
 @api_view(["POST"])
-@throttle_classes([UserRateThrottle])
 @permission_classes([AllowAny])
 def login_view(request):
     USER_CLAIM_SERIALIZER = get_serializer(accounts_config.USER_CLAIM_SERIALIZER_CLASS)
@@ -78,6 +106,33 @@ def login_view(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@swagger_auto_schema(
+    method="post",
+    operation_summary="Refresh JWT Token",
+    operation_description="Refresh the JWT access token using the refresh token.",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            "refresh": openapi.Schema(
+                type=openapi.TYPE_STRING, description="Refresh token"
+            ),
+        },
+    ),
+    responses={
+        200: openapi.Response(
+            "Success",
+            openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    "access_token": openapi.Schema(
+                        type=openapi.TYPE_STRING, description="New access token"
+                    ),
+                },
+            ),
+        ),
+        400: openapi.Response("Bad Request"),
+    },
+)
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def refresh_token_view(request):
@@ -111,26 +166,70 @@ def refresh_token_view(request):
         )
 
 
-class ResendEmail(APIView):
+@swagger_auto_schema(
+    method="post",
+    operation_summary="Resend Verification Email",
+    operation_description="Resend the email verification link to the user's email address.",
+    request_body=ResendVerificationEmailSerializer,
+    responses={
+        200: openapi.Response(
+            "Success",
+            openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    "email": openapi.Schema(
+                        type=openapi.TYPE_STRING, description="User's email address"
+                    ),
+                    "msg": openapi.Schema(
+                        type=openapi.TYPE_STRING, description="Message"
+                    ),
+                },
+            ),
+        ),
+        400: openapi.Response("Bad Request"),
+    },
+)
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def resend_verification_email(request):
+    """
+    Collect email from the user to resend the verification email.
+    """
 
-    def post(self, request):
-        """
-        Collect email from the user to resend the verification email.
-        """
-        serializer = ResendVerificationEmailSerializer(data=request.data)
-        if serializer.is_valid():
-            email = serializer.save()
-            return Response(
-                {"email": email, "msg": Messages.email_sent},
-                status=status.HTTP_200_OK,
-            )
+    serializer = ResendVerificationEmailSerializer(data=request.data)
+    if serializer.is_valid():
+        email = serializer.save()
+        return Response(
+            {"email": email, "msg": Messages.email_sent},
+            status=status.HTTP_200_OK,
+        )
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-resend_verification_email = ResendEmail.as_view()
-
-
+@swagger_auto_schema(
+    method="post",
+    operation_summary="Verify Email",
+    operation_description="Verify the user's email address using the verification code.",
+    request_body=VerifyEmailSerializer,
+    responses={
+        200: openapi.Response(
+            "Success",
+            openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    "email": openapi.Schema(
+                        type=openapi.TYPE_STRING, description="User's email address"
+                    ),
+                    "msg": openapi.Schema(
+                        type=openapi.TYPE_STRING, description="Message"
+                    ),
+                },
+            ),
+        ),
+        400: openapi.Response("Bad Request"),
+    },
+)
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def verify_email(request):
@@ -147,6 +246,29 @@ def verify_email(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@swagger_auto_schema(
+    method="post",
+    operation_summary="Sign Up",
+    operation_description="Create a new user account.",
+    request_body=get_serializer(accounts_config.REGISTRATION_SERIALIZER_CLASS),
+    responses={
+        201: openapi.Response(
+            "Created",
+            openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    "email": openapi.Schema(
+                        type=openapi.TYPE_STRING, description="User's email address"
+                    ),
+                    "msg": openapi.Schema(
+                        type=openapi.TYPE_STRING, description="Message"
+                    ),
+                },
+            ),
+        ),
+        400: openapi.Response("Bad Request"),
+    },
+)
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def signup_view(request):
@@ -168,6 +290,28 @@ def signup_view(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@swagger_auto_schema(
+    method="post",
+    operation_summary="Enable Multi-Factor Authentication",
+    operation_description="Enable Multi-Factor Authentication (MFA) for the user.",
+    responses={
+        200: openapi.Response(
+            "Success",
+            openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    "url": openapi.Schema(
+                        type=openapi.TYPE_STRING, description="OTP provisioning URI"
+                    ),
+                    "key": openapi.Schema(
+                        type=openapi.TYPE_STRING, description="Secret key"
+                    ),
+                },
+            ),
+        ),
+        400: openapi.Response("Bad Request"),
+    },
+)
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def enable_mfa(request):
@@ -208,6 +352,26 @@ def enable_mfa(request):
         )
 
 
+@swagger_auto_schema(
+    method="post",
+    operation_summary="Verify Multi-Factor Authentication",
+    operation_description="Verify the MFA code provided by the user.",
+    request_body=MfaCodeSerializer,
+    responses={
+        200: openapi.Response(
+            "Success",
+            openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    "msg": openapi.Schema(
+                        type=openapi.TYPE_STRING, description="Message"
+                    ),
+                },
+            ),
+        ),
+        400: openapi.Response("Bad Request"),
+    },
+)
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def verify_mfa(request):
@@ -242,6 +406,30 @@ def verify_mfa(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@swagger_auto_schema(
+    method="get",
+    operation_summary="Get MFA Status",
+    operation_description="Retrieve the current MFA status and recovery codes.",
+    responses={
+        200: openapi.Response(
+            "Success",
+            openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    "mfa_status": openapi.Schema(
+                        type=openapi.TYPE_BOOLEAN, description="MFA activation status"
+                    ),
+                    "recovery_codes": openapi.Schema(
+                        type=openapi.TYPE_ARRAY,
+                        items=openapi.Items(type=openapi.TYPE_STRING),
+                        description="List of recovery codes",
+                    ),
+                },
+            ),
+        ),
+        400: openapi.Response("Bad Request"),
+    },
+)
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def mfa_status(request):
@@ -267,6 +455,25 @@ def mfa_status(request):
         )
 
 
+@swagger_auto_schema(
+    method="post",
+    operation_summary="Regenerate Recovery Codes",
+    operation_description="Regenerate MFA recovery codes for the user.",
+    responses={
+        200: openapi.Response(
+            "Success",
+            openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    "msg": openapi.Schema(
+                        type=openapi.TYPE_STRING, description="Message"
+                    ),
+                },
+            ),
+        ),
+        400: openapi.Response("Bad Request"),
+    },
+)
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def regenerate_recovery_codes(request):
@@ -314,21 +521,52 @@ def regenerate_recovery_codes(request):
         )
 
 
-class DeactivateMfaView(APIView):
-    permission_classes = [IsAuthenticated]
+@swagger_auto_schema(
+    method="post",
+    operation_summary="Deactivate MFA",
+    operation_description="Deactivate MFA for the user.",
+    responses={
+        200: openapi.Response(
+            "Success",
+            openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    "msg": openapi.Schema(
+                        type=openapi.TYPE_STRING, description="Message"
+                    ),
+                },
+            ),
+        ),
+        400: openapi.Response("Bad Request"),
+    },
+)
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def deactivate_mfa(request):
+    serializer = DeactivateMfaSerializer(
+        data=request.data, context={"request": request}
+    )
+    if serializer.is_valid():
+        serializer.save()
+        return Response({"msg": Messages.mfa_deactivated}, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def post(self, request, *args, **kwargs):
-        serializer = DeactivateMfaSerializer(
-            data=request.data, context={"request": request}
-        )
-        if serializer.is_valid():
-            serializer.save()
-            return Response(
-                {"msg": Messages.mfa_deactivated}, status=status.HTTP_200_OK
-            )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
+@swagger_auto_schema(
+    method="get",
+    operation_summary="Get User Info",
+    operation_description="Retrieve detailed information about the authenticated user.",
+    responses={
+        200: openapi.Response(
+            "Success",
+            openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                description="User details",
+            ),
+        ),
+        400: openapi.Response("Bad Request"),
+    },
+)
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def user_info(request):
@@ -338,6 +576,26 @@ def user_info(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+@swagger_auto_schema(
+    method="post",
+    operation_summary="Logout",
+    operation_description="Logout the user and clear session cookies.",
+    request_body=LogoutSerializer,
+    responses={
+        200: openapi.Response(
+            "Success",
+            openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    "msg": openapi.Schema(
+                        type=openapi.TYPE_STRING, description="Message"
+                    ),
+                },
+            ),
+        ),
+        400: openapi.Response("Bad Request"),
+    },
+)
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def logout_view(request):
@@ -364,6 +622,39 @@ def logout_view(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@swagger_auto_schema(
+    method="post",
+    operation_summary="MFA Login",
+    operation_description="Login using MFA with an OTP or recovery code.",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            "code": openapi.Schema(
+                type=openapi.TYPE_STRING, description="OTP or recovery code"
+            ),
+        },
+    ),
+    responses={
+        200: openapi.Response(
+            "Success",
+            openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    "refresh": openapi.Schema(
+                        type=openapi.TYPE_STRING, description="JWT refresh token"
+                    ),
+                    "access": openapi.Schema(
+                        type=openapi.TYPE_STRING, description="JWT access token"
+                    ),
+                    "user": openapi.Schema(
+                        type=openapi.TYPE_OBJECT, description="User details"
+                    ),
+                },
+            ),
+        ),
+        400: openapi.Response("Bad Request"),
+    },
+)
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def mfa_login(request):
@@ -435,6 +726,26 @@ def mfa_login(request):
     return response
 
 
+@swagger_auto_schema(
+    method="post",
+    operation_summary="Reset Password",
+    operation_description="Request a password reset for a user account.",
+    request_body=ResetPasswordSerializer,
+    responses={
+        200: openapi.Response(
+            "Success",
+            openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    "msg": openapi.Schema(
+                        type=openapi.TYPE_STRING, description="Message"
+                    ),
+                },
+            ),
+        ),
+        400: openapi.Response("Bad Request"),
+    },
+)
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def reset_password(request):
@@ -458,6 +769,26 @@ def reset_password(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@swagger_auto_schema(
+    method="post",
+    operation_summary="Reset Password Complete",
+    operation_description="Complete the password reset process with a verification code.",
+    request_body=VerifyResetPasswordSerializer,
+    responses={
+        200: openapi.Response(
+            "Success",
+            openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    "msg": openapi.Schema(
+                        type=openapi.TYPE_STRING, description="Message"
+                    ),
+                },
+            ),
+        ),
+        400: openapi.Response("Bad Request"),
+    },
+)
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def verify_reset_password(request):
