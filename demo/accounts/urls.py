@@ -1,11 +1,11 @@
 from django.urls import path
 
-from .views import check_username_availability
+from .views import index
 
 urlpatterns = [
     path(
-        "check",
-        check_username_availability,
-        name="check_username_avalibility",
+        "",
+        index,
+        name="index",
     ),
 ]

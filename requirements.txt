@@ -1,4 +1,5 @@
 asgiref==3.8.1
+attrs==24.2.0
 backports.tarfile==1.2.0
 build==1.2.1
 certifi==2024.7.4
@@ -7,20 +8,29 @@ charset-normalizer==3.3.2
 colorama==0.4.6
 coverage==7.6.1
 cryptography==43.0.0
+<<<<<<< Updated upstream
 -e git+https://github.com/Theetawee/DJ_WAANVERSE_AUTH.git@a4200b3539b779b2e530ba96d69ea6998bbbe948#egg=dj_waanverse_auth
+=======
+-e git+https://github.com/Theetawee/DJ_WAANVERSE_AUTH.git@9462d5225d3328f9224b519115be3f7d5ba9c79a#egg=dj_waanverse_auth
+>>>>>>> Stashed changes
 Django==5.1
 django-dotenv==1.4.2
 django-unfold==0.34.0
 djangorestframework==3.15.2
 djangorestframework-simplejwt==5.3.1
 docutils==0.21.2
+drf-yasg==1.21.7
 flake8==7.1.1
 idna==3.7
 importlib_metadata==8.2.0
+importlib_resources==6.4.2
+inflection==0.5.1
 iniconfig==2.0.0
 jaraco.classes==3.4.0
 jaraco.context==5.3.0
 jaraco.functools==4.0.2
+jsonschema==4.23.0
+jsonschema-specifications==2023.12.1
 keyring==25.3.0
 markdown-it-py==3.0.0
 mccabe==0.7.0
@@ -39,16 +49,23 @@ pyotp==2.9.0
 pyproject_hooks==1.1.0
 pytest==8.3.2
 pytest-django==4.8.0
+pytz==2024.1
 pywin32-ctypes==0.2.2
+PyYAML==6.0.2
 readme_renderer==44.0
+referencing==0.35.1
 requests==2.32.3
 requests-toolbelt==1.0.0
 rfc3986==2.0.0
 rich==13.7.1
+rpds-py==0.20.0
 sqlparse==0.5.1
+swagger-spec-validator==3.0.4
 twine==5.1.1
+typing_extensions==4.12.2
 tzdata==2024.1
 ua-parser==0.18.0
+uritemplate==4.1.1
 urllib3==2.2.2
 user-agents==2.2.0
 zipp==3.19.2

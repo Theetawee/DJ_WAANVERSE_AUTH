@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "dj_waanverse_auth",
     "rest_framework",
     "accounts",
+    "drf_yasg",
 ]
 
 MIDDLEWARE = [
