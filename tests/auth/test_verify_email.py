@@ -32,7 +32,7 @@ class TestVerifyEmail(TestSetup):
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["status"], "email-sent")
+        self.assertEqual(response.data["msg"], self.messages.email_sent)
 
     def test_send_verify_email_invalid_email(self):
         response = self.client.post(

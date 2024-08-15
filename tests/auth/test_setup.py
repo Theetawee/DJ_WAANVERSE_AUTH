@@ -3,6 +3,7 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APIClient
 
+from dj_waanverse_auth.messages import Messages as msg
 from dj_waanverse_auth.models import EmailAddress
 from dj_waanverse_auth.settings import accounts_config
 
@@ -20,6 +21,7 @@ class TestSetup(TestCase):
         self.reset_password_url = reverse("reset_password")
         self.verify_rest_password_url = reverse("verify_reset_password")
         self.client = APIClient()
+        self.messages = msg
         self.access_cookie_name = accounts_config.ACCESS_TOKEN_COOKIE
         self.refresh_cookie_name = accounts_config.REFRESH_TOKEN_COOKIE
         self.user1 = Account.objects.create_user(

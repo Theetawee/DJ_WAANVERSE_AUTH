@@ -56,7 +56,7 @@ class TestLoginView(TestSetup):
         response = self.client.post(self.mfa_verify_url, {"code": code})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("msg", response.data)
-        self.assertEqual(response.data["msg"], "2FA enabled successfully")
+        self.assertEqual(response.data["msg"], self.messages.mfa_enabled_success)
 
     def test_deactivate_mfa(self):
         accounts_config.AUTH_METHODS = ["username"]
@@ -79,7 +79,7 @@ class TestLoginView(TestSetup):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("msg", response.data)
-        self.assertEqual(response.data["msg"], "MFA has been deactivated.")
+        self.assertEqual(response.data["msg"], self.messages.mfa_deactivated)
 
     def test_generate_tokens(self):
         accounts_config.AUTH_METHODS = ["username"]
@@ -100,4 +100,6 @@ class TestLoginView(TestSetup):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("msg", response.data)
-        self.assertEqual(response.data["msg"], "Recovery codes generated successfully")
+        self.assertEqual(
+            response.data["msg"], self.messages.mfa_recovery_codes_generated
+        )

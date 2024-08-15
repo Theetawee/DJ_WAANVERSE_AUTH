@@ -11,6 +11,8 @@ from rest_framework_simplejwt.serializers import PasswordField
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.tokens import RefreshToken, Token
 
+from dj_waanverse_auth.messages import Messages
+
 from .models import EmailConfirmationCode, MultiFactorAuth, ResetPasswordCode
 from .settings import accounts_config
 from .utils import (
@@ -32,9 +34,7 @@ Account = get_user_model()
 
 class TokenObtainSerializer(serializers.Serializer):
     token_class: Optional[Type[Token]] = None
-    default_error_messages = {
-        "no_active_account": _("No active account found with the given credentials")
-    }
+    default_error_messages = {"no_active_account": Messages.no_account}
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)

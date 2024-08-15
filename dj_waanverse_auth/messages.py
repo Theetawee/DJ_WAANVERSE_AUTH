@@ -26,12 +26,6 @@ class MessagesSchema(TypedDict):
     token_error: str
     general_msg: str
     mfa_code_generated_email_subject: str
-    email_exists: str
-    passwords_mismatch: str
-    username_exists: str
-    password_validation_error: str
-    invalid_email_code: str
-    expired_email_code: str
 
 
 class Messages(MessagesSchema):
@@ -67,9 +61,3 @@ class Messages(MessagesSchema):
     token_error = "An error occurred while processing the token. Please try again."
     general_msg = "An error occurred. Please try again."
     mfa_code_generated_email_subject = "New MFA Recovery Codes Generated"
-    username_exists = "Username already exists."
-    passwords_mismatch = "Passwords do not match."
-    email_exists = "Email already exists."
-    password_validation_error = "password must contain at least one digit, one uppercase letter, one lowercase letter, one special character (e.g., @, #, $, etc.)"
-    invalid_email_code = "Invalid code."
-    expired_email_code = "Code expired."

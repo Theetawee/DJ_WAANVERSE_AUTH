@@ -14,8 +14,8 @@ class TestLoginView(TestSetup):
         response = self.client.post(self.login_url, user_data, format="json")
         self.assertEqual(response.status_code, 200)
         self.assertIn("email", response.data)
-        self.assertIn("status", response.data)
-        self.assertEqual(response.data["status"], "unverified")
+        self.assertIn("msg", response.data)
+        self.assertEqual(response.data["msg"], self.messages.status_unverified)
         self.assertEqual(response.data["email"], self.user1.email)
 
     def test_login_view_verified_email(self):
@@ -37,8 +37,8 @@ class TestLoginView(TestSetup):
         response = self.client.post(self.login_url, user_data, format="json")
         self.assertEqual(response.status_code, 200)
         self.assertIn("email", response.data)
-        self.assertIn("status", response.data)
-        self.assertEqual(response.data["status"], "unverified")
+        self.assertIn("msg", response.data)
+        self.assertEqual(response.data["msg"], self.messages.status_unverified)
         self.assertEqual(response.data["email"], self.user1.email)
 
     def test_logout(self):
@@ -51,4 +51,4 @@ class TestLoginView(TestSetup):
         response = self.client.post(self.logout_url)
         self.assertEqual(response.status_code, 200)
         self.assertIn("msg", response.data)
-        self.assertEqual(response.data["msg"], "Successfully logged out.")
+        self.assertEqual(response.data["msg"], self.messages.logout_successful)
