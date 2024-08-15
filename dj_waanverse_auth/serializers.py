@@ -5,7 +5,6 @@ import pyotp
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.hashers import check_password
 from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
 from rest_framework import exceptions, serializers
 from rest_framework_simplejwt.serializers import PasswordField
 from rest_framework_simplejwt.settings import api_settings
@@ -22,6 +21,7 @@ from .utils import (
     generate_tokens,
     get_client_ip,
     get_email_verification_status,
+    get_user_agent,
     handle_email_verification,
     handle_user_login,
     user_email_address,
@@ -50,7 +50,7 @@ class TokenObtainSerializer(serializers.Serializer):
         if login_field:
             authenticate_kwargs = {"login_field": login_field, "password": password}
         else:
-            raise exceptions.ValidationError(_("Must include valid login credentials."))
+            raise exceptions.ValidationError({"msg": Messages.no_credentials})
 
         try:
             authenticate_kwargs["request"] = self.context["request"]
@@ -126,13 +126,11 @@ class ResendVerificationEmailSerializer(serializers.Serializer):
         try:
             user = Account.objects.get(email=email)
         except Account.DoesNotExist:
-            raise serializers.ValidationError(
-                "No account is associated with this email address."
-            )
+            raise serializers.ValidationError({"msg": Messages.no_account})
 
         email_address = user_email_address(user)
         if email_address.verified:
-            raise serializers.ValidationError("Email is already verified.")
+            raise serializers.ValidationError({"msg": Messages.email_already_verified})
 
         return email
 
@@ -142,10 +140,8 @@ class ResendVerificationEmailSerializer(serializers.Serializer):
             user = Account.objects.get(email=email)
             handle_email_verification(user)
             return email
-        except Exception as e:
-            raise serializers.ValidationError(
-                "An error occurred while sending verification email: " + str(e)
-            )
+        except Exception:
+            raise serializers.ValidationError({"msg": Messages.general_msg})
 
 
 class VerifyEmailSerializer(serializers.Serializer):
@@ -233,8 +229,8 @@ class SignupSerializer(serializers.Serializer):
             user_email_address(user)
 
             handle_email_verification(user)
-        except Exception as e:
-            raise serializers.ValidationError(f"Error creating user: {e}")
+        except Exception:
+            raise serializers.ValidationError({"msg": Messages.user_creation_error})
 
         return user
 
@@ -264,7 +260,7 @@ class LogoutSerializer(serializers.Serializer):
             if request:
                 refresh = request.COOKIES.get(accounts_config.REFRESH_TOKEN_COOKIE)
                 if not refresh:
-                    raise serializers.ValidationError("Refresh token is required.")
+                    raise serializers.ValidationError({"msg": Messages.token_error})
         attrs["refresh"] = refresh
         self.token = refresh
         return attrs
@@ -284,9 +280,7 @@ class ResetPasswordSerializer(serializers.Serializer):
 
     def validate_email(self, email):
         if not Account.objects.filter(email=email).exists():
-            raise serializers.ValidationError(
-                _("Something went wrong. Please try again or contact support.")
-            )
+            raise serializers.ValidationError({"msg": Messages.general_msg})
         return email
 
     def save(self, **kwargs):
@@ -308,9 +302,7 @@ class ResetPasswordSerializer(serializers.Serializer):
                 ):
                     if last_reset_code.cooldown_remaining > timedelta(seconds=0):
                         raise serializers.ValidationError(
-                            _(
-                                "Too many attempts. Please try again after the cooldown period."
-                            )
+                            {"msg": Messages.attempts_limit}
                         )
                     else:
                         # If cooldown period is over, reset attempts
@@ -334,7 +326,7 @@ class ResetPasswordSerializer(serializers.Serializer):
             email=email,
             context=email_context,
             template="password_reset",
-            subject="Password Reset Code - Waanverse Accounts.",
+            subject=Messages.reset_password_email_subject,
         )
         thread.start()
         return reset_code
@@ -409,7 +401,7 @@ class DeactivateMfaSerializer(serializers.Serializer):
 
         # Validate password
         if not check_password(password, user.password):
-            raise serializers.ValidationError("Invalid password.")
+            raise serializers.ValidationError({"msg": Messages.invalid_password})
 
         # Validate MFA code
         try:
@@ -422,7 +414,7 @@ class DeactivateMfaSerializer(serializers.Serializer):
         if not totp.verify(code):
             # Fallback to recovery codes if pyotp verification fails
             if code not in mfa.recovery_codes:
-                raise serializers.ValidationError("Invalid MFA code.")
+                raise serializers.ValidationError({"msg": Messages.mfa_invalid_otp})
             # Remove used recovery code
             mfa.recovery_codes.remove(code)
             mfa.save()
@@ -440,20 +432,18 @@ class DeactivateMfaSerializer(serializers.Serializer):
                 thread = EmailThread(
                     email=user.email,
                     template="deactivate_mfa",
-                    subject="MFA Deactivated",
+                    subject=Messages.mfa_deactivated_email_subject,
                     context={
                         "username": user.username,
                         "email": user.email,
                         "time": timezone.now(),
                         "ip_address": get_client_ip(self.context["request"]),
-                        "user_agent": self.context["request"].META.get(
-                            "HTTP_USER_AGENT", "<unknown>"
-                        )[:255],
+                        "user_agent": get_user_agent(self.context["request"]),
                     },
                 )
                 thread.start()
             mfa.save()
-            return {"detail": "MFA has been deactivated."}
+            return {"msg": Messages.mfa_deactivated}
 
-        except Exception as e:
-            raise serializers.ValidationError(str(e))
+        except Exception:
+            raise serializers.ValidationError({"msg": Messages.general_msg})

@@ -26,6 +26,13 @@ class MessagesSchema(TypedDict):
     token_error: str
     general_msg: str
     mfa_code_generated_email_subject: str
+    email_already_verified: str
+    no_credentials: str
+    user_creation_error: str
+    attempts_limit: str
+    invalid_password: str
+    mfa_deactivated_email_subject: str
+    reset_password_email_subject: str
 
 
 class Messages(MessagesSchema):
@@ -61,3 +68,10 @@ class Messages(MessagesSchema):
     token_error = "An error occurred while processing the token. Please try again."
     general_msg = "An error occurred. Please try again."
     mfa_code_generated_email_subject = "New MFA Recovery Codes Generated"
+    email_already_verified = "Your email is already verified."
+    no_credentials = "No valid credentials provided. Please try again."
+    user_creation_error = "An error occurred while creating the user. Please try again."
+    attempts_limit = "Too many attempts. Please try again after the cooldown period."
+    invalid_password = "Invalid password."
+    mfa_deactivated_email_subject = "Multi-factor authentication deactivated"
+    reset_password_email_subject = "Password Reset Request"
