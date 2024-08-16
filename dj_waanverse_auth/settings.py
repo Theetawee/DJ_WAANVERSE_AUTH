@@ -23,12 +23,10 @@ class AccountConfigSchema(TypedDict, total=False):
     DISALLOWED_USERNAMES: List[str]
     USER_DETAIL_SERIALIZER_CLASS: str
     ENABLE_EMAIL_ON_LOGIN: bool
-    ENCRYPTION_KEY: Optional[str]
     CONFIRMATION_CODE_DIGITS: int
     PLATFORM_NAME: str
     EMAIL_VERIFICATION_CODE_DURATION: timedelta
     MFA_ISSUER_NAME: str
-    BLACKLIST_TOKENS_ON_ROTATION: bool
     MFA_CODE_DIGITS: int
     MFA_EMAIL_ALERTS_ENABLED: bool
     PASSWORD_RESET_CODE_DURATION: timedelta
@@ -73,22 +71,18 @@ class AccountConfig:
             "USER_DETAIL_SERIALIZER_CLASS",
             "dj_waanverse_auth.serializers.AccountSerializer",
         )
-        self.ENABLE_EMAIL_ON_LOGIN = settings_dict.get("ENABLE_EMAIL_ON_LOGIN", False)
-        self.ENCRYPTION_KEY = settings_dict.get("ENCRYPTION_KEY", None)
+        self.ENABLE_EMAIL_ON_LOGIN = settings_dict.get("ENABLE_EMAIL_ON_LOGIN", True)
         self.CONFIRMATION_CODE_DIGITS = settings_dict.get("CONFIRMATION_CODE_DIGITS", 6)
-        self.PLATFORM_NAME = settings_dict.get("PLATFORM_NAME", "Waanverse Accounts")
+        self.PLATFORM_NAME = settings_dict.get("PLATFORM_NAME", "Waanverse Auth")
         self.EMAIL_VERIFICATION_CODE_DURATION = settings_dict.get(
             "EMAIL_VERIFICATION_CODE_DURATION", timedelta(minutes=10)
         )
         self.MFA_ISSUER_NAME = settings_dict.get(
             "MFA_ISSUER_NAME", "Waanverse Labs Inc."
         )
-        self.BLACKLIST_TOKENS_ON_ROTATION = settings_dict.get(
-            "BLACKLIST_TOKENS_ON_ROTATION", False
-        )
         self.MFA_CODE_DIGITS = settings_dict.get("MFA_CODE_DIGITS", 6)
         self.MFA_EMAIL_ALERTS_ENABLED = settings_dict.get(
-            "MFA_EMAIL_ALERTS_ENABLED", False
+            "MFA_EMAIL_ALERTS_ENABLED", True
         )
         self.PASSWORD_RESET_CODE_DURATION = settings_dict.get(
             "PASSWORD_RESET_CODE_DURATION", timedelta(minutes=10)
@@ -97,7 +91,7 @@ class AccountConfig:
             "PASSWORD_RESET_COOLDOWN_PERIOD", timedelta(minutes=5)
         )
         self.PASSWORD_RESET_MAX_ATTEMPTS = settings_dict.get(
-            "PASSWORD_RESET_MAX_ATTEMPTS", 3
+            "PASSWORD_RESET_MAX_ATTEMPTS", 1
         )
 
 

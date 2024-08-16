@@ -1,4 +1,4 @@
-# Package Configuration
+# Configuration
 `dj_waanverse_auth` comes with a number of default settings. These can be overridden in your `settings.py` file using the `WAANVERSE_AUTH` dictionary as shown below.
 
 ## Example
@@ -108,13 +108,9 @@ The `dj_waanverse_auth` package provides a flexible configuration system to tail
 
 ### ENABLE_EMAIL_ON_LOGIN
 - **Type:** `bool`
-- **Default:** `False`
-- **Description:** If set to `True`, users can log in using their email address.
+- **Default:** `True`
+- **Description:** If set to `True`, users will receive an email when them or someone else logs into their account.
 
-### ENCRYPTION_KEY
-- **Type:** `Optional[str]`
-- **Default:** `None`
-- **Description:** The key used for encrypting sensitive data. If not provided, the system will not perform encryption.
 
 ### CONFIRMATION_CODE_DIGITS
 - **Type:** `int`
@@ -123,7 +119,7 @@ The `dj_waanverse_auth` package provides a flexible configuration system to tail
 
 ### PLATFORM_NAME
 - **Type:** `str`
-- **Default:** `"Waanverse Accounts"`
+- **Default:** `"Waanverse Auth"`
 - **Description:** The name of the platform, used in email templates and other messaging contexts.
 
 ### EMAIL_VERIFICATION_CODE_DURATION
@@ -136,10 +132,6 @@ The `dj_waanverse_auth` package provides a flexible configuration system to tail
 - **Default:** `"Waanverse Labs Inc."`
 - **Description:** The name of the issuer displayed in MFA applications like Google Authenticator.
 
-### BLACKLIST_TOKENS_ON_ROTATION
-- **Type:** `bool`
-- **Default:** `False`
-- **Description:** If set to `True`, tokens are blacklisted when rotated, preventing their reuse.
 
 ### MFA_CODE_DIGITS
 - **Type:** `int`
@@ -148,8 +140,8 @@ The `dj_waanverse_auth` package provides a flexible configuration system to tail
 
 ### MFA_EMAIL_ALERTS_ENABLED
 - **Type:** `bool`
-- **Default:** `False`
-- **Description:** If set to `True`, users will receive email alerts for MFA-related activities.
+- **Default:** `True`
+- **Description:** If set to `True`, users will receive email alerts for MFA-related activities like generation of recovery codes.
 
 ### PASSWORD_RESET_CODE_DURATION
 - **Type:** `timedelta`
@@ -163,6 +155,6 @@ The `dj_waanverse_auth` package provides a flexible configuration system to tail
 
 ### PASSWORD_RESET_MAX_ATTEMPTS
 - **Type:** `int`
-- **Default:** `3`
-- **Description:** The maximum number of password reset attempts allowed before the system temporarily locks further attempts.
+- **Default:** `1`
+- **Description:** The maximum number of password reset attempts allowed before the system temporarily locks further attempts till the cooldown period.
 

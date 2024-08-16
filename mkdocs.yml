@@ -3,7 +3,7 @@ site_url: http://localhost:8000
 nav:
   - Home: index.md
   - Installation: installation.md
-  - Package Configuration: configuration.md
+  - Configuration: configuration.md
   
 
 theme:
