@@ -1,0 +1,87 @@
+site_name: Dj Waanverse Auth
+site_url: http://localhost:8000
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Package Configuration: configuration.md
+  
+
+theme:
+  name: material
+  custom_dir: docs/overrides
+  logo: assets/images/logo.png
+  favicon: assets/images/favicon.png
+  features:
+    - navigation.instant
+    - navigation.tabs
+    - navigation.instant.prefetch
+    - navigation.instant.progress
+    - navigation.sections
+    - toc.integrate 
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.copy
+    - navigation.tracking
+    - navigation.path
+    - navigation.footer
+
+
+  language: en
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/toggle-switch-off-outline
+        name: Switch to dark mode
+      primary: teal
+      accent: teal
+    - scheme: slate
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to light mode
+      primary: teal
+      accent: teal
+
+
+extra:
+  consent:
+    title: Cookie consent
+    description: >- 
+      We use cookies to recognize your repeated visits and preferences, as well
+      as to measure the effectiveness of our documentation and whether users
+      find what they're searching for. With your consent, you're helping us to
+      make our documentation better.
+    actions:
+      - accept
+      - reject
+
+  analytics:
+    provider: google
+    property: G-XXXXXXXXXX
+    
+  version:
+    provider: mike
+    default: stable 
+    alias: true
+  social:
+    - icon: fontawesome/brands/github 
+      link: https://github.com/waanverse
+  generator: false
+
+plugins:
+  - privacy
+  - search
+
+
+
+copyright: >
+  Copyright &copy; 2024 All rights reserved. Waanverse Labs Inc. –
+  <a href="#__consent">Change cookie settings</a>
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - toc:
+      permalink: True

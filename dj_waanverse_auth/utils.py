@@ -280,6 +280,12 @@ def generate_tokens(user):
         dict: A dictionary containing the access and refresh tokens.
     """
     refresh = RefreshToken.for_user(user)
+    UserClaimsSerializer = get_serializer(accounts_config.USER_CLAIM_SERIALIZER_CLASS)
+    serializer = UserClaimsSerializer(user)
+    claims = serializer.data
+    for key, value in claims.items():
+        refresh[key] = value
+
     return {"refresh_token": str(refresh), "access_token": str(refresh.access_token)}
 
 

@@ -46,7 +46,6 @@ class TokenObtainSerializer(serializers.Serializer):
     def validate(self, attrs: Dict[str, Any]) -> Dict[Any, Any]:
         login_field = attrs.get("login_field")
         password = attrs["password"]
-
         if login_field:
             authenticate_kwargs = {"login_field": login_field, "password": password}
         else:
@@ -66,11 +65,6 @@ class TokenObtainSerializer(serializers.Serializer):
             )
 
         return {}
-
-    @classmethod
-    def get_token(cls, user) -> Token:
-        token = cls.token_class.for_user(user)
-        return token
 
 
 class LoginSerializer(TokenObtainSerializer):
