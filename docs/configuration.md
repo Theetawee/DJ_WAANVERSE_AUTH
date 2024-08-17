@@ -179,3 +179,17 @@ The `dj_waanverse_auth` package provides a flexible configuration system to tail
 
     - **True:** Emails are sent in a separate thread.
     - **False:** Emails are sent synchronously, blocking the main process until sending is complete.
+
+
+
+### USE_ADMIN_PANEL
+
+- **Type:** `bool`
+- **Default:** `False`
+- **Description:** Determines whether models should be displayed in the Django admin panel. When set to `True`, models will be accessible and manageable through the admin interface. By default, this setting is disabled.
+
+### USE_UNFOLD
+
+- **Type:** `bool`
+- **Default:** `False`
+- **Description:** Activates or deactivates the integration with Django Unfold. When set to `True`, the application will utilize Django Unfold for its intended functionalities. By default, this setting is disabled.
