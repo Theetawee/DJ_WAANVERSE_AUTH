@@ -26,6 +26,7 @@ from .serializers import (
 from .settings import accounts_config
 from .utils import (
     EmailThread,
+    generate_tokens,
     get_client_ip,
     get_serializer,
     get_user_agent,
@@ -81,7 +82,7 @@ def login_view(request):
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def refresh_token_view(request):
-    refresh_token = request.data.get("refresh") or request.COOKIES.get(
+    refresh_token = request.data.get("refresh_token") or request.COOKIES.get(
         accounts_config.REFRESH_TOKEN_COOKIE
     )
 
@@ -91,14 +92,13 @@ def refresh_token_view(request):
         )
 
     try:
-        refresh = RefreshToken(refresh_token)
-        # Generate a new access token
-        new_access_token = str(refresh.access_token)
-        # Return the new access token in the response
+        tokens = generate_tokens(request.user, refresh_token=refresh_token)
         response = Response(
-            {"access_token": new_access_token}, status=status.HTTP_200_OK
+            {"access_token": tokens["access_token"]}, status=status.HTTP_200_OK
         )
-        new_response = set_cookies(access_token=new_access_token, response=response)
+        new_response = set_cookies(
+            access_token=tokens["access_token"], response=response
+        )
         return new_response
     except TokenError:
         return Response(

@@ -1,6 +1,6 @@
 from datetime import timedelta
 from typing import Any, Dict, Optional, Type
-
+from rest_framework_simplejwt.exceptions import AuthenticationFailed
 import pyotp
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.hashers import check_password
@@ -60,7 +60,7 @@ class TokenObtainSerializer(serializers.Serializer):
 
         if not api_settings.USER_AUTHENTICATION_RULE(self.user):
 
-            raise serializers.ValidationError(
+            raise AuthenticationFailed(
                 {"msg": self.error_messages["no_active_account"]}
             )
 

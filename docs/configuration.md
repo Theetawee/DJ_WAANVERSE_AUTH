@@ -6,7 +6,7 @@
 ```python
 WAANVERSE_AUTH = {
     ...
-    "USER_CLAIM_SERIALIZER": "dj_waanverse_auth.serializers.BasicAccountSerializer",
+    "USER_CLAIM_SERIALIZER": "my-app.serializers.BasicAccountSerializer",
     ...
 }
 ```
@@ -23,6 +23,11 @@ The `dj_waanverse_auth` package provides a flexible configuration system to tail
 !!! warning "Important"
 
     Each value specified in the configuration must correspond to an existing field in the accounts model. For instance, if `AUTH_METHODS` includes `["username", "email", "phone_number"]`, the accounts model must contain fields for `username`, `email`, and `phone_number`. Failure to do so will result in errors during authentication.
+
+!!! warning "Important"
+
+    `username` and `email` are mandatory fields in the accounts model and email verification is required out of the box with no available setting to disable it.
+
 
 
 ### MFA_RECOVERY_CODES_COUNT

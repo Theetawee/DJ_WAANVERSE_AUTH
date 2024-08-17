@@ -17,15 +17,15 @@ class TestLoginFails(TestSetup):
         data = {"login_field": "a@a.com", "password": "password1"}
         response = self.client.post(self.login_url, data)
         self.assertEqual(
-            response.data["msg"], [self.messages.no_account]
+            response.data["msg"], self.messages.no_account
         )
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_login_no_user(self):
         accounts_config.AUTH_METHODS = ["email", "username", "phone_number"]
         data = {"login_field": "not_a@a.com", "password": "invalid"}
         response = self.client.post(self.login_url, data)
         self.assertEqual(
-            response.data["msg"], [self.messages.no_account]
+            response.data["msg"], self.messages.no_account
         )
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

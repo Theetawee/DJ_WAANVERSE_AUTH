@@ -269,7 +269,7 @@ def check_mfa_status(user):
         return False
 
 
-def generate_tokens(user):
+def generate_tokens(user, refresh_token=None):
     """
     Generates access and refresh tokens for the given user.
 
@@ -279,7 +279,10 @@ def generate_tokens(user):
     Returns:
         dict: A dictionary containing the access and refresh tokens.
     """
-    refresh = RefreshToken.for_user(user)
+    if refresh_token:
+        refresh = RefreshToken(refresh_token)
+    else:
+        refresh = RefreshToken.for_user(user)
     UserClaimsSerializer = get_serializer(accounts_config.USER_CLAIM_SERIALIZER_CLASS)
     serializer = UserClaimsSerializer(user)
     claims = serializer.data
