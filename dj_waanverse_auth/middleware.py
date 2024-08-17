@@ -1,3 +1,5 @@
+from rest_framework import status
+
 from .settings import accounts_config
 
 
@@ -11,7 +13,7 @@ class CookiesHandlerMiddleware:
         response = self.get_response(request)
         try:
             if (response.data["code"]) == "user_not_found" or (
-                response.status_code == 401
+                response.status_code == status.HTTP_401_UNAUTHORIZED
             ):
                 response.delete_cookie(accounts_config["ACCESS_TOKEN_COOKIE_NAME"])
                 response.delete_cookie(accounts_config["REFRESH_TOKEN_COOKIE_NAME"])
