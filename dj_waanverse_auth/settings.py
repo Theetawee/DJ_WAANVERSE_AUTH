@@ -33,6 +33,8 @@ class AccountConfigSchema(TypedDict, total=False):
     PASSWORD_RESET_COOLDOWN_PERIOD: timedelta
     PASSWORD_RESET_MAX_ATTEMPTS: int
     EMAIL_THREADING_ENABLED: bool
+    USE_ADMIN_PANEL: bool
+    USE_UNFOLD: bool
 
 
 class AccountConfig:
@@ -98,6 +100,9 @@ class AccountConfig:
             "EMAIL_THREADING_ENABLED", True
         )
 
+        self.USE_ADMIN_PANEL = settings_dict.get("USE_ADMIN_PANEL", False)
+        self.USE_UNFOLD = settings_dict.get("USE_UNFOLD", False)
+
 
 # Merge user-provided settings with the default settings
 USER_SETTINGS = getattr(settings, "WAANVERSE_AUTH", {})
@@ -118,3 +123,9 @@ for setting in required_email_settings:
         raise ImproperlyConfigured(
             f"Email setting '{setting}' is required but not configured. Refer to django docs (https://docs.djangoproject.com/en/5.1/topics/email/)"
         )
+
+
+if accounts_config.USE_UNFOLD and "unfold" not in settings.INSTALLED_APPS:
+    raise ImproperlyConfigured(
+        "If 'USE_UNFOLD' is set to True, 'unfold' must be in INSTALLED_APPS"
+    )

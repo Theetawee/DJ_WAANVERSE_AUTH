@@ -28,6 +28,9 @@ class TestVerifyEmail(TestSetup):
             {"email": self.user1.email, "code": verification_code},
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("email", response.data)
+        self.assertIn("msg", response.data)
+        self.assertEqual(response.data["msg"], self.messages.status_verified)
 
     def test_resend_verify_email(self):
         response = self.client.post(
