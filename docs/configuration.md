@@ -128,9 +128,9 @@ The `dj_waanverse_auth` package provides a flexible configuration system to tail
 - **Description:** The name of the platform, used in email templates and other messaging contexts.
 
 ### EMAIL_VERIFICATION_CODE_DURATION
-- **Type:** `timedelta`
-- **Default:** `timedelta(minutes=10)`
-- **Description:** The duration for which the email verification code remains valid.
+- **Type:** `int`
+- **Default:** `10`
+- **Description:** The duration for which the email verification code remains valid in minutes.
 
 ### MFA_ISSUER_NAME
 - **Type:** `str`
@@ -174,7 +174,7 @@ The `dj_waanverse_auth` package provides a flexible configuration system to tail
     When set to `True`, emails are sent using a separate thread, allowing for asynchronous sending and preventing delays in the main process. This is particularly useful in production environments where email sending might be a time-consuming operation.
 
     When set to `False`, email sending is done synchronously, which can be useful for testing purposes or in scenarios where immediate feedback is required, as emails are sent directly without the overhead of threading.
-    
+
 - **Impact:**
 
     - **True:** Emails are sent in a separate thread.

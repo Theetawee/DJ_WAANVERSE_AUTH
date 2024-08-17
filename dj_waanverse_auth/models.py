@@ -42,8 +42,8 @@ class EmailConfirmationCode(models.Model):
 
     @property
     def is_expired(self):
-        expiration_time = self.created_at + timedelta(minutes=10)
-        return timezone.now() > expiration_time
+        expiration_time = self.created_at + timedelta(minutes=accounts_config.EMAIL_VERIFICATION_CODE_DURATION)
+        return timezone.now() >= expiration_time
 
     def __str__(self):
         return f"Email: {self.user.email} - Code: {self.code}"

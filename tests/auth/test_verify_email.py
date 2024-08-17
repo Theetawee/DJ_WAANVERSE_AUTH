@@ -1,3 +1,5 @@
+import time
+
 from django.core import mail
 from rest_framework import status
 
@@ -16,7 +18,9 @@ class TestVerifyEmail(TestSetup):
             self.login_url,
             {"login_field": self.user1.email, "password": "password1"},
         )
-
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to[0], self.user1.email)
+        self.assertEqual(mail.outbox[0].subject, self.messages.verify_email_subject)
         verification_code = EmailConfirmationCode.objects.get(user=self.user1).code
 
         response = self.client.post(
@@ -69,5 +73,24 @@ class TestVerifyEmail(TestSetup):
             self.verify_email_url,
             {"email": self.user1.email, "code": verification_code},
         )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["msg"], [self.messages.invalid_code])
+
+    def test_send_and_verify_email_expired_code(self):
+        mail.outbox = []
+        accounts_config.AUTH_METHODS = ["email"]
+        accounts_config.EMAIL_VERIFICATION_CODE_DURATION = 0.001
+        self.client.post(
+            self.login_url,
+            {"login_field": self.user1.email, "password": "password1"},
+        )
+
+        verification = EmailConfirmationCode.objects.get(user=self.user1)
+        time.sleep(1)
+        response = self.client.post(
+            self.verify_email_url,
+            {"email": self.user1.email, "code": verification.code},
+        )
+
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data["msg"], [self.messages.invalid_code])

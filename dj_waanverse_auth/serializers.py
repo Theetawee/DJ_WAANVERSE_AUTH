@@ -155,15 +155,10 @@ class VerifyEmailSerializer(serializers.Serializer):
             raise serializers.ValidationError({"msg": Messages.invalid_code})
         except Exception:
             raise serializers.ValidationError({"msg": Messages.general_msg})
-        # Check if the code has expired
-        if (
-            timezone.now() - block.created_at
-            > accounts_config.EMAIL_VERIFICATION_CODE_DURATION
-        ):
+        if block.is_expired:
             block.delete()
-            raise serializers.ValidationError(Messages.expired_email_code)
+            raise serializers.ValidationError({"msg": Messages.invalid_code})
 
-        # Delete the used code
         block.delete()
         VerifyEmailSerializer.verify_email(user)
         return data

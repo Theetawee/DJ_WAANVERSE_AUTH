@@ -58,3 +58,18 @@ class TestLoginView(TestSetup):
         self.assertEqual(response.status_code, 200)
         self.assertIn("msg", response.data)
         self.assertEqual(response.data["msg"], self.messages.logout_successful)
+
+    def test_login_view_email_on_login(self):
+        accounts_config.AUTH_METHODS = ["email"]
+        accounts_config.EMAIL_THREADING_ENABLED = False
+        mail.outbox = []
+        user_data = {
+            "login_field": self.user2.email,
+            "password": "password2",
+        }
+        response = self.client.post(self.login_url, user_data, format="json")
+        self.assert_auth_cookies(response)
+        self.assert_auth_response(response)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to[0], self.user2.email)
+        self.assertEqual(mail.outbox[0].subject, self.messages.login_email_subject)

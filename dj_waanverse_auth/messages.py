@@ -39,6 +39,7 @@ class MessagesSchema(TypedDict):
     email_exists: str
     password_mismatch: str
     verify_email_subject: str
+    login_email_subject: str
 
 
 class Messages(MessagesSchema):
@@ -95,3 +96,4 @@ class Messages(MessagesSchema):
     email_exists = _("An account with this email already exists.")
     password_mismatch = _("The provided passwords do not match. Please try again.")
     verify_email_subject = _("Verify your email address")
+    login_email_subject = _("New login alert")
