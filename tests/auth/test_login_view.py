@@ -1,3 +1,5 @@
+from django.core import mail
+
 from dj_waanverse_auth.settings import accounts_config
 
 from .test_setup import TestSetup
@@ -5,13 +7,17 @@ from .test_setup import TestSetup
 
 class TestLoginView(TestSetup):
     def test_login_view_non_verified(self):
+        mail.outbox = []
         accounts_config.AUTH_METHODS = ["username"]
-
+        accounts_config.EMAIL_THREADING_ENABLED = False
         user_data = {
             "login_field": self.user1.username,
             "password": "password1",
         }
         response = self.client.post(self.login_url, user_data, format="json")
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to[0], self.user1.email)
+        self.assertEqual(mail.outbox[0].subject, self.messages.verify_email_subject)
         self.assertEqual(response.status_code, 200)
         self.assertIn("email", response.data)
         self.assertIn("msg", response.data)

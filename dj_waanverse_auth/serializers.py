@@ -1,11 +1,12 @@
 from datetime import timedelta
 from typing import Any, Dict, Optional, Type
-from rest_framework_simplejwt.exceptions import AuthenticationFailed
+
 import pyotp
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.hashers import check_password
 from django.utils import timezone
 from rest_framework import exceptions, serializers
+from rest_framework_simplejwt.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import PasswordField
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.tokens import RefreshToken, Token
@@ -15,13 +16,13 @@ from dj_waanverse_auth.messages import Messages
 from .models import EmailConfirmationCode, MultiFactorAuth, ResetPasswordCode
 from .settings import accounts_config
 from .utils import (
-    EmailThread,
     check_mfa_status,
     generate_password_reset_code,
     generate_tokens,
     get_client_ip,
     get_email_verification_status,
     get_user_agent,
+    handle_email_mechanism,
     handle_email_verification,
     handle_user_login,
     user_email_address,
@@ -316,13 +317,12 @@ class ResetPasswordSerializer(serializers.Serializer):
 
         # Send the email with the new reset code
         email_context = {"code": reset_code.code, "email": email}
-        thread = EmailThread(
-            email=email,
+        handle_email_mechanism(
             context=email_context,
+            email=email,
             template="password_reset",
             subject=Messages.reset_password_email_subject,
         )
-        thread.start()
         return reset_code
 
 
@@ -421,10 +421,7 @@ class DeactivateMfaSerializer(serializers.Serializer):
         mfa.recovery_codes = []
         try:
             if accounts_config.MFA_EMAIL_ALERTS_ENABLED:
-                thread = EmailThread(
-                    email=user.email,
-                    template="deactivate_mfa",
-                    subject=Messages.mfa_deactivated_email_subject,
+                handle_email_mechanism(
                     context={
                         "username": user.username,
                         "email": user.email,
@@ -432,8 +429,11 @@ class DeactivateMfaSerializer(serializers.Serializer):
                         "ip_address": get_client_ip(self.context["request"]),
                         "user_agent": get_user_agent(self.context["request"]),
                     },
+                    email=user.email,
+                    template="deactivate_mfa",
+                    subject=Messages.mfa_deactivated_email_subject,
                 )
-                thread.start()
+
             mfa.save()
             return {"msg": Messages.mfa_deactivated}
 

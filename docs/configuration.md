@@ -163,3 +163,19 @@ The `dj_waanverse_auth` package provides a flexible configuration system to tail
 - **Default:** `1`
 - **Description:** The maximum number of password reset attempts allowed before the system temporarily locks further attempts till the cooldown period.
 
+### EMAIL_THREADING_ENABLED
+
+- **Type:** `bool`
+- **Default:** `True`
+- **Description:** Determines whether email sending should use threading.
+
+!!! note "Note"
+
+    When set to `True`, emails are sent using a separate thread, allowing for asynchronous sending and preventing delays in the main process. This is particularly useful in production environments where email sending might be a time-consuming operation.
+
+    When set to `False`, email sending is done synchronously, which can be useful for testing purposes or in scenarios where immediate feedback is required, as emails are sent directly without the overhead of threading.
+    
+- **Impact:**
+
+    - **True:** Emails are sent in a separate thread.
+    - **False:** Emails are sent synchronously, blocking the main process until sending is complete.

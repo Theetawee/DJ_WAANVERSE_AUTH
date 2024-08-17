@@ -2,7 +2,7 @@ import random
 import string
 import threading
 from importlib import import_module
-
+from .messages import Messages
 from django.conf import settings
 from django.contrib.auth.models import update_last_login
 from django.contrib.auth.signals import user_logged_in
@@ -129,6 +129,24 @@ def dispatch_email(context, email, subject, template):
         raise ValueError(f"Could not send an email. Error: {e}")
 
 
+def handle_email_mechanism(context, email, subject, template):
+    """
+    Handles email sending by deciding whether to use threading or not
+    based on the EMAIL_THREADING_ENABLED setting.
+
+    Args:
+        context (any): The context of the email which will be passed to the template
+        email (str): The email address to which the email will be sent
+        subject (str): The subject of the email
+        template (str): The name of the template located in the 'emails' folder
+    """
+    if accounts_config.EMAIL_THREADING_ENABLED:
+        email_thread = EmailThread(context, email, subject, template)
+        email_thread.start()
+    else:
+        dispatch_email(context, email, subject, template)
+
+
 def handle_email_verification(user):
     """Generates and sends the email verification code to the user's email.
 
@@ -147,16 +165,15 @@ def handle_email_verification(user):
         user_code, created = EmailConfirmationCode.objects.get_or_create(user=user)
         user_code.code = code
         user_code.save()
-        tread = EmailThread(
+        handle_email_mechanism(
             context={"code": code},
             email=user.email,
-            subject="Email Verification",
+            subject=Messages.verify_email_subject,
             template="verify_email",
         )
-        tread.start()
 
     except Exception as e:
-        raise ValueError(f"Could not create a confirmation code. Error: {e}")
+        raise ValueError({"msg": f"Could not create a confirmation code. Error: {e}"})
 
     return user_code
 

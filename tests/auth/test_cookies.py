@@ -104,7 +104,7 @@ class TestCookies(TestSetup):
 
     def test_refresh_token_no_refresh_token(self):
         response = self.client.post(self.refresh_token_url)
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertIn("msg", response.data)
         self.assertEqual(response.data["msg"], self.messages.token_error)
 
@@ -116,6 +116,6 @@ class TestCookies(TestSetup):
         res.cookies[accounts_config.REFRESH_TOKEN_COOKIE] = "invalid"
 
         response = self.client.post(self.refresh_token_url)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertIn("msg", response.data)
         self.assertEqual(response.data["msg"], self.messages.token_error)

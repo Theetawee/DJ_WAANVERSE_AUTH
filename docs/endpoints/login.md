@@ -18,7 +18,7 @@
         "password": "string"
     }
     ```
--   **Fields:**
+-   **Required Fields:**
     -   `login_field` (string): The login field (one of those specified in `AUTHENTICATION_METHODS`) of the user attempting to log in.
     -   `password` (string): The password associated with the `login_field`.
 

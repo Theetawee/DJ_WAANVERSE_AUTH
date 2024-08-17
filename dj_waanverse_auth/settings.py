@@ -32,6 +32,7 @@ class AccountConfigSchema(TypedDict, total=False):
     PASSWORD_RESET_CODE_DURATION: timedelta
     PASSWORD_RESET_COOLDOWN_PERIOD: timedelta
     PASSWORD_RESET_MAX_ATTEMPTS: int
+    EMAIL_THREADING_ENABLED: bool
 
 
 class AccountConfig:
@@ -92,6 +93,9 @@ class AccountConfig:
         )
         self.PASSWORD_RESET_MAX_ATTEMPTS = settings_dict.get(
             "PASSWORD_RESET_MAX_ATTEMPTS", 1
+        )
+        self.EMAIL_THREADING_ENABLED = settings_dict.get(
+            "EMAIL_THREADING_ENABLED", True
         )
 
 

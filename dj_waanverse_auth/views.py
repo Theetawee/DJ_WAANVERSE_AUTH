@@ -25,11 +25,11 @@ from .serializers import (
 )
 from .settings import accounts_config
 from .utils import (
-    EmailThread,
     generate_tokens,
     get_client_ip,
     get_serializer,
     get_user_agent,
+    handle_email_mechanism,
     reset_response,
     set_cookies,
 )
@@ -286,10 +286,10 @@ def regenerate_recovery_codes(request):
         mfa_account.set_recovery_codes()
         mfa_account.save()
         if accounts_config.MFA_EMAIL_ALERTS_ENABLED:
-            thread = EmailThread(
+            handle_email_mechanism(
+                subject=Messages.mfa_code_generated_email_subject,
                 email=user.email,
                 template="regenerate_codes",
-                subject=Messages.mfa_code_generated_email_subject,
                 context={
                     "username": user.username,
                     "email": user.email,
@@ -298,7 +298,6 @@ def regenerate_recovery_codes(request):
                     "user_agent": get_user_agent(request),
                 },
             )
-            thread.start()
         return Response(
             status=status.HTTP_200_OK,
             data={"msg": Messages.mfa_recovery_codes_generated},

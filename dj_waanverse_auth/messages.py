@@ -38,6 +38,7 @@ class MessagesSchema(TypedDict):
     invalid_code: str
     email_exists: str
     password_mismatch: str
+    verify_email_subject: str
 
 
 class Messages(MessagesSchema):
@@ -93,3 +94,4 @@ class Messages(MessagesSchema):
     invalid_code = _("The provided code is invalid or expired. Please try again.")
     email_exists = _("An account with this email already exists.")
     password_mismatch = _("The provided passwords do not match. Please try again.")
+    verify_email_subject = _("Verify your email address")

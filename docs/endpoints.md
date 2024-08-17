@@ -9,17 +9,17 @@
 | **Route**                         | **Requires Authentication** |
 |-----------------------------------|-----------------------------|
 | `/login`                          | No                          |
-| `/token/refresh`                  | No                          |
+| `/token/refresh`                  | Required                    |
 | `/resend/email`                   | No                          |
 | `/verify/email`                   | No                          |
 | `/signup`                         | No                          |
-| `/me`                             | Yes                         |
-| `/mfa/activate`                   | Yes                         |
-| `/mfa/verify`                     | Yes                         |
-| `/mfa/status`                     | Yes                         |
-| `/mfa/regenerate-codes`           | Yes                         |
-| `/mfa/deactivate`                 | Yes                         |
-| `/logout`                         | Yes                         |
-| `/mfa/login`                      | Yes                         |
+| `/me`                             | Required                    |
+| `/mfa/activate`                   | Required                    |
+| `/mfa/verify`                     | Required                    |
+| `/mfa/status`                     | Required                    |
+| `/mfa/regenerate-codes`           | Required                    |
+| `/mfa/deactivate`                 | Required                    |
+| `/logout`                         | Required                    |
+| `/mfa/login`                      | Required                    |
 | `/password/reset`                 | No                          |
 | `/password/reset/new`             | No                          |
