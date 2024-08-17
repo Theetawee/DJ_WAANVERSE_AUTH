@@ -1,10 +1,28 @@
 site_name: Dj Waanverse Auth
 site_url: http://localhost:8000
+
 nav:
-    - Home: index.md
-    - Installation: installation.md
-    - Configuration: configuration.md
-    - Endpoints: endpoints.md
+  - Home: index.md
+  - Installation Guide: installation.md
+  - Configuration Settings: configuration.md
+  - API Overview: endpoints.md
+  - API Endpoints:
+      - User Login: endpoints/login.md
+      - Confirm Password Reset: endpoints/confirm_reset_password.md
+      - User Logout: endpoints/logout.md
+      - Refresh Token: endpoints/refresh_token.md
+      - Resend Verification Email: endpoints/resend_verification_email.md
+      - Reset Password: endpoints/reset_password.md
+      - User Signup: endpoints/signup.md
+      - User Info: endpoints/userinfo.md
+      - Verify Email: endpoints/verify_email.md
+      - Multi-Factor Authentication (MFA):
+          - Deactivate MFA: endpoints/mfa/deactivate.md
+          - Enable MFA: endpoints/mfa/enable.md
+          - Generate MFA Recovery Codes: endpoints/mfa/generate_code.md
+          - MFA Login: endpoints/mfa/login.md
+          - MFA Status: endpoints/mfa/status.md
+          - Verify MFA: endpoints/mfa/verify.md
 
 theme:
     name: material

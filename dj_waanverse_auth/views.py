@@ -88,7 +88,7 @@ def refresh_token_view(request):
 
     if not refresh_token:
         return Response(
-            {"msg": Messages.token_error}, status=status.HTTP_400_BAD_REQUEST
+            {"msg": Messages.token_error}, status=status.HTTP_401_UNAUTHORIZED
         )
 
     try:
@@ -102,7 +102,7 @@ def refresh_token_view(request):
         return new_response
     except TokenError:
         return Response(
-            {"msg": Messages.token_error}, status=status.HTTP_400_BAD_REQUEST
+            {"msg": Messages.token_error}, status=status.HTTP_401_UNAUTHORIZED
         )
 
     except Exception:
@@ -112,6 +112,7 @@ def refresh_token_view(request):
 
 
 class ResendEmail(APIView):
+    permission_classes = [AllowAny]
 
     def post(self, request):
         """
