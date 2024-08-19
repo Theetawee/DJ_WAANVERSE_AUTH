@@ -159,6 +159,7 @@ WAANVERSE_AUTH = {
     "EMAIL_ON_LOGIN": False,
     "AUTHENTICATION_METHODS": ["email", "username"],
     "COOKIE_SECURE_FLAG": False,
+    "ENABLE_EMAIL_ON_LOGIN": False,
 }
 
 

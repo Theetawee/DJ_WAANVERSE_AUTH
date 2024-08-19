@@ -62,6 +62,7 @@ class TestLoginView(TestSetup):
     def test_login_view_email_on_login(self):
         accounts_config.AUTH_METHODS = ["email"]
         accounts_config.EMAIL_THREADING_ENABLED = False
+        accounts_config.ENABLE_EMAIL_ON_LOGIN = True
         mail.outbox = []
         user_data = {
             "login_field": self.user2.email,
