@@ -35,6 +35,7 @@ const useLogin = () => {
                 toast.success(data.msg);
 
                 if (data.code === "email_unverified") {
+                    sessionStorage.setItem("email", data.email);
                     return navigate("/verify-email");
                 } else {
                     console.log(data);

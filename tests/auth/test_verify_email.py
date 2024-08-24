@@ -84,7 +84,6 @@ class TestVerifyEmail(TestSetup):
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data["msg"], [self.messages.invalid_code])
-        self.assertEqual(response.data["code"], ["invalid_code"])
 
     def test_send_and_verify_email_expired_code(self):
         mail.outbox = []
@@ -105,4 +104,3 @@ class TestVerifyEmail(TestSetup):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data["msg"], [self.messages.expired_code])
-        self.assertEqual(response.data["code"], ["expired_code"])

@@ -153,16 +153,16 @@ class VerifyEmailSerializer(serializers.Serializer):
 
         except EmailConfirmationCode.DoesNotExist:
             raise serializers.ValidationError(
-                {"msg": Messages.invalid_code, "code": "invalid_code"}
+                {"msg": Messages.invalid_code}
             )
         except Exception:
             raise serializers.ValidationError(
-                {"msg": Messages.general_msg, "code": "unspecified_error"}
+                {"msg": Messages.general_msg}
             )
         if block.is_expired:
             block.delete()
             raise serializers.ValidationError(
-                {"msg": Messages.expired_code, "code": "expired_code"}
+                {"msg": Messages.expired_code}
             )
 
         block.delete()
