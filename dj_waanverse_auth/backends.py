@@ -9,7 +9,7 @@ from dj_waanverse_auth.settings import accounts_config
 User = get_user_model()
 
 
-class CustomAuthBackend(BaseBackend):
+class AuthBackend(BaseBackend):
     """
     Waanverse authentication backend that allows for multiple authentication methods.(username, email, phone_number) refer to docs
     """

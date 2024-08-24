@@ -132,7 +132,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 AUTHENTICATION_BACKENDS = [
-    "dj_waanverse_auth.backends.CustomAuthBackend",
+    "dj_waanverse_auth.backends.AuthBackend",
     "django.contrib.auth.backends.ModelBackend",
 ]
 
