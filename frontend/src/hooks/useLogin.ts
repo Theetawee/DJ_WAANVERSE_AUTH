@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { api_url } from "./constants";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 const useLogin = () => {
     const [isLoading, setIsLoading] = useState(false);
-
+    const navigate = useNavigate();
     const [login_field, setLoginField] = useState("");
     const [password, setPassword] = useState("");
 
@@ -31,7 +32,13 @@ const useLogin = () => {
             });
             const data = await response.json();
             if (response.ok) {
-                console.log(data);
+                toast.success(data.msg);
+
+                if (data.code === "email_unverified") {
+                    return navigate("/verify-email");
+                } else {
+                    console.log(data);
+                }
             } else {
                 toast.error("Invalid credentials");
                 console.log(data);
