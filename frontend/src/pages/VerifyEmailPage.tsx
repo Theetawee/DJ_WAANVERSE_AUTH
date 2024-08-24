@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import useVerifyEmail from "../hooks/useVerifyEmail";
 
 const VerifyEmailPage = () => {
-    const [counter, setCounter] = useState(60);
+    const [counter, setCounter] = useState(10);
     const [canResend, setCanResend] = useState(false);
-    const { handleVerifyEmail, isLoading, code, setCode } = useVerifyEmail();
+  const { handleVerifyEmail, isLoading, code, setCode, handleResendEmail } = useVerifyEmail();
+  
     useEffect(() => {
         if (counter > 0) {
             const timer = setTimeout(() => setCounter(counter - 1), 1000);
@@ -16,8 +17,8 @@ const VerifyEmailPage = () => {
 
     const handleResend = () => {
         if (canResend) {
-            // Logic to resend the email
-            setCounter(60);
+          handleResendEmail();
+          setCounter(10);
             setCanResend(false);
         }
     };

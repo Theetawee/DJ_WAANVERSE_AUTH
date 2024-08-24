@@ -2,12 +2,14 @@ import { useState } from "react";
 import { api_url } from "./constants";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import useAuth from "../context/useAuth";
 
 const useLogin = () => {
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
     const [login_field, setLoginField] = useState("");
     const [password, setPassword] = useState("");
+    const { setIsAuthenticated, setUser } = useAuth();
 
     const validateData = () => {
         if (login_field === "" || password === "") {
@@ -39,6 +41,8 @@ const useLogin = () => {
                     return navigate("/verify-email");
                 } else {
                     console.log(data);
+                    setIsAuthenticated(true);
+                    setUser(data.user);
                 }
             } else {
                 toast.error("Invalid credentials");
