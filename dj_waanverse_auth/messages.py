@@ -36,6 +36,7 @@ class MessagesSchema(TypedDict):
     mfa_deactivated_email_subject: str
     reset_password_email_subject: str
     invalid_code: str
+    expired_code: str
     email_exists: str
     password_mismatch: str
     verify_email_subject: str
@@ -92,8 +93,9 @@ class Messages(MessagesSchema):
         "Multi-factor Authentication Deactivation Confirmation"
     )
     reset_password_email_subject = _("Password Reset Request")
-    invalid_code = _("The provided code is invalid or expired. Please try again.")
+    invalid_code = _("The provided code is invalid. Please try again.")
     email_exists = _("An account with this email already exists.")
     password_mismatch = _("The provided passwords do not match. Please try again.")
     verify_email_subject = _("Verify your email address")
     login_email_subject = _("New login alert")
+    expired_code = _("The provided code has expired. Please try again.")

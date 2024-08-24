@@ -14,6 +14,7 @@ class TestVerifyEmail(TestSetup):
     def test_send_and_verify_email(self):
         mail.outbox = []
         accounts_config.AUTH_METHODS = ["email"]
+        accounts_config.AUTO_RESEND_EMAIL = True
         self.client.post(
             self.login_url,
             {"login_field": self.user1.email, "password": "password1"},
@@ -33,11 +34,16 @@ class TestVerifyEmail(TestSetup):
         self.assertEqual(response.data["msg"], self.messages.status_verified)
 
     def test_resend_verify_email(self):
+        mail.outbox = []
+        accounts_config.EMAIL_THREADING_ENABLED = False
         response = self.client.post(
             self.resend_verification_email_url,
             {"email": self.user1.email},
             format="json",
         )
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to[0], self.user1.email)
+        self.assertEqual(mail.outbox[0].subject, self.messages.verify_email_subject)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["msg"], self.messages.email_sent)
 
@@ -78,10 +84,12 @@ class TestVerifyEmail(TestSetup):
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data["msg"], [self.messages.invalid_code])
+        self.assertEqual(response.data["code"], ["invalid_code"])
 
     def test_send_and_verify_email_expired_code(self):
         mail.outbox = []
         accounts_config.AUTH_METHODS = ["email"]
+        accounts_config.AUTO_RESEND_EMAIL = True
         accounts_config.EMAIL_VERIFICATION_CODE_DURATION = 0.001
         self.client.post(
             self.login_url,
@@ -96,4 +104,5 @@ class TestVerifyEmail(TestSetup):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["msg"], [self.messages.invalid_code])
+        self.assertEqual(response.data["msg"], [self.messages.expired_code])
+        self.assertEqual(response.data["code"], ["expired_code"])

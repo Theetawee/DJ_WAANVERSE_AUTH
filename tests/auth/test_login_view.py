@@ -6,10 +6,30 @@ from .test_setup import TestSetup
 
 
 class TestLoginView(TestSetup):
+
+    def test_login_view_non_verified_not_auto_send_code(self):
+        mail.outbox = []
+        accounts_config.AUTH_METHODS = ["username"]
+        accounts_config.EMAIL_THREADING_ENABLED = False
+        accounts_config.AUTO_RESEND_EMAIL = False
+        user_data = {
+            "login_field": self.user1.username,
+            "password": "password1",
+        }
+        response = self.client.post(self.login_url, user_data, format="json")
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("email", response.data)
+        self.assertIn("msg", response.data)
+        self.assertEqual(response.data["msg"], self.messages.status_unverified)
+        self.assertEqual(response.data["email"], self.user1.email)
+        self.assertEqual(response.data["code"], "email_unverified")
+
     def test_login_view_non_verified(self):
         mail.outbox = []
         accounts_config.AUTH_METHODS = ["username"]
         accounts_config.EMAIL_THREADING_ENABLED = False
+        accounts_config.AUTO_RESEND_EMAIL = True
         user_data = {
             "login_field": self.user1.username,
             "password": "password1",
@@ -23,6 +43,7 @@ class TestLoginView(TestSetup):
         self.assertIn("msg", response.data)
         self.assertEqual(response.data["msg"], self.messages.status_unverified)
         self.assertEqual(response.data["email"], self.user1.email)
+        self.assertEqual(response.data["code"], "email_unverified")
 
     def test_login_view_verified_email(self):
         accounts_config.AUTH_METHODS = ["email"]

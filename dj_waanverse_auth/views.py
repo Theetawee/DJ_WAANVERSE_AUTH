@@ -60,7 +60,11 @@ def login_view(request):
 
         # Handle response based on email verification and MFA
         if not email_verified:
-            response_data = {"email": user.email, "msg": Messages.status_unverified}
+            response_data = {
+                "email": user.email,
+                "msg": Messages.status_unverified,
+                "code": "email_unverified",
+            }
             response_status = status.HTTP_200_OK
         elif mfa:
             response_data = {"mfa": user.id}

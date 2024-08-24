@@ -81,7 +81,8 @@ class LoginSerializer(TokenObtainSerializer):
         data["email_verified"] = email_verified
 
         if not email_verified:
-            handle_email_verification(self.user)
+            if accounts_config.AUTO_RESEND_EMAIL:
+                handle_email_verification(self.user)
             data["mfa"] = False  # MFA is reported as off if email is not verified
             return data
 
@@ -146,18 +147,23 @@ class VerifyEmailSerializer(serializers.Serializer):
     def validate(self, data):
         code = data.get("code")
         email = data.get("email")
-
         try:
             user = Account.objects.get(email=email)
             block = EmailConfirmationCode.objects.get(user=user, code=code)
 
         except EmailConfirmationCode.DoesNotExist:
-            raise serializers.ValidationError({"msg": Messages.invalid_code})
+            raise serializers.ValidationError(
+                {"msg": Messages.invalid_code, "code": "invalid_code"}
+            )
         except Exception:
-            raise serializers.ValidationError({"msg": Messages.general_msg})
+            raise serializers.ValidationError(
+                {"msg": Messages.general_msg, "code": "unspecified_error"}
+            )
         if block.is_expired:
             block.delete()
-            raise serializers.ValidationError({"msg": Messages.invalid_code})
+            raise serializers.ValidationError(
+                {"msg": Messages.expired_code, "code": "expired_code"}
+            )
 
         block.delete()
         VerifyEmailSerializer.verify_email(user)

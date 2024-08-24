@@ -35,6 +35,7 @@ class AccountConfigSchema(TypedDict, total=False):
     EMAIL_THREADING_ENABLED: bool
     USE_ADMIN_PANEL: bool
     USE_UNFOLD: bool
+    AUTO_RESEND_EMAIL: bool
 
 
 class AccountConfig:
@@ -102,6 +103,7 @@ class AccountConfig:
 
         self.USE_ADMIN_PANEL = settings_dict.get("USE_ADMIN_PANEL", False)
         self.USE_UNFOLD = settings_dict.get("USE_UNFOLD", False)
+        self.AUTO_RESEND_EMAIL = settings_dict.get("AUTO_RESEND_EMAIL", False)
 
 
 # Merge user-provided settings with the default settings
