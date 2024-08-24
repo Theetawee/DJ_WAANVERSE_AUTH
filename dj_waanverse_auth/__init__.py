@@ -8,7 +8,7 @@ r"""                                               _           _
  \/  \/ \__,_|\__,_|_| |_|\_/ \___|_|  |___/\___| \_____/\__,_|_.__/|___/
 """
 
-__version__ = "0.0.0-alpha"
+__version__ = "0.0.0-alpha.1"
 __author__ = "Waanverse Labs Inc."
 __email__ = "software@waanverse.com"
 __description__ = "A comprehensive Waanverse Labs Inc. internal package for managing user accounts and authentication"

@@ -37,6 +37,13 @@ from .utils import (
 Account = get_user_model()
 
 
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def index(request):
+    data = "Welcome to Dj Waanverse Auth. Docs \n Docs - https://dj-waanverse-auth.waanverse.com "
+    return Response(status=status.HTTP_200_OK, data=data)
+
+
 @api_view(["POST"])
 @throttle_classes([UserRateThrottle])
 @permission_classes([AllowAny])
