@@ -163,7 +163,7 @@ WAANVERSE_AUTH = {
     "COOKIE_SECURE_FLAG": False,
     "ENABLE_EMAIL_ON_LOGIN": False,
     "USE_ADMIN_PANEL": True,
-    "AUTO_RESEND_EMAIL": True,
+    "AUTO_RESEND_EMAIL": False,
 }
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": ("dj_waanverse_auth.backends.JWTAuthentication",),

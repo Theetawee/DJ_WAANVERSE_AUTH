@@ -39,7 +39,7 @@ const useLogin = () => {
         } catch {
             toast.error("Something went wrong. Please try again later.");
         } finally {
-            setIsLoading(true);
+            setIsLoading(false);
         }
     };
 
