@@ -2,7 +2,7 @@ import random
 import string
 import threading
 from importlib import import_module
-from .messages import Messages
+
 from django.conf import settings
 from django.contrib.auth.models import update_last_login
 from django.contrib.auth.signals import user_logged_in
@@ -13,6 +13,7 @@ from django.utils.html import strip_tags
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from .messages import Messages
 from .models import EmailAddress, EmailConfirmationCode, MultiFactorAuth
 from .settings import accounts_config
 
@@ -166,7 +167,10 @@ def handle_email_verification(user):
         user_code.code = code
         user_code.save()
         handle_email_mechanism(
-            context={"code": code},
+            context={
+                "code": code,
+                "timespan": accounts_config.EMAIL_VERIFICATION_CODE_DURATION,
+            },
             email=user.email,
             subject=Messages.verify_email_subject,
             template="verify_email",

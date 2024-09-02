@@ -152,18 +152,12 @@ class VerifyEmailSerializer(serializers.Serializer):
             block = EmailConfirmationCode.objects.get(user=user, code=code)
 
         except EmailConfirmationCode.DoesNotExist:
-            raise serializers.ValidationError(
-                {"msg": Messages.invalid_code}
-            )
+            raise serializers.ValidationError({"msg": Messages.invalid_code})
         except Exception:
-            raise serializers.ValidationError(
-                {"msg": Messages.general_msg}
-            )
+            raise serializers.ValidationError({"msg": Messages.general_msg})
         if block.is_expired:
             block.delete()
-            raise serializers.ValidationError(
-                {"msg": Messages.expired_code}
-            )
+            raise serializers.ValidationError({"msg": Messages.expired_code})
 
         block.delete()
         VerifyEmailSerializer.verify_email(user)
@@ -178,9 +172,10 @@ class VerifyEmailSerializer(serializers.Serializer):
 
 class SignupSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
-    username = serializers.CharField(required=True, max_length=10)
+    username = serializers.CharField(required=True, max_length=30)
     password1 = serializers.CharField(required=True, write_only=True)
     password2 = serializers.CharField(required=True, write_only=True)
+    verified = serializers.BooleanField(required=False, default=False)
 
     def validate_email(self, email):
         """Validate that the email does not already exist."""
@@ -193,19 +188,20 @@ class SignupSerializer(serializers.Serializer):
         username = username.lower()
         valid, message = username_validator(username)
         if not valid:
-            raise serializers.ValidationError({"msg": message})
+            raise serializers.ValidationError(message)
         if Account.objects.filter(username=username).exists():
-            raise serializers.ValidationError({"msg": Messages.username_exists})
+            raise serializers.ValidationError(Messages.username_exists)
         return username
 
     def validate(self, data):
         """Validate that the passwords match."""
+        print(data.get("password1", "Password"))
         if data.get("password1") != data.get("password2"):
             raise serializers.ValidationError(Messages.password_mismatch)
         password_res, is_valid = password_validator(data.get("password1"))
         if not is_valid:
             raise serializers.ValidationError(
-                {"password": Messages.password_validation_error}
+                {"password": "Password is not strong enough."}
             )
         return data
 
@@ -222,10 +218,14 @@ class SignupSerializer(serializers.Serializer):
                 **self.get_additional_fields(validated_data),
                 password=password,
             )
-            user_email_address(user)
-
-            handle_email_verification(user)
-        except Exception:
+            email_address = user_email_address(user)
+            if validated_data.get("verified", False) is False:
+                handle_email_verification(user)
+            else:
+                email_address.verified = True
+                email_address.save()
+        except Exception as e:
+            print(e)
             raise serializers.ValidationError({"msg": Messages.user_creation_error})
 
         return user

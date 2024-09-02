@@ -27,6 +27,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
         const stored_auth_value = localStorage.getItem("perms");
+        console.log(stored_auth_value)
         if (stored_auth_value !== null) {
             return stored_auth_value === "true";
         } else {

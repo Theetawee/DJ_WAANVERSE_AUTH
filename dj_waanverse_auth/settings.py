@@ -71,6 +71,7 @@ class AccountConfig:
         self.DISALLOWED_USERNAMES = settings_dict.get(
             "DISALLOWED_USERNAMES", ["waanverse"]
         )
+
         self.USER_DETAIL_SERIALIZER_CLASS = settings_dict.get(
             "USER_DETAIL_SERIALIZER_CLASS",
             "dj_waanverse_auth.serializers.AccountSerializer",
@@ -80,7 +81,7 @@ class AccountConfig:
         self.PLATFORM_NAME = settings_dict.get("PLATFORM_NAME", "Waanverse Auth")
         self.EMAIL_VERIFICATION_CODE_DURATION = settings_dict.get(
             "EMAIL_VERIFICATION_CODE_DURATION", 10
-        )
+        )  # in minutes
         self.MFA_ISSUER_NAME = settings_dict.get(
             "MFA_ISSUER_NAME", "Waanverse Labs Inc."
         )

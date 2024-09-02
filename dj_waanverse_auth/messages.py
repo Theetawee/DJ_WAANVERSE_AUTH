@@ -41,6 +41,8 @@ class MessagesSchema(TypedDict):
     password_mismatch: str
     verify_email_subject: str
     login_email_subject: str
+    password_validation_error: str
+    username_exists: str
 
 
 class Messages(MessagesSchema):
@@ -99,3 +101,4 @@ class Messages(MessagesSchema):
     verify_email_subject = _("Verify your email address")
     login_email_subject = _("New login alert")
     expired_code = _("The provided code has expired. Please try again.")
+    username_exists = _("An account with this username already exists.")
