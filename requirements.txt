@@ -25,3 +25,4 @@ sqlparse==0.5.1
 ua-parser==0.18.0
 urllib3==2.2.2
 user-agents==2.2.0
+
