@@ -1,5 +1,6 @@
 # flake8: noqa
 # Copyright 2024 Waanverse Labs Inc.
+from .version import __version__
 r"""                                               _           _         
 | |  | |                                          | |         | |        
 | |  | | __ _  __ _ _ ____   _____ _ __ ___  ___  | |     __ _| |__  ___ 
@@ -8,7 +9,7 @@ r"""                                               _           _
  \/  \/ \__,_|\__,_|_| |_|\_/ \___|_|  |___/\___| \_____/\__,_|_.__/|___/
 """
 
-__version__ = "0.0.0-alpha.2"
+__version__ = __version__
 __author__ = "Waanverse Labs Inc."
 __email__ = "software@waanverse.com"
 __description__ = "A comprehensive Waanverse Labs Inc. internal package for managing user accounts and authentication"
