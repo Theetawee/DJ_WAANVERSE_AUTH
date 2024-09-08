@@ -12,12 +12,16 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from dj_waanverse_auth.messages import Messages
 from dj_waanverse_auth.settings import accounts_config
 from dj_waanverse_auth.signals import user_created_via_google
 from dj_waanverse_auth.utils import (
     check_mfa_status,
     generate_tokens,
+    get_email_verification_status,
     get_serializer,
+    handle_email_verification,
+    handle_user_login,
     set_cookies,
 )
 
@@ -51,6 +55,7 @@ def google_url(request):
 
 class GoogleAuthCallbackView(APIView):
     permission_classes = (AllowAny,)
+    is_created = False
 
     def post(self, request):
         code = request.data.get("code")
@@ -78,7 +83,6 @@ class GoogleAuthCallbackView(APIView):
             )
 
         access_token = token_response_data.get("access_token")
-
         # Get user information
         user_info_url = "https://www.googleapis.com/oauth2/v1/userinfo"
         user_info_params = {"access_token": access_token}
@@ -91,6 +95,17 @@ class GoogleAuthCallbackView(APIView):
         # Implement user authentication or creation
         user = self.authenticate_or_create_user(user_info)
         mfa_status = check_mfa_status(user)
+        email_verification_status = get_email_verification_status(user)
+        if email_verification_status is False:
+            if accounts_config.AUTO_RESEND_EMAIL and self.is_created is False:
+                handle_email_verification(user)
+
+            response_data = {
+                "email": user.email,
+                "msg": Messages.status_unverified,
+                "code": "email_unverified",
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
         if mfa_status:
             pass
         else:
@@ -101,21 +116,21 @@ class GoogleAuthCallbackView(APIView):
                     "refresh_token": tokens.get("refresh_token"),
                     "user": USER_CLAIM_SERIALIZER(user).data,
                 },
-                status=status.HTTP_201_CREATED,
+                status=status.HTTP_200_OK,
             )
+            handle_user_login(user=user, context={"request": request})
             new_response = set_cookies(
                 response=response,
                 access_token=tokens.get("access_token"),
                 refresh_token=tokens.get("refresh_token"),
             )
-        # Generate JWT or any other token for the authenticated user
 
         return new_response
 
     def authenticate_or_create_user(self, user_info):
         email = user_info.get("email")
         username = get_username(user_info)
-        email_verified = user_info.get("email_verified", False)
+        email_verified = user_info.get("verified_email", False)
         allowed_chars = string.ascii_letters + string.digits + string.punctuation
         password = get_random_string(
             length=16,
@@ -130,8 +145,7 @@ class GoogleAuthCallbackView(APIView):
         try:
             user = Account.objects.get(email=email)
         except Account.DoesNotExist:
-            # Retrieve serializer fields dynamically
-
+            self.is_created = True
             # Prepare data for user creation
             user_data = {
                 "email": email,

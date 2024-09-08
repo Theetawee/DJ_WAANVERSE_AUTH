@@ -54,22 +54,13 @@ class EmailConfirmationCode(models.Model):
 
 
 class UserLoginActivity(models.Model):
-    # Login Status
-    SUCCESS = "S"
-    FAILED = "F"
-
-    LOGIN_STATUS = ((SUCCESS, "Success"), (FAILED, "Failed"))
-
     login_IP = models.GenericIPAddressField(null=True, blank=True)
     login_datetime = models.DateTimeField(auto_now=True)
-    login_username = models.CharField(max_length=40, null=True, blank=True)
-    status = models.CharField(
-        max_length=1, default=SUCCESS, choices=LOGIN_STATUS, null=True, blank=True
-    )
+    account = models.ForeignKey(Account, on_delete=models.CASCADE)
     user_agent_info = models.CharField(max_length=255)
 
     def __str__(self):
-        return f"{self.login_username} - {self.login_datetime}"
+        return f"{self.account.username} - {self.login_datetime}"
 
 
 class ResetPasswordCode(models.Model):
