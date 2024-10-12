@@ -10,7 +10,6 @@ def get_version():
         version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", f.read(), re.M)
         if version_match:
             version = version_match.group(1)
-            print(version)
             return version
         raise RuntimeError("Unable to find version string.")
 
