@@ -60,7 +60,9 @@ class GoogleAuthCallbackView(APIView):
     def post(self, request):
         code = request.data.get("code")
         credential = request.data.get("credential")
+        print("here calling")
         if credential:
+            print("here")
             # Handle Google One Tap login
             try:
                 user_info = self.verify_google_credential(credential)

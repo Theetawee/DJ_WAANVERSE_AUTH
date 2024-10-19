@@ -2,6 +2,8 @@ from typing import TypedDict
 
 from django.utils.translation import gettext_lazy as _
 
+from .settings import accounts_config
+
 
 class MessagesSchema(TypedDict):
     status_unverified: str
@@ -27,22 +29,26 @@ class MessagesSchema(TypedDict):
     recovery_codes_regeneration_error: str
     token_error: str
     general_msg: str
-    mfa_code_generated_email_subject: str
     email_already_verified: str
     no_credentials: str
     user_creation_error: str
-    attempts_limit: str
+    password_reset_attempts_limit: str
     invalid_password: str
-    mfa_deactivated_email_subject: str
-    reset_password_email_subject: str
     invalid_code: str
     expired_code: str
     email_exists: str
     password_mismatch: str
-    verify_email_subject: str
-    login_email_subject: str
     password_validation_error: str
     username_exists: str
+    email_not_found: str
+
+    # Email subjects
+    verify_email_subject: str
+    login_email_subject: str
+    mfa_deactivated_email_subject: str
+    reset_password_email_subject: str
+    mfa_code_generated_email_subject: str
+    password_reset_complete_email_subject: str
 
 
 class Messages(MessagesSchema):
@@ -66,7 +72,7 @@ class Messages(MessagesSchema):
     mfa_login_success = _("MFA login was successful.")
     invalid_account = _("The provided account details are invalid. Please try again.")
     password_reset_code_sent = _(
-        "A password reset code has been sent to your email address."
+        "A password reset code has been sent to your email address if an account associated to it is present."
     )
     password_reset_successful = _("Your password has been reset successfully.")
     already_authenticated = _("You are already authenticated.")
@@ -89,7 +95,9 @@ class Messages(MessagesSchema):
     email_already_verified = _("Your email is already verified.")
     no_credentials = _("No valid credentials provided. Please check and try again.")
     user_creation_error = _("An error occurred during user creation. Please try again.")
-    attempts_limit = _("Too many attempts. Please try again after the cooldown period.")
+    password_reset_attempts_limit = _(
+        f"Too many attempts. Please try again after the {accounts_config.PASSWORD_RESET_COOLDOWN_PERIOD} minutes."
+    )
     invalid_password = _("The password provided is invalid.")
     mfa_deactivated_email_subject = _(
         "Multi-factor Authentication Deactivation Confirmation"
@@ -102,3 +110,8 @@ class Messages(MessagesSchema):
     login_email_subject = _("New login alert")
     expired_code = _("The provided code has expired. Please try again.")
     username_exists = _("An account with this username already exists.")
+
+    email_not_found = _(
+        "A password reset code has been sent to your email address if an account associated to it is present."
+    )
+    password_reset_complete_email_subject = _("Password Reset Successful")
