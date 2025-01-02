@@ -1,1 +1,2 @@
 build_script="python setup.py sdist bdist_wheel"
+coverage="coverage run demo/manage.py test -v 2 && coverage report"
