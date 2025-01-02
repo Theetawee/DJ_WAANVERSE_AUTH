@@ -1,5 +1,5 @@
 site_name: Dj Waanverse Auth Documentation.
-site_url: https://dj-waanverse-auth.waanverse.com/
+site_url: https://dj_waanverse_auth.waanverse.com/
 
 nav:
     - Home: index.md

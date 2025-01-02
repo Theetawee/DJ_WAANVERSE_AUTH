@@ -1,4 +1,4 @@
-name: Upload Dj-Waanverse-Auth package to PyPI
+name: Upload dj_waanverse_auth package to PyPI
 
 on:
     release:

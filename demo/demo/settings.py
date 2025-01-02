@@ -164,5 +164,5 @@ WAANVERSE_AUTH = {
     "AUTO_RESEND_EMAIL": False,
 }
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": ("dj_waanverse_auth.backends.JWTAuthentication",),
+    # "DEFAULT_AUTHENTICATION_CLASSES": ("dj_waanverse_auth.backends.JWTAuthentication",),
 }

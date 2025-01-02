@@ -33,7 +33,7 @@ from typing import Final
 from .version import __version__
 
 # Package metadata
-__title__: Final = "dj-waanverse-auth"
+__title__: Final = "dj_waanverse_auth"
 __author__: Final = "Waanverse Labs Inc."
 __copyright__: Final = f"Copyright 2024 {__author__}"
 __email__: Final = "software@waanverse.com"
