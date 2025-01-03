@@ -24,16 +24,6 @@ class SignupSerializer(serializers.Serializer):
 
     email = serializers.EmailField(
         required=True,
-        validators=[
-            UniqueValidator(
-                queryset=Account.objects.all(),
-                message=_("This email is already registered."),
-            )
-        ],
-        error_messages={
-            "required": _("Email address is required."),
-            "invalid": _("Please enter a valid email address."),
-        },
     )
 
     username = serializers.CharField(
@@ -79,13 +69,17 @@ class SignupSerializer(serializers.Serializer):
         super().__init__(instance=instance, data=data, **kwargs)
 
     def validate_email(self, email):
-        """
-        Validate email with comprehensive checks and sanitization.
-        """
-        email_validation = self.email_service.validate_email(email)
+        try:
+            verification = VerificationCode.objects.get(
+                email_address=email, is_verified=True
+            )
+            verification.delete()
+        except VerificationCode.DoesNotExist:
+            raise serializers.ValidationError(_("Email address is not verified."))
 
-        if email_validation.get("errors"):
-            raise serializers.ValidationError(email_validation["errors"])
+        except Exception as e:
+            logger.error(f"Email validation error: {str(e)}")
+            raise serializers.ValidationError(_("Invalid email address."))
 
         return email
 
@@ -119,7 +113,7 @@ class SignupSerializer(serializers.Serializer):
             logger.error(f"Username validation error: {str(e)}")
             raise serializers.ValidationError(_("Invalid username format."))
 
-    def validate_password1(self, password):
+    def validate_password(self, password):
         """
         Validate password with Django's validators and additional checks.
         """
@@ -246,3 +240,23 @@ class InitiateEmailVerificationSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 _("Failed to initiate email verification.")
             )
+
+
+class VerifyEmailSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    code = serializers.CharField(required=True)
+
+    def create(self, validated_data):
+        email = validated_data["email"]
+        code = validated_data["code"]
+        try:
+            verification = VerificationCode.objects.get(email_address=email, code=code)
+            if verification.is_expired:
+                raise serializers.ValidationError(
+                    {"code": "Verification code has expired."}
+                )
+            verification.is_verified = True
+            verification.save()
+            return email
+        except VerificationCode.DoesNotExist:
+            raise serializers.ValidationError({"code": "Invalid verification code."})

@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from dj_waanverse_auth.serializers.signup_serializers import (
     InitiateEmailVerificationSerializer,
     SignupSerializer,
+    VerifyEmailSerializer,
 )
 
 
@@ -36,14 +37,14 @@ def verify_email(request):
     """
     Function-based view to verify email.
     """
-    serializer = InitiateEmailVerificationSerializer(data=request.data)
+    serializer = VerifyEmailSerializer(data=request.data)
     if serializer.is_valid():
         email = serializer.validated_data["email"]
         return Response(
             {
-                "message": "Email verification initiated.",
+                "message": "Email verified successfully.",
                 "email": email,
-                "status": "code_sent",
+                "status": "verified",
             },
             status=status.HTTP_200_OK,
         )
