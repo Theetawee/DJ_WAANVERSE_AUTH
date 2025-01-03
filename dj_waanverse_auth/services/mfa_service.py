@@ -1,6 +1,10 @@
+import hashlib
 import secrets
+from base64 import urlsafe_b64encode
 
 import pyotp
+from cryptography.fernet import Fernet
+from django.conf import settings
 from django.utils.timezone import now
 
 from dj_waanverse_auth.models import MultiFactorAuth
@@ -17,6 +21,15 @@ class MFAHandler:
         """
         self.user = user
         self.mfa = self.get_mfa()
+        self.fernet = Fernet(self._derive_key())
+
+    def _derive_key(self):
+        """
+        Derive a 32-byte key from Django's SECRET_KEY using SHA256.
+        :return: A 32-byte base64-encoded key for Fernet encryption.
+        """
+        hash_key = hashlib.sha256(settings.SECRET_KEY.encode()).digest()
+        return urlsafe_b64encode(hash_key)
 
     def get_mfa(self):
         """Get or create the MFA record for the user."""
@@ -29,23 +42,30 @@ class MFAHandler:
 
     def generate_secret(self):
         """Generate and save a new MFA secret for the user."""
-        secret_key = pyotp.random_base32()
-        self.mfa.secret_key = secret_key
+        raw_secret = pyotp.random_base32()
+        encoded_secret = self.fernet.encrypt(raw_secret.encode()).decode()
+
+        self.mfa.secret_key = encoded_secret
         self.mfa.activated = True
         self.mfa.activated_at = now()
         self.mfa.save()
-        return secret_key
+
+        return raw_secret
+
+    def get_decoded_secret(self):
+        """Decode the stored secret key."""
+        if not self.mfa.secret_key:
+            raise ValueError("No MFA secret found.")
+        return self.fernet.decrypt(self.mfa.secret_key.encode()).decode()
 
     def get_provisioning_uri(self):
         """
         Get the provisioning URI for the user's MFA setup.
         This is used to generate a QR code for authenticator apps.
         """
-        if not self.mfa.secret_key:
-            raise ValueError("No MFA secret found. Please generate a secret first.")
-
+        raw_secret = self.get_decoded_secret()
         issuer_name = auth_config.mfa_issuer
-        return pyotp.totp.TOTP(self.mfa.secret_key).provisioning_uri(
+        return pyotp.totp.TOTP(raw_secret).provisioning_uri(
             name=(
                 self.user.email_address
                 if self.user.email_address
@@ -60,10 +80,8 @@ class MFAHandler:
         :param token: The TOTP token to verify.
         :return: True if the token is valid, False otherwise.
         """
-        if not self.mfa.secret_key:
-            raise ValueError("No MFA secret found. Cannot verify token.")
-
-        totp = pyotp.TOTP(self.mfa.secret_key)
+        raw_secret = self.get_decoded_secret()
+        totp = pyotp.TOTP(raw_secret)
         return totp.verify(token)
 
     def disable_mfa(self):
@@ -76,7 +94,6 @@ class MFAHandler:
     def generate_recovery_codes(self):
         """Generate recovery codes for the user."""
         count = auth_config.mfa_recovery_codes_count
-
         return [str(secrets.randbelow(10**7)).zfill(7) for _ in range(count)]
 
     def set_recovery_codes(self):
