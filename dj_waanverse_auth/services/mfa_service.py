@@ -109,9 +109,19 @@ class MFAHandler:
         self.mfa.save()
 
     def generate_recovery_codes(self):
-        """Generate recovery codes for the user."""
+        """Generate recovery codes for the user and encrypt them."""
         count = auth_config.mfa_recovery_codes_count
-        return [str(secrets.randbelow(10**7)).zfill(7) for _ in range(count)]
+
+        codes = [str(secrets.randbelow(10**7)).zfill(7) for _ in range(count)]
+
+        encrypted_codes = [
+            self.fernet.encrypt(code.encode()).decode() for code in codes
+        ]
+
+        self.mfa.recovery_codes = encrypted_codes
+        self.mfa.save()
+
+        return codes
 
     def set_recovery_codes(self):
         """Set encrypted recovery codes for the user."""
