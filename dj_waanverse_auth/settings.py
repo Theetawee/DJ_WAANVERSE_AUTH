@@ -27,13 +27,13 @@ class AuthConfigSchema(TypedDict, total=False):
     COOKIE_SAMESITE_POLICY: str
     COOKIE_SECURE: bool
     COOKIE_HTTP_ONLY: bool
-    ACCESS_TOKEN_COOKIE_MAX_AGE: int
-    REFRESH_TOKEN_COOKIE_MAX_AGE: int
+    ACCESS_TOKEN_COOKIE_MAX_AGE: timedelta
+    REFRESH_TOKEN_COOKIE_MAX_AGE: timedelta
 
     # Multi-Factor Authentication
     MFA_ENABLED: bool
     MFA_TOKEN_COOKIE_NAME: str
-    MFA_TOKEN_DURATION: timedelta
+    MFA_TOKEN_COOKIE_MAX_AGE: timedelta
     MFA_RECOVERY_CODE_COUNT: int
     MFA_ISSUER_NAME: str
     MFA_CODE_LENGTH: int
@@ -127,9 +127,9 @@ class AuthConfig:
 
         # MFA Settings
         self.mfa_enabled = config_dict.get("MFA_ENABLED", True)
-        self.mfa_token_cookie = config_dict.get("MFA_TOKEN_COOKIE_NAME", "mfa_token")
-        self.mfa_token_duration = config_dict.get(
-            "MFA_TOKEN_DURATION", timedelta(minutes=2)
+        self.mfa_token_cookie_name = config_dict.get("MFA_TOKEN_COOKIE_NAME", "mfa")
+        self.mfa_token_cookie_max_age = config_dict.get(
+            "MFA_TOKEN_COOKIE_MAX_AGE", timedelta(minutes=2)
         )
         self.mfa_recovery_codes_count = self._validate_range(
             config_dict.get("MFA_RECOVERY_CODE_COUNT", 10),

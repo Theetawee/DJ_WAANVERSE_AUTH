@@ -2,6 +2,8 @@ from django.contrib.auth import authenticate
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
+from dj_waanverse_auth.services.mfa_service import MFAHandler
+
 
 class LoginSerializer(serializers.Serializer):
     """
@@ -36,5 +38,7 @@ class LoginSerializer(serializers.Serializer):
                 code="authentication",
             )
 
+        mfa_manager = MFAHandler(user)
+        attrs["mfa"] = mfa_manager.is_mfa_enabled()
         attrs["user"] = user
         return attrs

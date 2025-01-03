@@ -12,11 +12,15 @@ class CookieSettings:
         self.SAME_SITE = auth_config.cookie_samesite
         self.ACCESS_COOKIE_NAME = auth_config.access_token_cookie
         self.REFRESH_COOKIE_NAME = auth_config.refresh_token_cookie
+        self.MFA_COOKIE_NAME = auth_config.mfa_token_cookie_name
         self.ACCESS_COOKIE_MAX_AGE = int(
             (auth_config.access_token_cookie_max_age).total_seconds()
         )
         self.REFRESH_COOKIE_MAX_AGE = int(
             (auth_config.refresh_token_cookie_max_age).total_seconds()
+        )
+        self.MFA_COOKIE_MAX_AGE = int(
+            (auth_config.mfa_token_cookie_max_age).total_seconds()
         )
         self.DOMAIN = auth_config.cookie_domain
         self.PATH = auth_config.cookie_path
@@ -121,3 +125,29 @@ class TokenService:
             return True
         except TokenError:
             return False
+
+    def handle_mfa_cookie(self, response):
+        """
+        Add a cookie containing the user ID if MFA is enabled.
+        """
+        from dj_waanverse_auth.services.mfa_service import MFAHandler
+
+        mfa_handler = MFAHandler(self.user)
+        cookie_params = self.cookie_settings.get_cookie_params()
+
+        if mfa_handler.is_mfa_enabled():
+            mfa_id = str(mfa_handler.mfa.id)
+
+            response.set_cookie(
+                self.cookie_settings.MFA_COOKIE_NAME,
+                mfa_id,
+                max_age=self.cookie_settings.MFA_COOKIE_MAX_AGE,
+                **cookie_params,
+            )
+        else:
+            response.delete_cookie(
+                self.cookie_settings.MFA_COOKIE_NAME,
+                domain=self.cookie_settings.DOMAIN,
+                path=self.cookie_settings.PATH,
+            )
+        return response

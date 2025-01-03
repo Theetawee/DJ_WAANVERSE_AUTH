@@ -21,22 +21,29 @@ def login_view(request):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data["user"]
+            mfa = serializer.validated_data["mfa"]
             token_manager = token_service.TokenService(user=user)
-            tokens = token_manager.generate_tokens()
-            basic_serializer = get_serializer_class(
-                auth_config.basic_account_serializer_class
-            )
-            email_manager = email_service.EmailService(request=request)
-            email_manager.send_login_alert(user.email_address)
-            response = Response(
-                data={
-                    "status": "success",
-                    "access_token": tokens["access_token"],
-                    "refresh_token": tokens["refresh_token"],
-                    "user": basic_serializer(user).data,
-                }
-            )
-            return token_manager.add_tokens_to_response(response, tokens)
+
+            if mfa:
+                response = Response(data={"status": "success", "mfa": mfa})
+                response = token_manager.delete_tokens_from_response(response)
+                return token_manager.handle_mfa_cookie(response)
+            else:
+                tokens = token_manager.generate_tokens()
+                basic_serializer = get_serializer_class(
+                    auth_config.basic_account_serializer_class
+                )
+                email_manager = email_service.EmailService(request=request)
+                email_manager.send_login_alert(user.email_address)
+                response = Response(
+                    data={
+                        "status": "success",
+                        "access_token": tokens["access_token"],
+                        "refresh_token": tokens["refresh_token"],
+                        "user": basic_serializer(user).data,
+                    }
+                )
+                return token_manager.add_tokens_to_response(response, tokens)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     except Exception as e:
