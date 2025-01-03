@@ -38,6 +38,7 @@ class AuthConfigSchema(TypedDict, total=False):
     MFA_ISSUER_NAME: str
     MFA_CODE_LENGTH: int
     MFA_EMAIL_NOTIFICATIONS: bool
+    MFA_CHANGED_EMAIL_SUBJECT: str
 
     # User Configuration
     USERNAME_MIN_LENGTH: int
@@ -145,6 +146,9 @@ class AuthConfig:
             max_value=8,
         )
         self.mfa_email_notifications = config_dict.get("MFA_EMAIL_NOTIFICATIONS", True)
+        self.mfa_changed_email_subject = config_dict.get(
+            "MFA_CHANGED_EMAIL_SUBJECT", "Account security alert"
+        )
 
         # User Settings
         self.username_min_length = self._validate_range(

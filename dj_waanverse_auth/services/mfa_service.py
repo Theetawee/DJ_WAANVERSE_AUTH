@@ -65,7 +65,9 @@ class MFAHandler:
 
                 self.set_recovery_codes()
                 email_manager = EmailService()
-                email_manager.send_mfa_enabled_notification(self.user.email_address)
+                email_manager.send_mfa_change_notification(
+                    self.user.email_address, "enable"
+                )
         except Exception as e:
             logger.error(f"Error activating MFA: {str(e)}")
 
@@ -103,10 +105,20 @@ class MFAHandler:
 
     def disable_mfa(self):
         """Disable MFA for the user."""
-        self.mfa.secret_key = None
-        self.mfa.activated = False
-        self.mfa.activated_at = None
-        self.mfa.save()
+        try:
+            with transaction.atomic():
+                self.mfa.activated = False
+                self.mfa.activated_at = None
+                self.mfa.secret_key = None
+                self.mfa.recovery_codes = None
+                self.mfa.save()
+
+                email_manager = EmailService()
+                email_manager.send_mfa_change_notification(
+                    self.user.email_address, "disable"
+                )
+        except Exception as e:
+            logger.error(f"Error disabling MFA: {str(e)}")
 
     def generate_recovery_codes(self):
         """Generate recovery codes for the user and encrypt them."""

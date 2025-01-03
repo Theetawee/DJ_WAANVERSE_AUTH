@@ -15,7 +15,7 @@ class MultiFactorAuth(models.Model):
     )
     activated = models.BooleanField(default=False)
     activated_at = models.DateTimeField(null=True, blank=True)
-    recovery_codes = models.JSONField(default=list, blank=True)
+    recovery_codes = models.JSONField(default=list, blank=True, null=True)
     secret_key = models.CharField(max_length=255, null=True, blank=True)
     last_updated = models.DateTimeField(auto_now=True)
 

@@ -38,8 +38,8 @@ class EmailTemplate(Enum):
     PASSWORD_RESET = "password_reset"
     LOGIN_ALERT = "login_alert"
     ACCOUNT_LOCKED = "account_locked"
-    TWO_FACTOR_CODE = "two_factor_code"
     MFA_ENABLED = "mfa_enabled"
+    MFA_DISABLED = "mfa_disabled"
 
 
 class EmailPriority(Enum):
@@ -69,6 +69,7 @@ class EmailConfig:
     VERIFICATION_EMAIL_EXPIRATION_TIME = (
         f"{auth_config.verification_email_code_expiry_in_minutes} minutes"
     )
+    MFA_CHANGED_EMAIL_SUBJECT = auth_config.mfa_changed_email_subject
 
 
 class EmailValidationError(ValidationError):
@@ -378,15 +379,24 @@ class EmailService:
             priority=EmailPriority.HIGH,
         )
 
-    def send_mfa_enabled_notification(self, email_address: str) -> bool:
-        """Send MFA enabled notification."""
+    def send_mfa_change_notification(self, email_address: str, change_type) -> bool:
+        """Send MFA enabled notification.
+        type: 'enable' or 'disable'
+        """
         if auth_config.email_security_notifications_enabled:
+            if change_type not in ["enable", "disable"]:
+                raise ValueError("Type must be 'enable' or 'disable'.")
             context = {
                 "mfa_time": timezone.now(),
             }
+
             return self.send_email(
-                subject="Account Security Alert",
-                template_name=EmailTemplate.MFA_ENABLED,
+                subject=self.config.MFA_CHANGED_EMAIL_SUBJECT,
+                template_name=(
+                    EmailTemplate.MFA_ENABLED
+                    if change_type == "enable"
+                    else EmailTemplate.MFA_DISABLED
+                ),
                 context=context,
                 recipient_list=email_address,
                 priority=EmailPriority.HIGH,
