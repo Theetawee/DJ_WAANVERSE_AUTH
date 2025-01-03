@@ -153,7 +153,9 @@ EMAIL_HOST_PASSWORD = os.environ.get("SMTP_PASSWORD", "test-password")
 EMAIL_USE_TLS = True
 
 
-WAANVERSE_AUTH_CONFIG = {"PUBLIC_KEY_PATH": "/"}
+WAANVERSE_AUTH_CONFIG = {
+    "PUBLIC_KEY_PATH": os.path.join(BASE_DIR, "secrets/public_key.pem")
+}
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
