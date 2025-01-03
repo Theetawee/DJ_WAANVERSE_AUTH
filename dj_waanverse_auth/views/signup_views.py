@@ -8,6 +8,9 @@ from dj_waanverse_auth.serializers.signup_serializers import (
     SignupSerializer,
     VerifyEmailSerializer,
 )
+from dj_waanverse_auth.services.token_service import TokenService
+from dj_waanverse_auth.services.utils import get_serializer_class
+from dj_waanverse_auth.settings import auth_config
 
 
 @api_view(["POST"])
@@ -61,16 +64,22 @@ def signup_view(request):
     serializer = SignupSerializer(data=request.data)
     if serializer.is_valid():
         try:
-            user = serializer.create(serializer.validated_data)
-            return Response(
-                {
-                    "message": "Account created successfully.",
-                    "user": {
-                        "email": user.email,
-                        "username": user.username,
+            user = serializer.save()
+            token_manager = TokenService(user=user)
+            tokens = token_manager.generate_tokens()
+            return token_manager.add_tokens_to_response(
+                response=Response(
+                    {
+                        "message": "Account created successfully.",
+                        "user": get_serializer_class(
+                            auth_config.basic_account_serializer_class
+                        )(user).data,
+                        "access_token": tokens["access_token"],
+                        "refresh_token": tokens["refresh_token"],
                     },
-                },
-                status=status.HTTP_201_CREATED,
+                    status=status.HTTP_201_CREATED,
+                ),
+                tokens=tokens,
             )
         except Exception as e:
             return Response(
