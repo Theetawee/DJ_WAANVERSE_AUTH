@@ -12,6 +12,7 @@ class AuthConfigSchema(TypedDict, total=False):
     # Security Settings
     AUTH_METHODS: List[str]
     PUBLIC_KEY_PATH: Optional[str]
+    PRIVATE_KEY_PATH: Optional[str]
     HEADER_NAME: str
     USER_ID_CLAIM: str
     TOKEN_CACHE_TTL: int
@@ -26,6 +27,8 @@ class AuthConfigSchema(TypedDict, total=False):
     COOKIE_SAMESITE_POLICY: str
     COOKIE_SECURE: bool
     COOKIE_HTTP_ONLY: bool
+    ACCESS_TOKEN_COOKIE_MAX_AGE: int
+    REFRESH_TOKEN_COOKIE_MAX_AGE: int
 
     # Multi-Factor Authentication
     MFA_ENABLED: bool
@@ -80,6 +83,7 @@ class AuthConfig:
             config_dict.get("AUTH_METHODS", ["username"])
         )
         self.public_key_path = config_dict.get("PUBLIC_KEY_PATH")
+        self.private_key_path = config_dict.get("PRIVATE_KEY_PATH")
         self.header_name = config_dict.get("HEADER_NAME", "X-Auth-Token")
         self.user_id_claim = config_dict.get("USER_ID_CLAIM", "user_id")
         self.token_cache_ttl = config_dict.get("TOKEN_CACHE_TTL", 300)
@@ -102,6 +106,12 @@ class AuthConfig:
         )
         self.cookie_secure = config_dict.get("COOKIE_SECURE", False)
         self.cookie_httponly = config_dict.get("COOKIE_HTTP_ONLY", True)
+        self.access_token_cookie_max_age = config_dict.get(
+            "ACCESS_TOKEN_COOKIE_MAX_AGE"
+        )
+        self.refresh_token_cookie_max_age = config_dict.get(
+            "REFRESH_TOKEN_COOKIE_MAX_AGE"
+        )
 
         # MFA Settings
         self.mfa_enabled = config_dict.get("MFA_ENABLED", True)
@@ -261,5 +271,5 @@ class AuthConfig:
             )
 
 
-WAANVERSE_AUTH_CONFIG = getattr(settings, "AUTH_CONFIG", {})
-auth_config = AuthConfig(WAANVERSE_AUTH_CONFIG)
+AUTH_CONFIG = getattr(settings, "WAANVERSE_AUTH_CONFIG", {})
+auth_config = AuthConfig(AUTH_CONFIG)

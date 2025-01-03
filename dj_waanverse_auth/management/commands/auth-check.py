@@ -15,9 +15,10 @@ class Command(BaseCommand):
         """Check if the required WAANVERSE_AUTH_CONFIG settings are set."""
         required_keys = [
             "PUBLIC_KEY_PATH",
-            # "PRIVATE_KEY_PATH",
-            # "JWT_ALGORITHM",
-            # "USER_ID_CLAIM",
+            "PRIVATE_KEY_PATH",
+            "ACCESS_TOKEN_COOKIE_MAX_AGE",
+            "REFRESH_TOKEN_COOKIE_MAX_AGE",
+            "PASSWORD_CHANGED_FIELD_NAME",
         ]
 
         try:

@@ -154,7 +154,10 @@ EMAIL_USE_TLS = True
 
 
 WAANVERSE_AUTH_CONFIG = {
-    "PUBLIC_KEY_PATH": os.path.join(BASE_DIR, "secrets/public_key.pem")
+    "PUBLIC_KEY_PATH": os.path.join(BASE_DIR, "secrets/public_key.pem"),
+    "PRIVATE_KEY_PATH": os.path.join(BASE_DIR, "secrets/private_key.pem"),
+    "REFRESH_TOKEN_COOKIE_MAX_AGE": timedelta(days=30),
+    "ACCESS_TOKEN_COOKIE_MAX_AGE": timedelta(minutes=1),
 }
 
 REST_FRAMEWORK = {

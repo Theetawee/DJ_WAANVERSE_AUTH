@@ -1,14 +1,11 @@
 import logging
 
-import jwt
-from cryptography.exceptions import InvalidKey
-from cryptography.hazmat.primitives import serialization
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
-from jwt.exceptions import InvalidTokenError
 from rest_framework import authentication, exceptions
 from rest_framework.request import Request
 
+from dj_waanverse_auth.services.utils import decode_token
 from dj_waanverse_auth.settings import auth_config
 
 logger = logging.getLogger(__name__)
@@ -95,50 +92,7 @@ class JWTAuthentication(authentication.BaseAuthentication):
         return token
 
     def _decode_token(self, token):
-        """
-        Decode and validate JWT token with comprehensive error handling.
-        """
-        try:
-            public_key = self._get_public_key()
-            payload = jwt.decode(
-                token,
-                public_key,
-                algorithms=[self.ALGORITHM],
-                options={
-                    "verify_signature": True,
-                    "verify_exp": True,
-                    "verify_nbf": True,
-                    "verify_iat": True,
-                },
-            )
-            return payload
-
-        except jwt.ExpiredSignatureError:
-            logger.info("Token expired")
-            raise exceptions.AuthenticationFailed("Token has expired")
-        except InvalidTokenError as e:
-            logger.warning(f"Invalid token: {str(e)}")
-            raise exceptions.AuthenticationFailed("Invalid token")
-        except Exception as e:
-            logger.error(f"Token decode error: {str(e)}")
-            raise exceptions.AuthenticationFailed("Token validation failed")
-
-    def _get_public_key(self):
-        """
-        Load and cache public key with lazy loading pattern.
-        """
-        if self._public_key is None:
-            try:
-                with open(self.PUBLIC_KEY_PATH, "rb") as key_file:
-                    key_data = key_file.read()
-                self._public_key = serialization.load_pem_public_key(key_data)
-            except (IOError, InvalidKey) as e:
-                logger.error(f"Failed to load public key: {str(e)}")
-                raise exceptions.AuthenticationFailed(
-                    "Authentication system misconfigured"
-                )
-
-        return self._public_key
+        return decode_token(token)
 
     def _get_user_from_payload(self, payload):
         """
