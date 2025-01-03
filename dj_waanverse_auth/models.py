@@ -1,40 +1,33 @@
-# """
-# Custom user model     """
+import secrets
 
-# import secrets
-# from datetime import timedelta
+from django.contrib.auth import get_user_model
+from django.db import models
 
-# from django.conf import settings
-# from django.db import models
-# from django.utils import timezone
-# from django.utils.translation import gettext_lazy as _
+from .settings import auth_config
 
-# from .settings import auth_config
-
-# Account = settings.AUTH_USER_MODEL
+Account = get_user_model()
 
 
-# class MultiFactorAuth(models.Model):
-#     account = models.OneToOneField(
-#         Account, related_name="mfa", on_delete=models.CASCADE
-#     )
-#     activated = models.BooleanField(default=False)
-#     activated_at = models.DateTimeField(null=True, blank=True)
-#     recovery_codes = models.JSONField(default=list, blank=True)
-#     secret_key = models.CharField(max_length=255, null=True, blank=True)
-#     last_updated = models.DateTimeField(auto_now=True)
+class MultiFactorAuth(models.Model):
+    account = models.OneToOneField(
+        Account, related_name="mfa", on_delete=models.CASCADE
+    )
+    activated = models.BooleanField(default=False)
+    activated_at = models.DateTimeField(null=True, blank=True)
+    recovery_codes = models.JSONField(default=list, blank=True)
+    secret_key = models.CharField(max_length=255, null=True, blank=True)
+    last_updated = models.DateTimeField(auto_now=True)
 
-#     def generate_recovery_codes(self):
-#         # Get the number of recovery codes from settings
-#         count = int(getattr(auth_config, "MFA_RECOVERY_CODES_COUNT", 10))
-#         return [str(secrets.randbelow(10**7)).zfill(7) for _ in range(count)]
+    def generate_recovery_codes(self):
+        count = int(getattr(auth_config.mfa_recovery_codes))
+        return [str(secrets.randbelow(10**7)).zfill(7) for _ in range(count)]
 
-#     def set_recovery_codes(self):
-#         self.recovery_codes = self.generate_recovery_codes()
-#         self.save()
+    def set_recovery_codes(self):
+        self.recovery_codes = self.generate_recovery_codes()
+        self.save()
 
-#     def __str__(self):
-#         return f"Account: {self.account} - Activated: {self.activated}"
+    def __str__(self):
+        return f"Account: {self.account} - Activated: {self.activated}"
 
 
 # class EmailConfirmationCode(models.Model):

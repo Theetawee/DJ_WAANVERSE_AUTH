@@ -67,7 +67,7 @@ class AccountManager(BaseUserManager):
 class Account(AbstractBaseUser, PermissionsMixin):
     name = models.CharField(max_length=255)
     username = models.CharField(max_length=10, unique=True)
-    email = models.EmailField(max_length=255, unique=True, verbose_name="Email")
+    email_address = models.EmailField(max_length=255, unique=True, verbose_name="Email")
     phone_number = models.CharField(null=True, blank=True, unique=True, max_length=15)
     date_of_birth = models.DateField(
         verbose_name="Date of Birth", blank=True, null=True
@@ -83,7 +83,7 @@ class Account(AbstractBaseUser, PermissionsMixin):
     objects = AccountManager()
 
     def __str__(self):
-        return self.email
+        return self.email_address
 
     def get_full_name(self):
         return self.name

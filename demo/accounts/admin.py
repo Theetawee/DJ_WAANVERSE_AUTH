@@ -6,7 +6,7 @@ from .models import Account
 class AccountAdmin(admin.ModelAdmin):
     # Define the fields to be displayed in the list view
     list_display = (
-        "email",
+        "email_address",
         "is_active",
         "is_staff",
         "name",
@@ -16,7 +16,7 @@ class AccountAdmin(admin.ModelAdmin):
     )
 
     # Define fields to be searchable
-    search_fields = ("email", "name", "username")
+    search_fields = ("email_address", "name", "username")
 
     # Define fields that should be read-only
     readonly_fields = ("last_login", "date_joined")
@@ -55,7 +55,7 @@ class AccountAdmin(admin.ModelAdmin):
             None,
             {
                 "fields": (
-                    "email",
+                    "email_address",
                     "username",
                     "name",
                     "password1",

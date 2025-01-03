@@ -19,7 +19,7 @@ class AuthenticationBackend(BaseBackend):
         """
         try:
             validate_email(login_field)
-            query = Q(email=login_field)
+            query = Q(email_address=login_field)
         except ValidationError:
             query = Q(username=login_field) | Q(phone_number=login_field)
 
