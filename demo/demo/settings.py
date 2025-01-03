@@ -158,6 +158,7 @@ WAANVERSE_AUTH_CONFIG = {
     "PRIVATE_KEY_PATH": os.path.join(BASE_DIR, "secrets/private_key.pem"),
     "REFRESH_TOKEN_COOKIE_MAX_AGE": timedelta(days=30),
     "ACCESS_TOKEN_COOKIE_MAX_AGE": timedelta(minutes=1),
+    "BASIC_ACCOUNT_SERIALIZER": "accounts.serializers.BasicAccountSerializer",
 }
 
 REST_FRAMEWORK = {

@@ -16,15 +16,11 @@ from dj_waanverse_auth.messages import Messages
 from .models import EmailConfirmationCode, MultiFactorAuth, ResetPasswordCode
 from .settings import auth_config
 from .utils import (
-    check_mfa_status,
     generate_password_reset_code,
-    generate_tokens,
     get_client_ip,
-    get_email_verification_status,
     get_user_agent,
     handle_email_mechanism,
     handle_email_verification,
-    handle_user_login,
     user_email_address,
 )
 from .validators import password_validator
@@ -66,44 +62,6 @@ class TokenObtainSerializer(serializers.Serializer):
             )
 
         return {}
-
-
-class LoginSerializer(TokenObtainSerializer):
-    token_class = RefreshToken
-
-    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
-        data = super().validate(attrs)
-        # Add user data
-        data["user"] = self.user
-
-        # Check email verification status
-        email_verified = get_email_verification_status(self.user)
-        data["email_verified"] = email_verified
-
-        if not email_verified:
-            if auth_config.AUTO_RESEND_EMAIL:
-                handle_email_verification(self.user)
-            data["mfa"] = False  # MFA is reported as off if email is not verified
-            return data
-
-        # Check MFA status if email is verified
-        data["mfa"] = check_mfa_status(self.user)
-
-        # Generate tokens
-        tokens = generate_tokens(self.user)
-        data.update(tokens)
-
-        # Handle user login if MFA is not required
-        if not data["mfa"]:
-            handle_user_login(self.context, self.user)
-
-        return data
-
-
-class BasicAccountSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Account
-        fields = ["username", "id"]
 
 
 class AccountSerializer(serializers.ModelSerializer):

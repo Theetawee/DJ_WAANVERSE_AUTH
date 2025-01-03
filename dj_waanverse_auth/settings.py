@@ -44,7 +44,7 @@ class AuthConfigSchema(TypedDict, total=False):
     RESERVED_USERNAMES: List[str]
 
     # Serializer Classes
-    USER_CLAIMS_SERIALIZER: str
+    BASIC_ACCOUNT_SERIALIZER: str
     REGISTRATION_SERIALIZER: str
     USER_DETAIL_SERIALIZER: str
 
@@ -148,8 +148,9 @@ class AuthConfig:
         )
 
         # Serializer Classes
-        self.user_claims_serializer = config_dict.get(
-            "USER_CLAIMS_SERIALIZER", "auth.serializers.BasicUserClaimsSerializer"
+        self.basic_account_serializer_class = config_dict.get(
+            "BASIC_ACCOUNT_SERIALIZER",
+            "dj_waanverse_auth.serializers.base_serializers.BasicAccountSerializer",
         )
         self.registration_serializer = config_dict.get(
             "REGISTRATION_SERIALIZER", "auth.serializers.UserRegistrationSerializer"

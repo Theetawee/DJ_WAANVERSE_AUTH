@@ -5,6 +5,7 @@ from functools import lru_cache
 import jwt
 from cryptography.exceptions import InvalidKey
 from cryptography.hazmat.primitives import serialization
+from django.utils.module_loading import import_string
 from rest_framework import exceptions
 
 from dj_waanverse_auth.settings import auth_config
@@ -109,3 +110,23 @@ def encode_token(payload):
     except Exception as e:
         logger.error(f"Token encoding failed: {str(e)}")
         raise exceptions.AuthenticationFailed("Could not generate token")
+
+
+def get_serializer_class(class_path: str):
+    """
+    Retrieve a serializer class given its string path.
+
+    Args:
+        class_path (str): Full dotted path to the serializer class.
+                          Example: 'dj_waanverse_auth.serializers.Basic_Serializer'
+
+    Returns:
+        class: The serializer class.
+
+    Raises:
+        ImportError: If the class cannot be imported.
+    """
+    try:
+        return import_string(class_path)
+    except ImportError as e:
+        raise ImportError(f"Could not import serializer class '{class_path}': {e}")

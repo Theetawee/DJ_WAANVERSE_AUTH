@@ -1,7 +1,5 @@
 from rest_framework import serializers
 
-from dj_waanverse_auth.serializers import SignupSerializer as Core
-
 from .models import Account
 
 
@@ -21,12 +19,3 @@ class AccountSerializer(serializers.ModelSerializer):
             "profile_image",
             "date_of_birth",
         ]
-
-
-class SignupSerializer(Core):
-    name = serializers.CharField(required=True, max_length=255)
-
-    def get_additional_fields(self, validated_data):
-        return {
-            "name": validated_data["name"],
-        }
