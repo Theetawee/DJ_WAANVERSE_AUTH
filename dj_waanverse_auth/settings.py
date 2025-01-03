@@ -121,10 +121,10 @@ class AuthConfig:
         self.cookie_secure = config_dict.get("COOKIE_SECURE", False)
         self.cookie_httponly = config_dict.get("COOKIE_HTTP_ONLY", True)
         self.access_token_cookie_max_age = config_dict.get(
-            "ACCESS_TOKEN_COOKIE_MAX_AGE"
+            "ACCESS_TOKEN_COOKIE_MAX_AGE", timedelta(minutes=30)
         )
         self.refresh_token_cookie_max_age = config_dict.get(
-            "REFRESH_TOKEN_COOKIE_MAX_AGE"
+            "REFRESH_TOKEN_COOKIE_MAX_AGE", timedelta(days=30)
         )
 
         # MFA Settings

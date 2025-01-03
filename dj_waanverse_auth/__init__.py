@@ -22,7 +22,7 @@ Key Features:
     - Rate limiting
 
 For more information, visit:
-https://github.com/waanverse/dj-waanverse-auth
+https://github.com/waanverse/dj_waanverse_auth
 """
 
 import logging
@@ -43,7 +43,7 @@ __description__: Final = (
 )
 __maintainer__: Final = "Khaotungkulmethee Pattawee Drake"
 __maintainer_email__: Final = "tawee@waanverse.com"
-__url__: Final = "https://github.com/waanverse/dj-waanverse-auth"
+__url__: Final = "https://github.com/waanverse/dj_waanverse_auth"
 __status__: Final = "Production"
 
 # ASCII art logo
