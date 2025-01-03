@@ -3,6 +3,7 @@ from datetime import timedelta
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from dj_waanverse_auth.settings import auth_config
 
@@ -24,22 +25,45 @@ class MultiFactorAuth(models.Model):
 
 
 class VerificationCode(models.Model):
-    email_address = models.EmailField(unique=True, blank=True, null=True, db_index=True)
-    phone_number = models.CharField(
-        max_length=15, unique=True, blank=True, null=True, db_index=True
+    email_address = models.EmailField(
+        unique=True,
+        blank=True,
+        null=True,
+        db_index=True,
+        verbose_name=_("Email Address"),
     )
-    is_verified = models.BooleanField(default=False)
-    code = models.CharField(max_length=255, unique=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    phone_number = models.CharField(
+        max_length=15,
+        unique=True,
+        blank=True,
+        null=True,
+        db_index=True,
+        verbose_name=_("Phone Number"),
+    )
+    is_verified = models.BooleanField(default=False, verbose_name=_("Is Verified"))
+    code = models.CharField(
+        max_length=255, unique=True, verbose_name=_("Verification Code")
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created At"))
+    verified_at = models.DateTimeField(
+        null=True, blank=True, verbose_name=_("Verified At")
+    )
 
     def is_expired(self):
+        """
+        Check if the verification code is expired based on the configured expiry duration.
+        """
         expiration_time = self.created_at + timedelta(
             minutes=auth_config.verification_email_code_expiry_in_minutes
         )
         return timezone.now() > expiration_time
 
     def __str__(self):
-        return self.code
+        return f"Code: {self.code}, Verified: {self.is_verified}"
+
+    class Meta:
+        verbose_name = _("Verification Code")
+        verbose_name_plural = _("Verification Codes")
 
 
 # class EmailConfirmationCode(models.Model):

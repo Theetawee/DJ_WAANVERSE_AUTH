@@ -51,7 +51,8 @@ def verify_email(request):
     """
     serializer = VerifyEmailSerializer(data=request.data)
     if serializer.is_valid():
-        email = serializer.validated_data["email"]
+        serializer.save()
+        email = serializer.validated_data["email_address"]
         return Response(
             {
                 "message": "Email verified successfully.",

@@ -4,6 +4,7 @@ import re
 from django.contrib.auth import get_user_model, password_validation
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
@@ -235,19 +236,43 @@ class VerifyEmailSerializer(serializers.Serializer):
     email_address = serializers.EmailField(required=True)
     code = serializers.CharField(required=True)
 
-    def create(self, validated_data):
-        email_address = validated_data["email_address"]
-        code = validated_data["code"]
+    def validate(self, data):
+        """
+        Validate the email and code combination.
+        """
+        email_address = data["email_address"]
+        code = data["code"]
+
         try:
             verification = VerificationCode.objects.get(
-                email_address=email_address, code=code
+                email_address=email_address, code=code, is_verified=False
             )
-            if verification.is_expired:
+
+            if verification.is_expired():
+                verification.delete()
                 raise serializers.ValidationError(
                     {"code": "Verification code has expired."}
                 )
-            verification.is_verified = True
-            verification.save()
-            return email_address
+
+            return data
+
         except VerificationCode.DoesNotExist:
-            raise serializers.ValidationError({"code": "Invalid verification code."})
+            raise serializers.ValidationError(
+                {"code": "Invalid verification code or email address."}
+            )
+
+    def create(self, validated_data):
+        """
+        Mark the verification code as used and verified.
+        """
+        email_address = validated_data["email_address"]
+        code = validated_data["code"]
+
+        verification = VerificationCode.objects.get(
+            email_address=email_address, code=code, is_verified=False
+        )
+        verification.is_verified = True
+        verification.verified_at = timezone.now()
+        verification.save()
+
+        return {"email_address": email_address, "verified": True}
