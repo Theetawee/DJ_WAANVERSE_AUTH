@@ -64,7 +64,7 @@ class MFAHandler:
             raise ValueError("No MFA secret found. Cannot verify token.")
 
         totp = pyotp.TOTP(self.mfa.secret_key)
-        return totp.verify(token, valid_window=auth_config.mfa_valid_window)
+        return totp.verify(token)
 
     def disable_mfa(self):
         """Disable MFA for the user."""
@@ -75,9 +75,8 @@ class MFAHandler:
 
     def generate_recovery_codes(self):
         """Generate recovery codes for the user."""
-        count = int(
-            getattr(auth_config, "mfa_recovery_codes", 5)
-        )  # Default to 5 recovery codes if not set
+        count = auth_config.mfa_recovery_codes_count
+
         return [str(secrets.randbelow(10**7)).zfill(7) for _ in range(count)]
 
     def set_recovery_codes(self):
@@ -88,3 +87,19 @@ class MFAHandler:
     def get_recovery_codes(self):
         """Get recovery codes for the user."""
         return self.mfa.recovery_codes
+
+    def verify_recovery_code(self, code):
+        """
+        Verify if a recovery code is valid and remove it if it is.
+        :param code: The recovery code provided by the user.
+        :return: True if the code is valid, False otherwise.
+        """
+        if not self.user.mfa or not self.user.mfa.recovery_codes:
+            return False
+
+        if code in self.user.mfa.recovery_codes:
+            self.user.mfa.recovery_codes.remove(code)
+            self.user.mfa.save()
+            return True
+
+        return False

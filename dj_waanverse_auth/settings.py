@@ -131,7 +131,7 @@ class AuthConfig:
         self.mfa_token_duration = config_dict.get(
             "MFA_TOKEN_DURATION", timedelta(minutes=2)
         )
-        self.mfa_recovery_codes = self._validate_range(
+        self.mfa_recovery_codes_count = self._validate_range(
             config_dict.get("MFA_RECOVERY_CODE_COUNT", 10),
             "MFA_RECOVERY_CODE_COUNT",
             min_value=5,

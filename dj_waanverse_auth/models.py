@@ -1,4 +1,3 @@
-import secrets
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
@@ -19,14 +18,6 @@ class MultiFactorAuth(models.Model):
     recovery_codes = models.JSONField(default=list, blank=True)
     secret_key = models.CharField(max_length=255, null=True, blank=True)
     last_updated = models.DateTimeField(auto_now=True)
-
-    def generate_recovery_codes(self):
-        count = int(getattr(auth_config.mfa_recovery_codes))
-        return [str(secrets.randbelow(10**7)).zfill(7) for _ in range(count)]
-
-    def set_recovery_codes(self):
-        self.recovery_codes = self.generate_recovery_codes()
-        self.save()
 
     def __str__(self):
         return f"Account: {self.account} - Activated: {self.activated}"

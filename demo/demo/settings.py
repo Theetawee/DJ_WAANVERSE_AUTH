@@ -158,7 +158,7 @@ WAANVERSE_AUTH_CONFIG = {
     "PUBLIC_KEY_PATH": os.path.join(BASE_DIR, "secrets/public_key.pem"),
     "PRIVATE_KEY_PATH": os.path.join(BASE_DIR, "secrets/private_key.pem"),
     "REFRESH_TOKEN_COOKIE_MAX_AGE": timedelta(days=30),
-    "ACCESS_TOKEN_COOKIE_MAX_AGE": timedelta(minutes=1),
+    "ACCESS_TOKEN_COOKIE_MAX_AGE": timedelta(minutes=30),
     "BASIC_ACCOUNT_SERIALIZER": "accounts.serializers.BasicAccountSerializer",
     "DISPOSABLE_EMAIL_DOMAINS": [
         "tempmail.com",
@@ -167,6 +167,7 @@ WAANVERSE_AUTH_CONFIG = {
         "mailinator.com",
     ],
     "SEND_LOGIN_ALERT_EMAILS": True,
+    "ENABLE_ADMIN_PANEL": True,
 }
 
 REST_FRAMEWORK = {
@@ -174,5 +175,3 @@ REST_FRAMEWORK = {
         "dj_waanverse_auth.authentication.JWTAuthentication",
     ),
 }
-
-
