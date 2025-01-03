@@ -139,19 +139,18 @@ class MFAHandler:
         :return: True if the code is valid, False otherwise.
         """
         try:
-            # Get the decrypted recovery codes
             decrypted_codes = self.get_recovery_codes()
-            print(decrypted_codes)
-            print(code)
 
-            # Check if the provided code is in the decrypted recovery codes
             if code in decrypted_codes:
-                # Remove the code from the decrypted list, then re-encrypt and save
-                self.mfa.recovery_codes.remove(
-                    self.fernet.encrypt(code.encode()).decode()
-                )
+                decrypted_codes.remove(code)
 
+                encrypted_codes = [
+                    self.fernet.encrypt(c.encode()).decode() for c in decrypted_codes
+                ]
+
+                self.mfa.recovery_codes = encrypted_codes
                 self.mfa.save()
+
                 return True
 
             return False
