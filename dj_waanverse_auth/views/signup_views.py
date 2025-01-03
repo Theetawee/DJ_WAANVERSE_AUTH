@@ -1,3 +1,5 @@
+import logging
+
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
@@ -12,26 +14,33 @@ from dj_waanverse_auth.services.token_service import TokenService
 from dj_waanverse_auth.services.utils import get_serializer_class
 from dj_waanverse_auth.settings import auth_config
 
+logger = logging.getLogger(__name__)
+
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def initiate_email_verification(request):
-    """
-    Function-based view to initiate email verification.
-    """
+    """ """
     serializer = InitiateEmailVerificationSerializer(data=request.data)
-    if serializer.is_valid():
-        email = serializer.validated_data["email"]
+    try:
+        if serializer.is_valid():
+            serializer.save()
+            email = serializer.validated_data["email_address"]
+            return Response(
+                {
+                    "message": "Email verification initiated.",
+                    "email": email,
+                    "status": "code_sent",
+                },
+                status=status.HTTP_200_OK,
+            )
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
         return Response(
-            {
-                "message": "Email verification initiated.",
-                "email": email,
-                "status": "code_sent",
-            },
-            status=status.HTTP_200_OK,
+            {"error": f"Failed to initiate email verification: {str(e)}"},
+            status=status.HTTP_400_BAD_REQUEST,
         )
-    else:
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST"])

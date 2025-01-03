@@ -148,7 +148,7 @@ class SignupSerializer(serializers.Serializer):
             additional_fields = self.get_additional_fields(validated_data)
 
             user_data = {
-                "email": validated_data["email"],
+                "email_address": validated_data["email"],
                 "username": validated_data["username"],
                 "password": validated_data["password1"],
                 **additional_fields,
@@ -190,7 +190,7 @@ class SignupSerializer(serializers.Serializer):
 
 
 class InitiateEmailVerificationSerializer(serializers.Serializer):
-    email = serializers.EmailField(
+    email_address = serializers.EmailField(
         required=True,
         error_messages={
             "required": _("Email is required."),
@@ -207,34 +207,23 @@ class InitiateEmailVerificationSerializer(serializers.Serializer):
         self.email_service = EmailService()
         super().__init__(instance=instance, data=data, **kwargs)
 
-    def validate_email(self, email):
+    def validate_email_address(self, email_address):
         """
         Validate email with comprehensive checks and sanitization.
         """
-        email_validation = self.email_service.validate_email(email)
+        email_validation = self.email_service.validate_email(email_address)
 
         if email_validation.get("errors"):
             raise serializers.ValidationError(email_validation["errors"])
 
-        return email
+        return email_address
 
     def create(self, validated_data):
         try:
             with transaction.atomic():
-                verification_code = self.email_service.generate_verification_code()
-                email = validated_data["email"]
-                existing_verification = VerificationCode.objects.filter(
-                    email_address=email
-                ).first()
-                if existing_verification:
-                    existing_verification.delete()
-
-                new_verification = VerificationCode.objects.create(
-                    email_address=email, code=verification_code
-                )
-                new_verification.save()
-                self.email_service.send_verification_email(email, verification_code)
-                return email
+                email_address = validated_data["email_address"]
+                self.email_service.send_verification_email(email_address)
+                return email_address
         except Exception as e:
             logger.error(f"Email verification failed: {str(e)}")
             raise serializers.ValidationError(
@@ -243,20 +232,22 @@ class InitiateEmailVerificationSerializer(serializers.Serializer):
 
 
 class VerifyEmailSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=True)
+    email_address = serializers.EmailField(required=True)
     code = serializers.CharField(required=True)
 
     def create(self, validated_data):
-        email = validated_data["email"]
+        email_address = validated_data["email_address"]
         code = validated_data["code"]
         try:
-            verification = VerificationCode.objects.get(email_address=email, code=code)
+            verification = VerificationCode.objects.get(
+                email_address=email_address, code=code
+            )
             if verification.is_expired:
                 raise serializers.ValidationError(
                     {"code": "Verification code has expired."}
                 )
             verification.is_verified = True
             verification.save()
-            return email
+            return email_address
         except VerificationCode.DoesNotExist:
             raise serializers.ValidationError({"code": "Invalid verification code."})

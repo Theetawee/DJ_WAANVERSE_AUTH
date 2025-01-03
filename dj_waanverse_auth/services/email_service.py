@@ -299,17 +299,21 @@ class EmailService:
             )
             return False
 
-    def send_verification_email(self, email: str, verification_code: str) -> bool:
+    def send_verification_email(self, email: str) -> bool:
         """Send email verification code."""
+        print("called here")
         from dj_waanverse_auth.models import VerificationCode
 
-        existing_verification = VerificationCode.objects.filter(email=email).first()
+        verification_code = self.generate_verification_code()
+        existing_verification = VerificationCode.objects.filter(
+            email_address=email
+        ).first()
         if existing_verification:
             existing_verification.delete()
-
+        print("called")
         with transaction.atomic():
             new_verification = VerificationCode.objects.create(
-                email=email, code=verification_code
+                email_address=email, code=verification_code
             )
             new_verification.save()
             context = {

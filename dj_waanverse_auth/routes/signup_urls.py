@@ -7,7 +7,11 @@ from dj_waanverse_auth.views.signup_views import (
 )
 
 urlpatterns = [
-    path("email/initiate/", initiate_email_verification, name="email_initiate"),
+    path(
+        "email/initiate-verification/",
+        initiate_email_verification,
+        name="email_initiate",
+    ),
     path("email/verify/", verify_email, name="email_verify"),
     path("", signup_view, name="signup"),
 ]
