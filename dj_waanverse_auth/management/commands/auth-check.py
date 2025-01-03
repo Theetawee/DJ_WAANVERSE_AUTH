@@ -19,6 +19,7 @@ class Command(BaseCommand):
             "ACCESS_TOKEN_COOKIE_MAX_AGE",
             "REFRESH_TOKEN_COOKIE_MAX_AGE",
             "PASSWORD_CHANGED_FIELD_NAME",
+            "PLATFORM_NAME",
         ]
 
         try:

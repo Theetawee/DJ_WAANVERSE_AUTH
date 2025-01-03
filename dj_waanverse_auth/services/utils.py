@@ -1,9 +1,10 @@
+# utils.py
 import logging
+from functools import lru_cache
 
 import jwt
 from cryptography.exceptions import InvalidKey
 from cryptography.hazmat.primitives import serialization
-from jwt.exceptions import InvalidTokenError
 from rest_framework import exceptions
 
 from dj_waanverse_auth.settings import auth_config
@@ -11,40 +12,52 @@ from dj_waanverse_auth.settings import auth_config
 logger = logging.getLogger(__name__)
 
 
-def get_key(type):
+class KeyLoadError(Exception):
+    pass
+
+
+@lru_cache(maxsize=2)
+def get_key(key_type):
     """
-    Load and cache public key with lazy loading pattern.
+    Load and cache cryptographic keys with LRU caching
     """
-    print(auth_config.public_key_path, auth_config.private_key_path)
-    if type == "public":
+    key_paths = {
+        "public": auth_config.public_key_path,
+        "private": auth_config.private_key_path,
+    }
 
-        try:
-            with open(auth_config.public_key_path, "rb") as key_file:
-                key_data = key_file.read()
-            public_key = serialization.load_pem_public_key(key_data)
-        except (IOError, InvalidKey) as e:
-            logger.error(f"Failed to load public key: {str(e)}")
-            raise exceptions.AuthenticationFailed("Authentication system misconfigured")
+    if key_type not in key_paths:
+        raise KeyLoadError(f"Invalid key type: {key_type}")
 
-        return public_key
-    elif type == "private":
-        try:
-            with open(auth_config.private_key_path, "rb") as key_file:
-                key_data = key_file.read()
-            private_key = serialization.load_pem_private_key(key_data, password=None)
-        except (IOError, InvalidKey) as e:
-            logger.error(f"Failed to load private key: {str(e)}")
-            raise exceptions.AuthenticationFailed("Authentication system misconfigured")
+    try:
+        with open(key_paths[key_type], "rb") as key_file:
+            key_data = key_file.read()
 
-        return private_key
+        if key_type == "public":
+            return serialization.load_pem_public_key(key_data)
+        else:
+            return serialization.load_pem_private_key(key_data, password=None)
+
+    except FileNotFoundError:
+        logger.critical(f"Could not find {key_type} key file at {key_paths[key_type]}")
+        raise KeyLoadError(f"Could not find {key_type} key file")
+    except InvalidKey as e:
+        logger.critical(f"Invalid {key_type} key format: {str(e)}")
+        raise KeyLoadError(f"Invalid {key_type} key format")
+    except Exception as e:
+        logger.critical(f"Unexpected error loading {key_type} key: {str(e)}")
+        raise KeyLoadError(f"Failed to load {key_type} key")
 
 
 def decode_token(token):
     """
-    Decode and validate JWT token with comprehensive error handling.
+    Decode and validate JWT token with comprehensive error handling and logging
     """
+    if not token:
+        raise exceptions.AuthenticationFailed("No token provided")
+
     try:
-        public_key = get_key(type="public")
+        public_key = get_key("public")
         payload = jwt.decode(
             token,
             public_key,
@@ -54,6 +67,7 @@ def decode_token(token):
                 "verify_exp": True,
                 "verify_nbf": True,
                 "verify_iat": True,
+                "require": ["exp", "iat", "iss", "user_id"],
             },
         )
         return payload
@@ -61,31 +75,37 @@ def decode_token(token):
     except jwt.ExpiredSignatureError:
         logger.info("Token expired")
         raise exceptions.AuthenticationFailed("Token has expired")
-    except InvalidTokenError as e:
-        logger.warning(f"Invalid token: {str(e)}")
-        raise exceptions.AuthenticationFailed("Invalid token")
+    except jwt.InvalidTokenError as e:
+        logger.warning(f"Invalid token structure: {str(e)}")
+        raise exceptions.AuthenticationFailed("Invalid token structure")
+    except jwt.InvalidSignatureError:
+        logger.warning("Invalid token signature")
+        raise exceptions.AuthenticationFailed("Invalid token signature")
+    except jwt.InvalidIssuerError:
+        logger.warning("Invalid token issuer")
+        raise exceptions.AuthenticationFailed("Invalid token issuer")
     except Exception as e:
-        logger.error(f"Token decode error: {str(e)}")
-        raise exceptions.AuthenticationFailed(
-            f"Token decoding failed with error: {str(e)}"
-        )
+        logger.error(f"Unexpected error decoding token: {str(e)}")
+        raise exceptions.AuthenticationFailed("Token validation failed")
 
 
 def encode_token(payload):
     """
-    Encode the payload into a JWT token using RS256 algorithm.
-
-    Args:
-        payload (dict): The payload to encode.
-
-    Returns:
-        str: The encoded JWT token.
+    Encode payload into JWT token with error handling and logging
     """
+    if not isinstance(payload, dict):
+        raise ValueError("Payload must be a dictionary")
+
+    required_claims = {"user_id", "exp", "iat", "iss"}
+    missing_claims = required_claims - set(payload.keys())
+    if missing_claims:
+        raise ValueError(f"Missing required claims: {missing_claims}")
+
     try:
-        private_key = get_key(type="private")
-        return jwt.encode(payload, private_key, algorithm="RS256")
+        private_key = get_key("private")
+        token = jwt.encode(payload, private_key, algorithm="RS256")
+        return token
+
     except Exception as e:
-        logger.error(f"Token encode error: {str(e)}")
-        raise exceptions.AuthenticationFailed(
-            f"Token Encoding failed with error: {str(e)}"
-        )
+        logger.error(f"Token encoding failed: {str(e)}")
+        raise exceptions.AuthenticationFailed("Could not generate token")
