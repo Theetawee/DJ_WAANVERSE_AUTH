@@ -27,7 +27,10 @@ def login_view(request):
             token_manager = token_service.TokenService(user=user)
 
             if mfa:
-                response = Response(data={"status": "success", "mfa": mfa})
+                response = Response(
+                    data={"status": "success", "mfa": user.id},
+                    status=status.HTTP_200_OK,
+                )
                 response = token_manager.delete_tokens_from_response(response)
                 return token_manager.handle_mfa_cookie(response, action="add")
             else:
