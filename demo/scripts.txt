@@ -8,3 +8,8 @@ coverage="coverage run demo/manage.py test -v 2 && coverage report"
 =>Generate Private and Public key.
     ssh-keygen -t rsa -b 4096 -m PEM -f private_key.pem
     ssh-keygen -y -f private_key.pem > public_key.pem
+
+
+
+------Installation--------
+add dj_waanverse_auth in installed apps
