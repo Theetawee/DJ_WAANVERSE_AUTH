@@ -3,7 +3,7 @@ import re
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
-from .settings import accounts_config
+from .settings import auth_config
 
 
 def validate_username(username: str) -> tuple:
@@ -16,13 +16,13 @@ def validate_username(username: str) -> tuple:
         tuple: A tuple containing a boolean indicating if the username is valid
             and a string containing the error message if the username is invalid.
     """
-    if len(username) < accounts_config.USERNAME_MIN_LENGTH:
+    if len(username) < auth_config.USERNAME_MIN_LENGTH:
         return (
             False,
-            f"Username should be at least {accounts_config.USERNAME_MIN_LENGTH} characters long.",
+            f"Username should be at least {auth_config.USERNAME_MIN_LENGTH} characters long.",
         )
 
-    if username in accounts_config.DISALLOWED_USERNAMES:
+    if username in auth_config.DISALLOWED_USERNAMES:
         return False, f"Username must not contain the word '{username}'."
 
     # Check for allowed characters (letters, numbers, and underscores)

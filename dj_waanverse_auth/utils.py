@@ -15,7 +15,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from .messages import Messages
 from .models import EmailAddress, EmailConfirmationCode, MultiFactorAuth
-from .settings import accounts_config
+from .settings import auth_config
 
 
 def set_cookie(response: HttpResponse, name: str, value: str, max_age: int, **kwargs):
@@ -33,11 +33,11 @@ def set_cookie(response: HttpResponse, name: str, value: str, max_age: int, **kw
         name,
         value,
         max_age=max_age,
-        path=kwargs.get("path", accounts_config.COOKIE_PATH),
-        domain=kwargs.get("domain", accounts_config.COOKIE_DOMAIN),
-        secure=kwargs.get("secure", accounts_config.COOKIE_SECURE_FLAG),
-        httponly=kwargs.get("httponly", accounts_config.COOKIE_HTTP_ONLY_FLAG),
-        samesite=kwargs.get("samesite", accounts_config.COOKIE_SAMESITE_POLICY),
+        path=kwargs.get("path", auth_config.COOKIE_PATH),
+        domain=kwargs.get("domain", auth_config.COOKIE_DOMAIN),
+        secure=kwargs.get("secure", auth_config.COOKIE_SECURE_FLAG),
+        httponly=kwargs.get("httponly", auth_config.COOKIE_HTTP_ONLY_FLAG),
+        samesite=kwargs.get("samesite", auth_config.COOKIE_SAMESITE_POLICY),
     )
     return response
 
@@ -64,7 +64,7 @@ def set_cookies(
         access_token_lifetime = api_settings.ACCESS_TOKEN_LIFETIME.total_seconds()
         set_cookie(
             response,
-            accounts_config.ACCESS_TOKEN_COOKIE,
+            auth_config.ACCESS_TOKEN_COOKIE,
             access_token,
             max_age=int(access_token_lifetime),
         )
@@ -73,15 +73,15 @@ def set_cookies(
         refresh_token_lifetime = api_settings.REFRESH_TOKEN_LIFETIME.total_seconds()
         set_cookie(
             response,
-            accounts_config.REFRESH_TOKEN_COOKIE,
+            auth_config.REFRESH_TOKEN_COOKIE,
             refresh_token,
             max_age=int(refresh_token_lifetime),
         )
 
     if mfa:
-        mfa_lifetime = accounts_config.MFA_COOKIE_DURATION.total_seconds()
+        mfa_lifetime = auth_config.MFA_COOKIE_DURATION.total_seconds()
         set_cookie(
-            response, accounts_config.MFA_COOKIE_NAME, mfa, max_age=int(mfa_lifetime)
+            response, auth_config.MFA_COOKIE_NAME, mfa, max_age=int(mfa_lifetime)
         )
 
     return response
@@ -109,7 +109,7 @@ def dispatch_email(context, email, subject, template):
         subject (str): The subject of the email
         template (str): The name of the template located in the 'emails' folder
     """
-    context["PLATFORM_NAME"] = accounts_config.PLATFORM_NAME
+    context["PLATFORM_NAME"] = auth_config.PLATFORM_NAME
     template_name = f"emails/{template}.html"
     convert_to_html_content = render_to_string(
         template_name=template_name, context=context
@@ -141,7 +141,7 @@ def handle_email_mechanism(context, email, subject, template):
         subject (str): The subject of the email
         template (str): The name of the template located in the 'emails' folder
     """
-    if accounts_config.EMAIL_THREADING_ENABLED:
+    if auth_config.EMAIL_THREADING_ENABLED:
         email_thread = EmailThread(context, email, subject, template)
         email_thread.start()
     else:
@@ -157,7 +157,7 @@ def handle_email_verification(user):
     Returns:
         EmailConfirmationCode: The email verification code.
     """
-    length = accounts_config.CONFIRMATION_CODE_DIGITS
+    length = auth_config.CONFIRMATION_CODE_DIGITS
 
     # Generate a numeric code
     code = "".join(random.choices(string.digits, k=length))
@@ -169,7 +169,7 @@ def handle_email_verification(user):
         handle_email_mechanism(
             context={
                 "code": code,
-                "timespan": accounts_config.EMAIL_VERIFICATION_CODE_DURATION,
+                "timespan": auth_config.EMAIL_VERIFICATION_CODE_DURATION,
             },
             email=user.email,
             subject=Messages.verify_email_subject,
@@ -192,7 +192,7 @@ def get_client_ip(request):
 
 
 def generate_password_reset_code():
-    length = accounts_config.CONFIRMATION_CODE_LENGTH
+    length = auth_config.CONFIRMATION_CODE_LENGTH
 
     # Generate a numeric code
     code = "".join(random.choices(string.digits, k=length))
@@ -235,8 +235,8 @@ def reset_response(response: HttpResponse) -> HttpResponse:
     Args:
         response (Response): The response object to remove the cookies from.
     """
-    response.delete_cookie(accounts_config.ACCESS_TOKEN_COOKIE)
-    response.delete_cookie(accounts_config.REFRESH_TOKEN_COOKIE)
+    response.delete_cookie(auth_config.ACCESS_TOKEN_COOKIE)
+    response.delete_cookie(auth_config.REFRESH_TOKEN_COOKIE)
 
     return response
 
@@ -304,7 +304,7 @@ def generate_tokens(user, refresh_token=None):
         refresh = RefreshToken(refresh_token)
     else:
         refresh = RefreshToken.for_user(user)
-    UserClaimsSerializer = get_serializer(accounts_config.USER_CLAIM_SERIALIZER_CLASS)
+    UserClaimsSerializer = get_serializer(auth_config.USER_CLAIM_SERIALIZER_CLASS)
     serializer = UserClaimsSerializer(user)
     claims = serializer.data
     for key, value in claims.items():

@@ -13,7 +13,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from dj_waanverse_auth.messages import Messages
-from dj_waanverse_auth.settings import accounts_config
+from dj_waanverse_auth.settings import auth_config
 from dj_waanverse_auth.signals import user_created_via_google
 from dj_waanverse_auth.utils import (
     check_mfa_status,
@@ -81,11 +81,9 @@ class GoogleAuthCallbackView(APIView):
         user = self.authenticate_or_create_user(user_info)
         mfa_status = check_mfa_status(user)
         email_verification_status = get_email_verification_status(user)
-        USER_CLAIM_SERIALIZER = get_serializer(
-            accounts_config.USER_CLAIM_SERIALIZER_CLASS
-        )
+        USER_CLAIM_SERIALIZER = get_serializer(auth_config.USER_CLAIM_SERIALIZER_CLASS)
         if not email_verification_status:
-            if accounts_config.AUTO_RESEND_EMAIL and self.is_created is False:
+            if auth_config.AUTO_RESEND_EMAIL and self.is_created is False:
                 handle_email_verification(user)
 
             response_data = {
@@ -178,9 +176,7 @@ class GoogleAuthCallbackView(APIView):
             length=16,
             allowed_chars=allowed_chars,
         )
-        CREATION_SERIALIZER = get_serializer(
-            accounts_config.REGISTRATION_SERIALIZER_CLASS
-        )
+        CREATION_SERIALIZER = get_serializer(auth_config.REGISTRATION_SERIALIZER_CLASS)
 
         if not email:
             raise AuthenticationFailed("No email associated with Google account")

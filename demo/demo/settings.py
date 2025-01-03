@@ -132,7 +132,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 AUTHENTICATION_BACKENDS = [
-    "dj_waanverse_auth.backends.AuthBackend",
+    "dj_waanverse_auth.backends.AuthenticationBackend",
     "django.contrib.auth.backends.ModelBackend",
 ]
 
@@ -153,16 +153,10 @@ EMAIL_HOST_PASSWORD = os.environ.get("SMTP_PASSWORD", "test-password")
 EMAIL_USE_TLS = True
 
 
-WAANVERSE_AUTH = {
-    "REGISTRATION_SERIALIZER_CLASS": "accounts.serializers.SignupSerializer",
-    "CONFIRMATION_CODE_LENGTH": 5,
-    "EMAIL_ON_LOGIN": False,
-    "AUTHENTICATION_METHODS": ["email", "username"],
-    "COOKIE_SECURE_FLAG": False,
-    "ENABLE_EMAIL_ON_LOGIN": False,
-    "USE_ADMIN_PANEL": True,
-    "AUTO_RESEND_EMAIL": False,
-}
+WAANVERSE_AUTH_CONFIG = {"PUBLIC_KEY_PATH": "/"}
+
 REST_FRAMEWORK = {
-    # "DEFAULT_AUTHENTICATION_CLASSES": ("dj_waanverse_auth.backends.JWTAuthentication",),
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "dj_waanverse_auth.authentication.JWTAuthentication",
+    ),
 }

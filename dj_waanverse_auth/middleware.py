@@ -1,6 +1,6 @@
 from rest_framework import status
 
-from .settings import accounts_config
+from .settings import auth_config
 
 
 class CookiesHandlerMiddleware:
@@ -15,8 +15,8 @@ class CookiesHandlerMiddleware:
             if (response.data["code"]) == "user_not_found" or (
                 response.status_code == status.HTTP_401_UNAUTHORIZED
             ):
-                response.delete_cookie(accounts_config.ACCESS_TOKEN_COOKIE)
-                response.delete_cookie(accounts_config.REFRESH_TOKEN_COOKIE)
+                response.delete_cookie(auth_config.ACCESS_TOKEN_COOKIE)
+                response.delete_cookie(auth_config.REFRESH_TOKEN_COOKIE)
 
         except Exception:
             pass

@@ -14,12 +14,19 @@ from rest_framework_simplejwt.tokens import RefreshToken, Token
 from dj_waanverse_auth.messages import Messages
 
 from .models import EmailConfirmationCode, MultiFactorAuth, ResetPasswordCode
-from .settings import accounts_config
-from .utils import (check_mfa_status, generate_password_reset_code,
-                    generate_tokens, get_client_ip,
-                    get_email_verification_status, get_user_agent,
-                    handle_email_mechanism, handle_email_verification,
-                    handle_user_login, user_email_address)
+from .settings import auth_config
+from .utils import (
+    check_mfa_status,
+    generate_password_reset_code,
+    generate_tokens,
+    get_client_ip,
+    get_email_verification_status,
+    get_user_agent,
+    handle_email_mechanism,
+    handle_email_verification,
+    handle_user_login,
+    user_email_address,
+)
 from .validators import password_validator
 from .validators import validate_username as username_validator
 
@@ -74,7 +81,7 @@ class LoginSerializer(TokenObtainSerializer):
         data["email_verified"] = email_verified
 
         if not email_verified:
-            if accounts_config.AUTO_RESEND_EMAIL:
+            if auth_config.AUTO_RESEND_EMAIL:
                 handle_email_verification(self.user)
             data["mfa"] = False  # MFA is reported as off if email is not verified
             return data
@@ -230,9 +237,9 @@ class MfaCodeSerializer(serializers.Serializer):
     code = serializers.CharField(required=True)
 
     def validate_code(self, value):
-        if len(str(value)) != accounts_config.MFA_CODE_DIGITS:
+        if len(str(value)) != auth_config.MFA_CODE_DIGITS:
             raise serializers.ValidationError(
-                f"The OTP code must be {accounts_config.MFA_CODE_DIGITS} digits."
+                f"The OTP code must be {auth_config.MFA_CODE_DIGITS} digits."
             )
         return value
 
@@ -245,7 +252,7 @@ class LogoutSerializer(serializers.Serializer):
         if not refresh:
             request = self.context.get("request")
             if request:
-                refresh = request.COOKIES.get(accounts_config.REFRESH_TOKEN_COOKIE)
+                refresh = request.COOKIES.get(auth_config.REFRESH_TOKEN_COOKIE)
                 if not refresh:
                     raise serializers.ValidationError({"msg": Messages.token_error})
         attrs["refresh"] = refresh
@@ -368,9 +375,9 @@ class DeactivateMfaSerializer(serializers.Serializer):
     password = serializers.CharField(required=True)
 
     def validate_code(self, value):
-        if len(str(value)) != accounts_config.MFA_CODE_DIGITS:
+        if len(str(value)) != auth_config.MFA_CODE_DIGITS:
             raise serializers.ValidationError(
-                f"The OTP code must be {accounts_config.MFA_CODE_DIGITS} digits."
+                f"The OTP code must be {auth_config.MFA_CODE_DIGITS} digits."
             )
         return value
 
@@ -408,7 +415,7 @@ class DeactivateMfaSerializer(serializers.Serializer):
         mfa.secret_key = None
         mfa.recovery_codes = []
         try:
-            if accounts_config.MFA_EMAIL_ALERTS_ENABLED:
+            if auth_config.MFA_EMAIL_ALERTS_ENABLED:
                 handle_email_mechanism(
                     context={
                         "username": user.username,

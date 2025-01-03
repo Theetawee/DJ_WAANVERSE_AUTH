@@ -1,0 +1,2 @@
+Add the authentication backend into the array
+add password_changed_at field on your models

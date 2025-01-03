@@ -57,10 +57,10 @@ These settings ensure that Waanverse Accounts' custom authentication backend and
 
 ### Customizing Settings
 
-You can customize the behavior of Waanverse Accounts by adding an `ACCOUNTS_CONFIG` dictionary to your Django `settings.py` file. Here are the default settings:
+You can customize the behavior of Waanverse Accounts by adding an `auth_config` dictionary to your Django `settings.py` file. Here are the default settings:
 
 ```python
-DEFAULT_ACCOUNTS_CONFIG = {
+DEFAULT_auth_config = {
     "AUTHENTICATION_METHODS": ["username"],
     "MFA_RECOVERY_CODES_COUNT": 2,
     "ACCESS_TOKEN_COOKIE_NAME": "access",
