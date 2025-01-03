@@ -29,7 +29,7 @@ def login_view(request):
             if mfa:
                 response = Response(data={"status": "success", "mfa": mfa})
                 response = token_manager.delete_tokens_from_response(response)
-                return token_manager.handle_mfa_cookie(response)
+                return token_manager.handle_mfa_cookie(response, action="add")
             else:
                 tokens = token_manager.generate_tokens()
                 basic_serializer = get_serializer_class(
@@ -37,13 +37,16 @@ def login_view(request):
                 )
                 email_manager = email_service.EmailService(request=request)
                 email_manager.send_login_alert(user.email_address)
-                response = Response(
-                    data={
-                        "status": "success",
-                        "access_token": tokens["access_token"],
-                        "refresh_token": tokens["refresh_token"],
-                        "user": basic_serializer(user).data,
-                    }
+                response = token_manager.handle_mfa_cookie(
+                    response=Response(
+                        data={
+                            "status": "success",
+                            "access_token": tokens["access_token"],
+                            "refresh_token": tokens["refresh_token"],
+                            "user": basic_serializer(user).data,
+                        }
+                    ),
+                    action="remove",
                 )
                 return token_manager.add_tokens_to_response(response, tokens)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -99,7 +102,7 @@ def mfa_login_view(request):
     if is_valid:
         token_manager = token_service.TokenService(user=user)
         tokens = token_manager.generate_tokens()
-        return token_manager.add_tokens_to_response(
+        response = token_manager.add_tokens_to_response(
             response=Response(
                 data={
                     "status": "success",
@@ -112,6 +115,7 @@ def mfa_login_view(request):
             ),
             tokens=tokens,
         )
+        return token_manager.handle_mfa_cookie(response, action="delete")
     else:
         return Response(
             {"error": "Invalid MFA code or recovery code."},

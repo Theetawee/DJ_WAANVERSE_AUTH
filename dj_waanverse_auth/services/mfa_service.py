@@ -119,6 +119,7 @@ class MFAHandler:
                 )
         except Exception as e:
             logger.error(f"Error disabling MFA: {str(e)}")
+            raise e
 
     def generate_recovery_codes(self):
         """Generate recovery codes for the user and encrypt them."""

@@ -126,17 +126,27 @@ class TokenService:
         except TokenError:
             return False
 
-    def handle_mfa_cookie(self, response):
+    def handle_mfa_cookie(self, response, action):
         """
         Add a cookie containing the user ID if MFA is enabled.
+        action: 'add' or 'remove'
         """
+        if action not in ["add", "remove"]:
+            raise ValueError("Invalid action for MFA cookie")
+        if action == "add":
+            cookie_params = self.cookie_settings.get_cookie_params()
 
-        cookie_params = self.cookie_settings.get_cookie_params()
-
-        response.set_cookie(
-            self.cookie_settings.MFA_COOKIE_NAME,
-            str(self.user.id),
-            max_age=self.cookie_settings.MFA_COOKIE_MAX_AGE,
-            **cookie_params,
-        )
-        return response
+            response.set_cookie(
+                self.cookie_settings.MFA_COOKIE_NAME,
+                str(self.user.id),
+                max_age=self.cookie_settings.MFA_COOKIE_MAX_AGE,
+                **cookie_params,
+            )
+            return response
+        elif action == "remove":
+            response.delete_cookie(
+                self.cookie_settings.MFA_COOKIE_NAME,
+                domain=self.cookie_settings.DOMAIN,
+                path=self.cookie_settings.PATH,
+            )
+            return response
