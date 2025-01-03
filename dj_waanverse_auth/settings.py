@@ -52,6 +52,7 @@ class AuthConfigSchema(TypedDict, total=False):
     # Email Settings
     EMAIL_VERIFICATION_ENABLED: bool
     EMAIL_VERIFICATION_CODE_LENGTH: int
+    EMAIL_VERIFICATION_CODE_IS_ALPHANUMERIC: bool
     EMAIL_SECURITY_NOTIFICATIONS_ENABLED: bool
     EMAIL_THREADING_ENABLED: bool
     AUTO_RESEND_VERIFICATION_EMAIL: bool
@@ -184,6 +185,9 @@ class AuthConfig:
             "EMAIL_VERIFICATION_CODE_LENGTH",
             min_value=6,
             max_value=12,
+        )
+        self.email_verification_code_is_alphanumeric = config_dict.get(
+            "EMAIL_VERIFICATION_CODE_IS_ALPHANUMERIC", False
         )
         self.email_security_notifications_enabled = config_dict.get(
             "EMAIL_SECURITY_NOTIFICATIONS_ENABLED", True

@@ -441,7 +441,10 @@ class EmailService:
         return success_count, failure_count
 
     @staticmethod
-    def generate_verification_code(length: int = 6, alphanumeric: bool = False) -> str:
+    def generate_verification_code(
+        length: int = auth_config.email_verification_code_length,
+        alphanumeric: bool = auth_config.email_verification_code_is_alphanumeric,
+    ) -> str:
         """
         Generate a random verification code.
 

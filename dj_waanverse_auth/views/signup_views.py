@@ -3,7 +3,52 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
-from dj_waanverse_auth.serializers import SignupSerializer
+from dj_waanverse_auth.serializers.signup_serializers import (
+    InitiateEmailVerificationSerializer,
+    SignupSerializer,
+)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def initiate_email_verification(request):
+    """
+    Function-based view to initiate email verification.
+    """
+    serializer = InitiateEmailVerificationSerializer(data=request.data)
+    if serializer.is_valid():
+        email = serializer.validated_data["email"]
+        return Response(
+            {
+                "message": "Email verification initiated.",
+                "email": email,
+                "status": "code_sent",
+            },
+            status=status.HTTP_200_OK,
+        )
+    else:
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def verify_email(request):
+    """
+    Function-based view to verify email.
+    """
+    serializer = InitiateEmailVerificationSerializer(data=request.data)
+    if serializer.is_valid():
+        email = serializer.validated_data["email"]
+        return Response(
+            {
+                "message": "Email verification initiated.",
+                "email": email,
+                "status": "code_sent",
+            },
+            status=status.HTTP_200_OK,
+        )
+    else:
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST"])

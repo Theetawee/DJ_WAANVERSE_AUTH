@@ -3,10 +3,12 @@ import re
 
 from django.contrib.auth import get_user_model, password_validation
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
+from dj_waanverse_auth.models import VerificationCode
 from dj_waanverse_auth.services.email_service import EmailService
 from dj_waanverse_auth.settings import auth_config
 
@@ -191,3 +193,56 @@ class SignupSerializer(serializers.Serializer):
 
         except Exception as e:
             logger.error(f"Post-creation tasks failed for user {user.id}: {str(e)}")
+
+
+class InitiateEmailVerificationSerializer(serializers.Serializer):
+    email = serializers.EmailField(
+        required=True,
+        error_messages={
+            "required": _("Email is required."),
+        },
+        validators=[
+            UniqueValidator(
+                queryset=Account.objects.all(),
+                message=_("This email is already registered."),
+            )
+        ],
+    )
+
+    def __init__(self, instance=None, data=None, **kwargs):
+        self.email_service = EmailService()
+        super().__init__(instance=instance, data=data, **kwargs)
+
+    def validate_email(self, email):
+        """
+        Validate email with comprehensive checks and sanitization.
+        """
+        email_validation = self.email_service.validate_email(email)
+
+        if email_validation.get("errors"):
+            raise serializers.ValidationError(email_validation["errors"])
+
+        return email
+
+    def create(self, validated_data):
+        try:
+            with transaction.atomic():
+                verification_code = self.email_service.generate_verification_code()
+                email = validated_data["email"]
+                existing_verification = VerificationCode.objects.filter(
+                    email_address=email
+                ).first()
+                if existing_verification:
+                    existing_verification.delete()
+
+                new_verification = VerificationCode.objects.create(
+                    email_address=email, code=verification_code
+                )
+                new_verification.save()
+                self.email_service.send_verification_email(email, verification_code)
+                return email
+        except Exception as e:
+            logger.error(f"Email verification failed: {str(e)}")
+            raise serializers.ValidationError(
+                _("Failed to initiate email verification.")
+            )
