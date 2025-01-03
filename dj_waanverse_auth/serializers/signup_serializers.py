@@ -23,7 +23,7 @@ class SignupSerializer(serializers.Serializer):
     Serializer for user registration with comprehensive validation.
     """
 
-    email = serializers.EmailField(
+    email_address = serializers.EmailField(
         required=True,
     )
 
@@ -69,10 +69,10 @@ class SignupSerializer(serializers.Serializer):
         self._password_validators_cache = None
         super().__init__(instance=instance, data=data, **kwargs)
 
-    def validate_email(self, email):
+    def validate_email_address(self, email_address):
         try:
             verification = VerificationCode.objects.get(
-                email_address=email, is_verified=True
+                email_address=email_address, is_verified=True
             )
             verification.delete()
         except VerificationCode.DoesNotExist:
@@ -82,7 +82,7 @@ class SignupSerializer(serializers.Serializer):
             logger.error(f"Email validation error: {str(e)}")
             raise serializers.ValidationError(_("Invalid email address."))
 
-        return email
+        return email_address
 
     def validate_username(self, username):
         """
