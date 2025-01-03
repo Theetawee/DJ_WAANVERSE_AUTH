@@ -121,7 +121,7 @@ class EmailService:
         check_uniqueness: bool = False,
         check_disposable: bool = True,
         check_blacklist: bool = True,
-    ) -> str:
+    ) -> dict:
         """
         Comprehensive email validation.
 
@@ -132,7 +132,7 @@ class EmailService:
             check_blacklist: Whether to check against blacklisted patterns
 
         Returns:
-            Normalized email address
+            dict: Dictionary with 'email' and 'error' keys
 
         Raises:
             EmailValidationError: If validation fails
