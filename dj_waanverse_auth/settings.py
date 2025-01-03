@@ -51,7 +51,7 @@ class AuthConfigSchema(TypedDict, total=False):
     # Email Settings
     EMAIL_VERIFICATION_ENABLED: bool
     EMAIL_VERIFICATION_CODE_LENGTH: int
-    EMAIL_NOTIFICATIONS_ENABLED: bool
+    EMAIL_SECURITY_NOTIFICATIONS_ENABLED: bool
     EMAIL_THREADING_ENABLED: bool
     AUTO_RESEND_VERIFICATION_EMAIL: bool
     BLACKLISTED_DOMAINS: List[str]
@@ -181,8 +181,8 @@ class AuthConfig:
             min_value=6,
             max_value=12,
         )
-        self.email_notifications_enabled = config_dict.get(
-            "EMAIL_NOTIFICATIONS_ENABLED", True
+        self.email_security_notifications_enabled = config_dict.get(
+            "EMAIL_SECURITY_NOTIFICATIONS_ENABLED", True
         )
         self.email_threading_enabled = config_dict.get("EMAIL_THREADING_ENABLED", True)
         self.auto_resend_verification = config_dict.get(

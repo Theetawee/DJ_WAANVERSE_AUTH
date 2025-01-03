@@ -39,6 +39,7 @@ class EmailTemplate(Enum):
     LOGIN_ALERT = "login_alert"
     ACCOUNT_LOCKED = "account_locked"
     TWO_FACTOR_CODE = "two_factor_code"
+    MFA_ENABLED = "mfa_enabled"
 
 
 class EmailPriority(Enum):
@@ -79,7 +80,7 @@ class EmailValidationError(ValidationError):
 class EmailService:
     """Production-ready email service handling all email-related functionality."""
 
-    def __init__(self, request):
+    def __init__(self, request=None):
         """Initialize email service with configuration."""
         self.config = EmailConfig()
         self.email_validator = EmailValidator()
@@ -342,6 +343,8 @@ class EmailService:
         Args:
             email: Recipient email
         """
+        if not self.request:
+            raise ValueError("Request object is required")
         if auth_config.send_login_alert_emails:
             ip_address = get_ip_address(self.request)
             context = {
@@ -374,6 +377,23 @@ class EmailService:
             recipient_list=email,
             priority=EmailPriority.HIGH,
         )
+
+    def send_mfa_enabled_notification(self, email_address: str) -> bool:
+        """Send MFA enabled notification."""
+        if auth_config.email_security_notifications_enabled:
+            context = {
+                "mfa_time": timezone.now(),
+            }
+            return self.send_email(
+                subject="Account Security Alert",
+                template_name=EmailTemplate.MFA_ENABLED,
+                context=context,
+                recipient_list=email_address,
+                priority=EmailPriority.HIGH,
+            )
+        else:
+            logger.warning("MFA enabled notification email sending is disabled.")
+            return False
 
     def send_batch_emails(
         self,

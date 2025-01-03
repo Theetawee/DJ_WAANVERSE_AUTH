@@ -1,14 +1,19 @@
 import hashlib
+import logging
 import secrets
 from base64 import urlsafe_b64encode
 
 import pyotp
 from cryptography.fernet import Fernet
 from django.conf import settings
+from django.db import transaction
 from django.utils.timezone import now
 
 from dj_waanverse_auth.models import MultiFactorAuth
+from dj_waanverse_auth.services.email_service import EmailService
 from dj_waanverse_auth.settings import auth_config
+
+logger = logging.getLogger(__name__)
 
 
 class MFAHandler:
@@ -46,11 +51,23 @@ class MFAHandler:
         encoded_secret = self.fernet.encrypt(raw_secret.encode()).decode()
 
         self.mfa.secret_key = encoded_secret
-        self.mfa.activated = True
-        self.mfa.activated_at = now()
         self.mfa.save()
 
         return raw_secret
+
+    def activate_mfa(self):
+        """Activate MFA for the user."""
+        try:
+            with transaction.atomic():
+                self.mfa.activated = True
+                self.mfa.activated_at = now()
+                self.mfa.save()
+
+                self.set_recovery_codes()
+                email_manager = EmailService()
+                email_manager.send_mfa_enabled_notification(self.user.email_address)
+        except Exception as e:
+            logger.error(f"Error activating MFA: {str(e)}")
 
     def get_decoded_secret(self):
         """Decode the stored secret key."""
@@ -97,13 +114,23 @@ class MFAHandler:
         return [str(secrets.randbelow(10**7)).zfill(7) for _ in range(count)]
 
     def set_recovery_codes(self):
-        """Set recovery codes for the user."""
-        self.mfa.recovery_codes = self.generate_recovery_codes()
+        """Set encrypted recovery codes for the user."""
+        recovery_codes = self.generate_recovery_codes()
+        encrypted_codes = [
+            self.fernet.encrypt(code.encode()).decode() for code in recovery_codes
+        ]
+        self.mfa.recovery_codes = encrypted_codes
         self.mfa.save()
 
     def get_recovery_codes(self):
-        """Get recovery codes for the user."""
-        return self.mfa.recovery_codes
+        """Decrypt and get recovery codes for the user."""
+        if not self.mfa.recovery_codes:
+            return []
+
+        return [
+            self.fernet.decrypt(code.encode()).decode()
+            for code in self.mfa.recovery_codes
+        ]
 
     def verify_recovery_code(self, code):
         """
@@ -111,12 +138,13 @@ class MFAHandler:
         :param code: The recovery code provided by the user.
         :return: True if the code is valid, False otherwise.
         """
-        if not self.user.mfa or not self.user.mfa.recovery_codes:
-            return False
+        decrypted_codes = self.get_recovery_codes()
 
-        if code in self.user.mfa.recovery_codes:
-            self.user.mfa.recovery_codes.remove(code)
-            self.user.mfa.save()
+        if code in decrypted_codes:
+            self.mfa.recovery_codes.remove(
+                self.fernet.encrypt(code.encode()).decode()
+            )  # Remove the encrypted version
+            self.mfa.save()
             return True
 
         return False

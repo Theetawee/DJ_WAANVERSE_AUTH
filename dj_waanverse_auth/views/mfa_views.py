@@ -16,6 +16,7 @@ def activate_mfa_view(request):
     mfa_handler = MFAHandler(user)
 
     if mfa_handler.is_mfa_enabled():
+
         return Response(
             {"detail": "MFA is already activated."}, status=status.HTTP_400_BAD_REQUEST
         )
@@ -27,6 +28,37 @@ def activate_mfa_view(request):
         {"secret_key": secret_key, "provisioning_uri": provisioning_uri},
         status=status.HTTP_200_OK,
     )
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def activate_mfa_with_code_view(request):
+    """Activate MFA for the authenticated user using a code."""
+    user = request.user
+    mfa_handler = MFAHandler(user)
+
+    if mfa_handler.is_mfa_enabled():
+        return Response(
+            {"detail": "MFA is already activated."}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    code = request.data.get("code")
+
+    if not code:
+        return Response(
+            {"detail": "Code is required."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if not mfa_handler.verify_token(code):
+        return Response(
+            {"detail": "Invalid MFA code."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    mfa_handler.activate_mfa()
+
+    return Response({"detail": "MFA has been activated."}, status=status.HTTP_200_OK)
 
 
 @api_view(["POST"])
