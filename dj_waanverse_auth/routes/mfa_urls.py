@@ -5,6 +5,7 @@ from dj_waanverse_auth.views.mfa_views import (
     activate_mfa_view,
     activate_mfa_with_code_view,
     deactivate_mfa_view,
+    get_recovery_codes_view,
 )
 
 urlpatterns = [
@@ -14,4 +15,5 @@ urlpatterns = [
     path(
         "activate/verify/", activate_mfa_with_code_view, name="mfa_activate_with_code"
     ),
+    path("recovery-codes/", get_recovery_codes_view, name="get_recovery_codes"),
 ]

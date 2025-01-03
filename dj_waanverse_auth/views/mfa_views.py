@@ -146,3 +146,30 @@ def verify_mfa_token_view(request):
     return Response(
         {"detail": "MFA token verified successfully."}, status=status.HTTP_200_OK
     )
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_recovery_codes_view(request):
+    """
+    View to get the list of recovery codes for the authenticated user.
+    Returns the decrypted recovery codes.
+    """
+    user = request.user
+    mfa_handler = MFAHandler(user)
+
+    if not mfa_handler.is_mfa_enabled():
+        return Response(
+            {"detail": "MFA is not enabled for this user."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    recovery_codes = mfa_handler.get_recovery_codes()
+
+    if not recovery_codes:
+        return Response(
+            {"detail": "No recovery codes available."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    return Response({"recovery_codes": recovery_codes}, status=status.HTTP_200_OK)

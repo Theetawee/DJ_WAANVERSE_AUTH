@@ -138,13 +138,24 @@ class MFAHandler:
         :param code: The recovery code provided by the user.
         :return: True if the code is valid, False otherwise.
         """
-        decrypted_codes = self.get_recovery_codes()
+        try:
+            # Get the decrypted recovery codes
+            decrypted_codes = self.get_recovery_codes()
+            print(decrypted_codes)
+            print(code)
 
-        if code in decrypted_codes:
-            self.mfa.recovery_codes.remove(
-                self.fernet.encrypt(code.encode()).decode()
-            )  # Remove the encrypted version
-            self.mfa.save()
-            return True
+            # Check if the provided code is in the decrypted recovery codes
+            if code in decrypted_codes:
+                # Remove the code from the decrypted list, then re-encrypt and save
+                self.mfa.recovery_codes.remove(
+                    self.fernet.encrypt(code.encode()).decode()
+                )
 
-        return False
+                self.mfa.save()
+                return True
+
+            return False
+
+        except Exception as e:
+            logger.error(f"Error verifying recovery code: {str(e)}")
+            return False
