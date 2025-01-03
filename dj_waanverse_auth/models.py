@@ -1,9 +1,11 @@
 import secrets
+from datetime import timedelta
 
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.utils import timezone
 
-from .settings import auth_config
+from dj_waanverse_auth.settings import auth_config
 
 Account = get_user_model()
 
@@ -28,6 +30,25 @@ class MultiFactorAuth(models.Model):
 
     def __str__(self):
         return f"Account: {self.account} - Activated: {self.activated}"
+
+
+class VerificationCode(models.Model):
+    email_address = models.EmailField(unique=True, blank=True, null=True, db_index=True)
+    phone_number = models.CharField(
+        max_length=15, unique=True, blank=True, null=True, db_index=True
+    )
+    is_verified = models.BooleanField(default=False)
+    code = models.CharField(max_length=255, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def is_expired(self):
+        expiration_time = self.created_at + timedelta(
+            minutes=auth_config.verification_email_code_expiry_in_minutes
+        )
+        return timezone.now() > expiration_time
+
+    def __str__(self):
+        return self.code
 
 
 # class EmailConfirmationCode(models.Model):

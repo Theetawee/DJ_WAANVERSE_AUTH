@@ -51,10 +51,20 @@ class AuthConfigSchema(TypedDict, total=False):
     # Email Settings
     EMAIL_VERIFICATION_ENABLED: bool
     EMAIL_VERIFICATION_CODE_LENGTH: int
-    EMAIL_VERIFICATION_CODE_EXPIRY: int  # minutes
     EMAIL_NOTIFICATIONS_ENABLED: bool
     EMAIL_THREADING_ENABLED: bool
     AUTO_RESEND_VERIFICATION_EMAIL: bool
+    BLACKLISTED_DOMAINS: List[str]
+    DISPOSABLE_EMAIL_DOMAINS: List[str]
+    EMAIL_BATCH_SIZE: int
+    EMAIL_RETRY_ATTEMPTS: int
+    EMAIL_RETRY_DELAY: int
+    EMAIL_MAX_RECIPIENTS: int
+    EMAIL_THREAD_POOL_SIZE: int
+    VERIFICATION_EMAIL_SUBJECT: str
+    VERIFICATION_EMAIL_CODE_EXPIRATION_TIME_MINUTES: int  # minutes
+    LOGIN_ALERT_EMAIL_SUBJECT: str
+    SEND_LOGIN_ALERT_EMAILS: bool
 
     # Password Reset
     PASSWORD_RESET_CODE_EXPIRY: timedelta
@@ -66,6 +76,8 @@ class AuthConfigSchema(TypedDict, total=False):
 
     # Branding
     PLATFORM_NAME: str
+    PLATFORM_ADDRESS: str
+    PLATFORM_CONTACT_EMAIL: str
 
 
 @dataclass
@@ -169,9 +181,6 @@ class AuthConfig:
             min_value=6,
             max_value=12,
         )
-        self.email_verification_expiry = config_dict.get(
-            "EMAIL_VERIFICATION_CODE_EXPIRY", 10
-        )
         self.email_notifications_enabled = config_dict.get(
             "EMAIL_NOTIFICATIONS_ENABLED", True
         )
@@ -179,6 +188,23 @@ class AuthConfig:
         self.auto_resend_verification = config_dict.get(
             "AUTO_RESEND_VERIFICATION_EMAIL", False
         )
+        self.blacklisted_domains = config_dict.get("BLACKLISTED_DOMAINS", [])
+        self.disposable_email_domains = config_dict.get("DISPOSABLE_EMAIL_DOMAINS", [])
+        self.email_batch_size = config_dict.get("EMAIL_BATCH_SIZE", 50)
+        self.email_retry_attempts = config_dict.get("EMAIL_RETRY_ATTEMPTS", 3)
+        self.email_retry_delay = config_dict.get("EMAIL_RETRY_DELAY", 5)
+        self.email_max_recipients = config_dict.get("EMAIL_MAX_RECIPIENTS", 50)
+        self.email_thread_pool_size = config_dict.get("EMAIL_THREAD_POOL_SIZE", 5)
+        self.verification_email_subject = config_dict.get(
+            "VERIFICATION_EMAIL_SUBJECT", "Verify your email address"
+        )
+        self.verification_email_code_expiry_in_minutes = config_dict.get(
+            "VERIFICATION_EMAIL_CODE_EXPIRATION_TIME_MINUTES", 15
+        )
+        self.login_alert_email_subject = config_dict.get(
+            "LOGIN_ALERT_EMAIL_SUBJECT", "New login alert"
+        )
+        self.send_login_alert_emails = config_dict.get("SEND_LOGIN_ALERT_EMAILS", False)
 
         # Password Reset Settings
         self.password_reset_expiry = config_dict.get(
@@ -192,6 +218,10 @@ class AuthConfig:
 
         # Branding
         self.platform_name = config_dict.get("PLATFORM_NAME", "Authentication Service")
+        self.platform_address = config_dict.get("PLATFORM_ADDRESS", "123 Main St.")
+        self.platform_contact_email = config_dict.get(
+            "PLATFORM_CONTACT_EMAIL", "support@waanverse.com"
+        )
 
         # Validate configuration
         self._validate_configuration()

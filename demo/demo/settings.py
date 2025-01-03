@@ -144,8 +144,9 @@ SIMPLE_JWT = {
 
 
 # Email settings
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-
+# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+# use console backend
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_HOST_USER = os.environ.get("SMTP_EMAIL", "email@gmail.com")
@@ -159,6 +160,13 @@ WAANVERSE_AUTH_CONFIG = {
     "REFRESH_TOKEN_COOKIE_MAX_AGE": timedelta(days=30),
     "ACCESS_TOKEN_COOKIE_MAX_AGE": timedelta(minutes=1),
     "BASIC_ACCOUNT_SERIALIZER": "accounts.serializers.BasicAccountSerializer",
+    "DISPOSABLE_EMAIL_DOMAINS": [
+        "tempmail.com",
+        "throwawaymail.com",
+        "guerrillamail.com",
+        "mailinator.com",
+    ],
+    "SEND_LOGIN_ALERT_EMAILS": True,
 }
 
 REST_FRAMEWORK = {
@@ -166,3 +174,5 @@ REST_FRAMEWORK = {
         "dj_waanverse_auth.authentication.JWTAuthentication",
     ),
 }
+
+

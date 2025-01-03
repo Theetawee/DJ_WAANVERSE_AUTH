@@ -47,8 +47,8 @@ class MFAHandler:
         issuer_name = auth_config.mfa_issuer
         return pyotp.totp.TOTP(self.mfa.secret_key).provisioning_uri(
             name=(
-                self.user.email
-                if self.user.email
+                self.user.email_address
+                if self.user.email_address
                 else self.user.username if self.user.username else ""
             ),
             issuer_name=issuer_name,
