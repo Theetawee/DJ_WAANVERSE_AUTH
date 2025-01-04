@@ -1,2 +1,12 @@
 Add the authentication backend into the array
 add password_changed_at field on your models
+
+add backends
+    "dj_waanverse_auth.backends.AuthenticationBackend",
+
+add the rest_framework options
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "dj_waanverse_auth.authentication.JWTAuthentication",
+    ),
+}

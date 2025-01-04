@@ -13,3 +13,7 @@ coverage="coverage run demo/manage.py test -v 2 && coverage report"
 
 ------Installation--------
 add dj_waanverse_auth in installed apps
+
+2. WAANVERSE_AUTH_CONFIG={
+    "PUBLIC_KEY_PATH"
+}

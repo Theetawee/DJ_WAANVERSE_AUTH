@@ -17,6 +17,8 @@ class AuthenticationBackend(BaseBackend):
         """
         Authenticate a user using email, phone number, or username.
         """
+        if not login_field or not password:
+            return None
         try:
             validate_email(login_field)
             query = Q(email_address=login_field)

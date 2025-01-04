@@ -4,6 +4,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from dj_waanverse_auth.services.token_service import TokenService
+from dj_waanverse_auth.services.utils import get_serializer_class
+from dj_waanverse_auth.settings import auth_config
 
 
 @api_view(["POST"])
@@ -37,3 +39,16 @@ def refresh_access_token(request):
             status=status.HTTP_401_UNAUTHORIZED,
         )
         return token_service.delete_tokens_from_response(response)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def authenticated_user(request):
+    basic_account_serializer = get_serializer_class(
+        auth_config.basic_account_serializer_class
+    )
+
+    return Response(
+        data=basic_account_serializer(request.user).data,
+        status=status.HTTP_200_OK,
+    )
