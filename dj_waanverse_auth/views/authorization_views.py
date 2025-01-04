@@ -52,3 +52,12 @@ def authenticated_user(request):
         data=basic_account_serializer(request.user).data,
         status=status.HTTP_200_OK,
     )
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def logout_view(request):
+    token_manager = TokenService()
+    return token_manager.delete_tokens_from_response(
+        Response(status=status.HTTP_200_OK, data={"status": "success"})
+    )
