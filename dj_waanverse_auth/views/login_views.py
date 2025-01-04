@@ -118,7 +118,7 @@ def mfa_login_view(request):
             ),
             tokens=tokens,
         )
-        return token_manager.handle_mfa_cookie(response, action="delete")
+        return token_manager.handle_mfa_cookie(response, action="remove")
     else:
         return Response(
             {"error": "Invalid MFA code or recovery code."},
