@@ -92,6 +92,7 @@ def signup_view(request):
                 tokens=tokens,
             )
         except Exception as e:
+            print(e)
             return Response(
                 {"error": f"Failed to create account: {str(e)}"},
                 status=status.HTTP_400_BAD_REQUEST,

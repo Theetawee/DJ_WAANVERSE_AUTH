@@ -49,7 +49,7 @@ class JWTAuthentication(authentication.BaseAuthentication):
                 return cached_user, token
 
             payload = self._decode_token(token)
-            user = self._get_user_from_payload(payload)
+            user = self._get_user_from_payload(payload=payload, request=request)
 
             self._cache_user(token, user)
 
@@ -94,7 +94,7 @@ class JWTAuthentication(authentication.BaseAuthentication):
     def _decode_token(self, token):
         return decode_token(token)
 
-    def _get_user_from_payload(self, payload):
+    def _get_user_from_payload(self, payload, request):
         """
         Retrieve and validate user from token payload.
         """
@@ -110,7 +110,9 @@ class JWTAuthentication(authentication.BaseAuthentication):
 
         except User.DoesNotExist:
             logger.warning(f"User {user_id} from token not found or inactive")
-            raise exceptions.AuthenticationFailed("User not found or inactive")
+            raise exceptions.AuthenticationFailed(
+                "User not found or inactive", code="user_not_found"
+            )
 
     def _validate_user(self, user, payload):
         """
