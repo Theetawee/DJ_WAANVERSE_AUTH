@@ -15,22 +15,22 @@ from django.db import models
 class AccountManager(BaseUserManager):
     def create_user(
         self,
-        email,
+        email_address,
         username,
         name,
         password=None,
         **extra_fields,
     ):
-        if not email:
-            raise ValueError("The Email field must be set")
+        if not email_address:
+            raise ValueError("The Email Address field must be set")
         if not username:
             raise ValueError("The Username field must be set")
         if not name:
             raise ValueError("The Name field must be set")
 
-        email = self.normalize_email(email).lower()
+        email_address = self.normalize_email(email_address).lower()
         user = self.model(
-            email=email,
+            email_address=email_address,
             username=username,
             name=name,
             **extra_fields,
@@ -41,7 +41,7 @@ class AccountManager(BaseUserManager):
 
     def create_superuser(
         self,
-        email,
+        email_address,
         username,
         name,
         password=None,
@@ -56,7 +56,7 @@ class AccountManager(BaseUserManager):
             raise ValueError("Superuser must have is_superuser=True.")
 
         return self.create_user(
-            email=email,
+            email_address=email_address,
             username=username,
             name=name,
             password=password,

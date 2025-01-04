@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from dj_waanverse_auth.serializers.signup_serializers import SignupSerializer as Base
+
 from .models import Account
 
 
@@ -19,3 +21,18 @@ class AccountSerializer(serializers.ModelSerializer):
             "profile_image",
             "date_of_birth",
         ]
+
+
+class SignupSerializer(Base):
+    name = serializers.CharField(
+        required=True,
+        max_length=50,
+        error_messages={
+            "required": ("First name is required."),
+            "max_length": ("First name cannot exceed 50 characters."),
+        },
+    )
+
+    def get_additional_fields(self, validated_data):
+
+        return {"name": validated_data["name"]}

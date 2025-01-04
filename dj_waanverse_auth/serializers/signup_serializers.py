@@ -25,6 +25,7 @@ class SignupSerializer(serializers.Serializer):
 
     email_address = serializers.EmailField(
         required=True,
+        error_messages={"required": _("Email address is required.")},
     )
 
     username = serializers.CharField(
@@ -50,144 +51,114 @@ class SignupSerializer(serializers.Serializer):
         required=True,
         write_only=True,
         style={"input_type": "password"},
-        error_messages={
-            "required": _("Password is required."),
-        },
+        error_messages={"required": _("Password is required.")},
     )
 
-    password_confirm = serializers.CharField(
+    confirm_password = serializers.CharField(
         required=True,
         write_only=True,
         style={"input_type": "password"},
-        error_messages={
-            "required": _("Password confirmation is required."),
-        },
+        error_messages={"required": _("Password confirmation is required.")},
     )
 
-    def __init__(self, instance=None, data=None, **kwargs):
+    def __init__(self, *args, **kwargs):
         self.email_service = EmailService()
-        self._password_validators_cache = None
-        super().__init__(instance=instance, data=data, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def validate_email_address(self, email_address):
-        try:
-            verification = VerificationCode.objects.get(
-                email_address=email_address, is_verified=True
-            )
-            verification.delete()
-        except VerificationCode.DoesNotExist:
-            raise serializers.ValidationError(_("Email address is not verified."))
-
-        except Exception as e:
-            logger.error(f"Email validation error: {str(e)}")
-            raise serializers.ValidationError(_("Invalid email address."))
-
+        """
+        Perform email-specific validation if needed.
+        """
         return email_address
 
     def validate_username(self, username):
         """
-        Validate username with comprehensive checks.
+        Validate the username with custom rules.
         """
-        try:
-            username = username.strip().lower()
-            if len(username) < auth_config.username_min_length:
-                raise serializers.ValidationError(
-                    _(
-                        f"Username must be at least {auth_config.username_min_length} characters long."
-                    )
+        username = username.strip().lower()
+        if len(username) < auth_config.username_min_length:
+            raise serializers.ValidationError(
+                _(
+                    f"Username must be at least {auth_config.username_min_length} characters long."
                 )
-            if username in auth_config.reserved_usernames:
-                raise serializers.ValidationError(
-                    _("This username is reserved and cannot be used.")
+            )
+        if username in auth_config.reserved_usernames:
+            raise serializers.ValidationError(
+                _("This username is reserved and cannot be used.")
+            )
+        if not re.match(r"^[a-zA-Z0-9_.-]+$", username):
+            raise serializers.ValidationError(
+                _(
+                    "Username can only contain letters, numbers, and the characters: . - _"
                 )
-
-            if not re.match(r"^[a-zA-Z0-9_.-]+$", username):
-                raise serializers.ValidationError(
-                    _(
-                        "Username can only contain letters, numbers, and the characters: . - _"
-                    )
-                )
-
-            return username
-
-        except Exception as e:
-            logger.error(f"Username validation error: {str(e)}")
-            raise serializers.ValidationError(_("Invalid username format."))
+            )
+        return username
 
     def validate_password(self, password):
         """
-        Validate password with Django's validators and additional checks.
+        Validate the password using Django's validators and additional rules.
         """
         try:
             password_validation.validate_password(password)
         except ValidationError as e:
             raise serializers.ValidationError(list(e.messages))
-
         return password
 
     def validate(self, data):
         """
-        Perform cross-field validation.
+        Perform cross-field validation, such as matching passwords and verifying the email.
         """
+        if data.get("password") != data.get("confirm_password"):
+            raise serializers.ValidationError(
+                {"confirm_password": _("Passwords do not match.")}
+            )
+
         try:
-            if data.get("password") != data.get("password_confirm"):
-                raise serializers.ValidationError(
-                    {"password_confirm": _("Passwords do not match.")}
-                )
+            verification = VerificationCode.objects.get(
+                email_address=data["email_address"], is_verified=True
+            )
+            data["verification"] = verification
+        except VerificationCode.DoesNotExist:
+            raise serializers.ValidationError(
+                {"email_address": _("Email address is not verified.")}
+            )
 
-            return data
-
-        except Exception as e:
-            logger.error(f"Data validation error: {str(e)}")
-            raise serializers.ValidationError(_("Invalid data provided."))
+        return data
 
     def create(self, validated_data):
         """
-        Create new user with error handling and logging.
+        Create a new user with transaction handling.
         """
+        additional_fields = self.get_additional_fields(validated_data)
+
+        user_data = {
+            "email_address": validated_data["email_address"],
+            "username": validated_data["username"],
+            "password": validated_data["password"],
+            **additional_fields,
+        }
+
         try:
-            additional_fields = self.get_additional_fields(validated_data)
-
-            user_data = {
-                "email_address": validated_data["email"],
-                "username": validated_data["username"],
-                "password": validated_data["password1"],
-                **additional_fields,
-            }
-
-            from django.db import transaction
-
             with transaction.atomic():
                 user = Account.objects.create_user(**user_data)
-
+                validated_data["verification"].delete()
                 self.perform_post_creation_tasks(user)
-
             return user
-
         except Exception as e:
             logger.error(f"User creation failed: {str(e)}")
             raise serializers.ValidationError(_("Failed to create user account."))
 
     def get_additional_fields(self, validated_data):
         """
-        Get additional fields for user creation. Override for custom fields.
+        Return any additional fields needed for user creation.
         """
         return {}
 
     def perform_post_creation_tasks(self, user):
         """
-        Perform any necessary tasks after user creation. Override as needed.
+        Perform any post-creation tasks, such as sending welcome emails.
         """
-        try:
-            # Send welcome email if configured
-            if auth_config.send_welcome_email:
-                self.email_service.send_welcome_email(user)
-
-            # Additional setup tasks can be added here
-            pass
-
-        except Exception as e:
-            logger.error(f"Post-creation tasks failed for user {user.id}: {str(e)}")
+        pass
 
 
 class InitiateEmailVerificationSerializer(serializers.Serializer):
@@ -257,9 +228,7 @@ class VerifyEmailSerializer(serializers.Serializer):
             return data
 
         except VerificationCode.DoesNotExist:
-            raise serializers.ValidationError(
-                {"code": "Invalid verification code or email address."}
-            )
+            raise serializers.ValidationError({"code": "Invalid verification code"})
 
     def create(self, validated_data):
         """

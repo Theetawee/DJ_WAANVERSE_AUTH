@@ -7,7 +7,6 @@ from rest_framework.response import Response
 
 from dj_waanverse_auth.serializers.signup_serializers import (
     InitiateEmailVerificationSerializer,
-    SignupSerializer,
     VerifyEmailSerializer,
 )
 from dj_waanverse_auth.services.token_service import TokenService
@@ -71,7 +70,8 @@ def signup_view(request):
     """
     Function-based view to handle user signup.
     """
-    serializer = SignupSerializer(data=request.data)
+    signup_serializer = get_serializer_class(auth_config.registration_serializer)
+    serializer = signup_serializer(data=request.data)
     if serializer.is_valid():
         try:
             user = serializer.save()

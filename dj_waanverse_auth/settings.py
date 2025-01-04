@@ -170,7 +170,8 @@ class AuthConfig:
             "dj_waanverse_auth.serializers.base_serializers.BasicAccountSerializer",
         )
         self.registration_serializer = config_dict.get(
-            "REGISTRATION_SERIALIZER", "auth.serializers.UserRegistrationSerializer"
+            "REGISTRATION_SERIALIZER",
+            "dj_waanverse_auth.serializers.signup_serializers.SignupSerializer",
         )
         self.user_detail_serializer = config_dict.get(
             "USER_DETAIL_SERIALIZER", "auth.serializers.UserDetailSerializer"
