@@ -1,0 +1,33 @@
+[
+    {
+        "model": "dj_waanverse_auth.multifactorauth",
+        "pk": 4,
+        "fields": {
+            "account": 1,
+            "activated": false,
+            "activated_at": null,
+            "recovery_codes": [],
+            "secret_key": null,
+            "last_updated": "2025-01-04T05:22:12.433Z"
+        }
+    },
+    {
+        "model": "accounts.account",
+        "pk": 1,
+        "fields": {
+            "password": "pbkdf2_sha256$36000$kv9RYdbYWqfn$dAcLLtgCNR41AOJlQlNcSK9ZwbQopZZaXqsO9gZQJYA=",
+            "is_superuser": true,
+            "name": "Test User",
+            "username": "test_user1",
+            "email_address": "test@gmail.com",
+            "phone_number": null,
+            "date_of_birth": null,
+            "date_joined": "2025-01-03T00:27:54.993Z",
+            "last_login": "2025-01-04T11:59:32.411Z",
+            "is_active": true,
+            "is_staff": true,
+            "groups": [],
+            "user_permissions": []
+        }
+    }
+]

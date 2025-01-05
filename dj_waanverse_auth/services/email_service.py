@@ -10,6 +10,7 @@ from typing import List, Optional, Union
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import BaseUserManager
 from django.core.exceptions import ValidationError
 from django.core.mail import EmailMultiAlternatives, get_connection
 from django.core.validators import EmailValidator
@@ -138,6 +139,7 @@ class EmailService:
             EmailValidationError: If validation fails
         """
         try:
+            email_address = BaseUserManager.normalize_email(email_address)
             self.email_validator(email_address)
 
             email_address = email_address.lower().strip()
@@ -301,7 +303,6 @@ class EmailService:
 
     def send_verification_email(self, email: str) -> bool:
         """Send email verification code."""
-        print("called here")
         from dj_waanverse_auth.models import VerificationCode
 
         verification_code = self.generate_verification_code()
@@ -310,7 +311,6 @@ class EmailService:
         ).first()
         if existing_verification:
             existing_verification.delete()
-        print("called")
         with transaction.atomic():
             new_verification = VerificationCode.objects.create(
                 email_address=email, code=verification_code

@@ -1,6 +1,5 @@
 # flake8: noqa
 # Copyright 2024 Waanverse Labs Inc. All rights reserved.
-
 """
 Dj Waanverse Auth
 ~~~~~~~~~~~~~~~~
@@ -24,9 +23,9 @@ Key Features:
 For more information, visit:
 https://github.com/waanverse/dj_waanverse_auth
 """
-
 import logging
 import sys
+from datetime import datetime
 from logging.handlers import RotatingFileHandler
 from typing import Final
 
@@ -126,6 +125,7 @@ check_dependencies()
 
 # Package banner
 if sys.stdout.isatty():
-    print(__logo__)
-    print(f"Dj Waanverse Auth v{__version__}")
-    print(f"Copyright © 2024 {__author__}. All rights reserved.\n")
+    print(f"Powered by Dj Waanverse Auth v{__version__}")
+    print(
+        f"Copyright © {datetime.now().year} {__author__}. Waanverse Labs Inc. All rights reserved.\n"
+    )
