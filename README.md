@@ -39,7 +39,7 @@ If you encounter any issues or bugs, please report them through our [issue track
 ### Contact Us
 For questions, support, or further information, feel free to contact the lead developer:
 - **Pattawee Khaotungkulmethee**
-- Email: **[tawee@waanverse.com]**
+- Email: **tawee@waanverse.com**
 
 ## Licensing
 This is an internal package for Waanverse Labs and is not currently open-sourced. External usage is subject to approval by Waanverse Labs Inc.
