@@ -1,17 +1,6 @@
 [flake8]
-# per-file-ignores =
 max-line-length = 4440
 
-exclude = 
-    .git, 
-    __pycache__, 
-    docs/source/conf.py, 
-    old, 
-    build, 
-    dist, 
-    core/settings/base.py, 
-    env/**,
-    env
-    .\env\**
-    .\env
+extend-ignore = E203
+exclude = .git,__pycache__,docs/source/conf.py,old,build,dist,env,./env/*
 max-complexity = 10
