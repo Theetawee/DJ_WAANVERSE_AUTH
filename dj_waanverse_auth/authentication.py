@@ -1,7 +1,6 @@
 import logging
 
 from django.contrib.auth import get_user_model
-from django.core.cache import cache
 from rest_framework import authentication, exceptions
 from rest_framework.request import Request
 
@@ -44,14 +43,8 @@ class JWTAuthentication(authentication.BaseAuthentication):
             if not token:
                 return None
 
-            cached_user = self._get_cached_user(token)
-            if cached_user:
-                return cached_user, token
-
             payload = self._decode_token(token)
             user = self._get_user_from_payload(payload=payload, request=request)
-
-            self._cache_user(token, user)
 
             return user, token
 
@@ -124,28 +117,6 @@ class JWTAuthentication(authentication.BaseAuthentication):
             )
             if password_changed and password_changed.timestamp() > payload["iat"]:
                 raise exceptions.AuthenticationFailed("Password has been changed")
-
-    def _get_cached_user(self, token):
-        """
-        Retrieve user from cache if available.
-        """
-        cache_key = f"{self.CACHE_PREFIX}{token}"
-        user_id = cache.get(cache_key)
-
-        if user_id:
-            try:
-                return User.objects.get(id=user_id)
-            except User.DoesNotExist:
-                cache.delete(cache_key)
-
-        return None
-
-    def _cache_user(self, token, user):
-        """
-        Cache user ID for faster subsequent authentication.
-        """
-        cache_key = f"{self.CACHE_PREFIX}{token}"
-        cache.set(cache_key, user.id, self.TOKEN_CACHE_TTL)
 
     def authenticate_header(self, request):
         """

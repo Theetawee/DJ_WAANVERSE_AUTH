@@ -66,61 +66,15 @@ class VerificationCode(models.Model):
         verbose_name_plural = _("Verification Codes")
 
 
-# class EmailConfirmationCode(models.Model):
-#     user = models.OneToOneField(Account, on_delete=models.CASCADE)
-#     code = models.CharField(max_length=6)
-#     created_at = models.DateTimeField(auto_now=True)
+class UserDevice(models.Model):
+    device_id = models.CharField(max_length=255, unique=True)
+    account = models.ForeignKey(
+        Account, related_name="devices", on_delete=models.CASCADE
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_updated = models.DateTimeField(auto_now=True)
+    user_agent = models.TextField(blank=True, null=True)
+    ip_address = models.GenericIPAddressField(blank=True, null=True)
 
-#     @property
-#     def is_expired(self):
-#         expiration_time = self.created_at + timedelta(
-#             minutes=auth_config.EMAIL_VERIFICATION_CODE_DURATION
-#         )
-#         return timezone.now() >= expiration_time
-
-#     def __str__(self):
-#         return f"Email: {self.user.email} - Code: {self.code}"
-
-
-# class UserLoginActivity(models.Model):
-#     login_IP = models.GenericIPAddressField(null=True, blank=True)
-#     login_datetime = models.DateTimeField(auto_now=True)
-#     account = models.ForeignKey(Account, on_delete=models.CASCADE)
-#     user_agent_info = models.CharField(max_length=255)
-
-#     def __str__(self):
-#         return f"{self.account.username} - {self.login_datetime}"
-
-
-# class ResetPasswordCode(models.Model):
-#     email = models.EmailField(max_length=255, unique=True, db_index=True)
-#     code = models.CharField(max_length=auth_config.CONFIRMATION_CODE_LENGTH)
-#     created_at = models.DateTimeField(auto_now_add=True)
-
-#     @property
-#     def is_expired(self):
-#         expiration_time = self.created_at + auth_config.PASSWORD_RESET_CODE_DURATION
-#         return timezone.now() > expiration_time
-
-#     @property
-#     def cooldown_remaining(self):
-#         # Calculate cooldown end time
-#         cooldown_end_time = self.created_at + timedelta(
-#             minutes=auth_config.PASSWORD_RESET_COOLDOWN_PERIOD
-#         )
-#         return max(cooldown_end_time - timezone.now(), timedelta(seconds=0))
-
-#     def __str__(self):
-#         return f"Email: {self.email} - Code: {self.code}"
-
-
-# class EmailAddress(models.Model):
-#     email = models.EmailField(_("email address"), max_length=254)
-#     verified = models.BooleanField(default=False)
-#     primary = models.BooleanField(default=False)
-#     user = models.ForeignKey(
-#         Account, on_delete=models.CASCADE, related_name="email_address"
-#     )
-
-#     def __str__(self):
-#         return self.email
+    def __str__(self):
+        return f"Device: {self.device_id}, Account: {self.account}"

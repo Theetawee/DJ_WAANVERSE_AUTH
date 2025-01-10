@@ -14,6 +14,8 @@ class AuthConfigSchema(TypedDict, total=False):
     PUBLIC_KEY_PATH: Optional[str]
     PRIVATE_KEY_PATH: Optional[str]
     HEADER_NAME: str
+    DEVICE_ID_HEADER_NAME: str
+    DEVICE_COOKIE_NAME: str
     USER_ID_CLAIM: str
     TOKEN_CACHE_TTL: int
     CACHE_PREFIX: str
@@ -105,6 +107,10 @@ class AuthConfig:
         self.password_changed_field_name = config_dict.get(
             "PASSWORD_CHANGED_FIELD_NAME", "password_changed_at"
         )
+        self.device_id_header_name = config_dict.get(
+            "DEVICE_ID_HEADER_NAME", "X-Device-Id"
+        )
+        self.device_cookie_name = config_dict.get("DEVICE_COOKIE_NAME", "device_id")
 
         # Cookie Settings
         self.access_token_cookie = config_dict.get(

@@ -24,35 +24,47 @@ def login_view(request):
         if serializer.is_valid():
             user = serializer.validated_data["user"]
             mfa = serializer.validated_data["mfa"]
-            token_manager = token_service.TokenService(user=user)
+            token_manager = token_service.TokenService(user=user, request=request)
 
             if mfa:
                 response = Response(
-                    data={"status": "success", "mfa": user.id},
+                    data={"status": "success"},
                     status=status.HTTP_200_OK,
                 )
-                response = token_manager.delete_tokens_from_response(response)
-                return token_manager.handle_mfa_cookie(response, action="add")
+                response_data = token_manager.handle_mfa_state(
+                    response, preserve_other_cookies=False
+                )
+                response = response_data["response"]
+                mfa_token = response_data["mfa_token"]
+                response.data["mfa"] = mfa_token
+                return response
+
             else:
-                tokens = token_manager.generate_tokens()
                 basic_serializer = get_serializer_class(
                     auth_config.basic_account_serializer_class
                 )
+                response = Response(
+                    data={
+                        "status": "success",
+                        "user": basic_serializer(user).data,
+                    },
+                    status=status.HTTP_200_OK,
+                )
                 email_manager = email_service.EmailService(request=request)
                 email_manager.send_login_alert(user.email_address)
-                response = token_manager.handle_mfa_cookie(
-                    response=Response(
-                        data={
-                            "status": "success",
-                            "access_token": tokens["access_token"],
-                            "refresh_token": tokens["refresh_token"],
-                            "user": basic_serializer(user).data,
-                        }
-                    ),
-                    action="remove",
-                )
-                return token_manager.add_tokens_to_response(response, tokens)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                response_data = token_manager.setup_login_cookies(response=response)
+                response = response_data["response"]
+                tokens = response_data["tokens"]
+                device_id = response_data["device_id"]
+                response.data["device_id"] = device_id
+                response.data["access_token"] = tokens["access_token"]
+                response.data["refresh_token"] = tokens["refresh_token"]
+                return response
+        else:
+            token_manager = token_service.TokenService()
+            response = Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            response = token_manager.clear_all_cookies(response)
+            return response
 
     except Exception as e:
         logger.exception(f"Error occurred while logging in. Error: {str(e)}")

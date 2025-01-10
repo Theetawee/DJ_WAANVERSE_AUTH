@@ -9,9 +9,9 @@ logger = logging.getLogger(__name__)
 
 # last update : Sep 28, 2023:
 TRUSTED_PROXIES = [
-    # IPv4 ranges
-    "127.0.0.1",  # localhost
-    "192.168.0.0/16",  # local networks
+    # # IPv4 ranges
+    # "127.0.0.1",  # localhost
+    # "192.168.0.0/16",  # local networks
     "173.245.48.0/20",
     "103.21.244.0/22",
     "103.22.200.0/22",
