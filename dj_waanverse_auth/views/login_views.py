@@ -20,11 +20,14 @@ logger = logging.getLogger(__name__)
 def login_view(request):
     """View for user login."""
     try:
-        serializer = LoginSerializer(data=request.data)
+        serializer = LoginSerializer(data=request.data, context={"request": request})
         if serializer.is_valid():
             user = serializer.validated_data["user"]
             mfa = serializer.validated_data["mfa"]
-            token_manager = token_service.TokenService(user=user, request=request)
+            login_method = serializer.validated_data["login_method"]
+            token_manager = token_service.TokenService(
+                user=user, request=request, login_method=login_method
+            )
 
             if mfa:
                 response = Response(

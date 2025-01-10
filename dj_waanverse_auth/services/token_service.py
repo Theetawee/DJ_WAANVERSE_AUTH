@@ -49,7 +49,7 @@ class CookieSettings:
 class TokenService:
     """Service for handling JWT token operations with enhanced security and functionality."""
 
-    def __init__(self, request, user=None, refresh_token=None):
+    def __init__(self, request, user=None, refresh_token=None, login_method=None):
         self.user = user
         self.refresh_token = refresh_token
         self.cookie_settings = CookieSettings()
@@ -57,6 +57,7 @@ class TokenService:
         self.request = request
         self.user_agent = request.headers.get("User-Agent", "")
         self.platform = request.headers.get("Sec-CH-UA-Platform", "Unknown").strip('"')
+        self.login_method = login_method
 
     @property
     def tokens(self):
@@ -89,7 +90,6 @@ class TokenService:
 
         raw_string = f"{self.user.id}|{self.platform}|{browser}|{uuid.uuid4()}"
         hashed_id = hashlib.sha256(raw_string.encode()).hexdigest()
-        print(hashed_id)
         return f"{hashed_id[:16]}"
 
     def setup_login_cookies(self, response):
@@ -142,6 +142,7 @@ class TokenService:
                     account=self.user,
                     ip_address=ip_address,
                     user_agent=self.user_agent,
+                    login_method=self.login_method,
                 )
                 new_device.save()
 

@@ -1,15 +1,15 @@
+from unittest.mock import patch
+
+from django.core import mail
 from rest_framework import status
 
+from dj_waanverse_auth.models import UserDevice
 from dj_waanverse_auth.settings import auth_config
 
 from .test_setup import TestSetup
 
 
 class TestLogin(TestSetup):
-    def setUp(self):
-        super().setUp()
-        self.login_data = {"login_field": "test_user1", "password": "Test@12"}
-
     def assert_cookie_attributes(self, cookie, expected_value, max_age=None):
         """
         Helper function to assert cookie attributes.
@@ -35,7 +35,7 @@ class TestLogin(TestSetup):
                 int(cookie["max-age"]), int(max_age.total_seconds()), "Max age mismatch"
             )
 
-    def assert_response_structure(self, response):
+    def assert_response_structure(self, response, expected_username):
         """
         Helper function to assert response structure and content.
         """
@@ -47,7 +47,7 @@ class TestLogin(TestSetup):
             self.assertIn(field, response.data, f"Missing field: {field}")
 
         user_data = response.data["user"]
-        self.assertEqual(user_data["username"], "test_user1")
+        self.assertEqual(user_data["username"], expected_username)
         self.assertIn("id", user_data)
         self.assertIn("email_address", user_data)
 
@@ -55,14 +55,12 @@ class TestLogin(TestSetup):
         """
         Helper function to assert cookies match response data.
         """
-        # Get cookies
         cookies = {
             "refresh": self.client.cookies.get(auth_config.refresh_token_cookie),
             "access": self.client.cookies.get(auth_config.access_token_cookie),
             "device": self.client.cookies.get(auth_config.device_id_cookie_name),
         }
 
-        # Check if all cookies exist
         for cookie_name, cookie in cookies.items():
             self.assertIsNotNone(cookie, f"{cookie_name} cookie not found")
 
@@ -89,17 +87,73 @@ class TestLogin(TestSetup):
                 config["cookie"], config["value"], config["max_age"]
             )
 
-    def test_login_not_mfa(self):
+    def assert_login_email(self, subject, recipient):
         """
-        Test successful login without MFA.
+        Helper function to assert login alert email properties
         """
-        # Perform login
-        response = self.client.post(self.login_url, self.login_data)
+        self.assertEqual(len(mail.outbox), 1)
+        email = mail.outbox[0]
+        self.assertEqual(email.subject, subject)
+        self.assertEqual(email.to[0], recipient)
 
-        self.assert_response_structure(response)
+    def test_login_with_email_enabled(self):
+        """
+        Test successful login with email notifications enabled.
+        """
+        auth_config.email_threading_enabled = True
+        auth_config.send_login_alert_emails = True
 
-        # Assert cookies match response data
+        response = self.client.post(self.login_url, self.user_1_username_login_data)
+
+        self.assert_response_structure(response, "test_user1")
         self.assert_cookies_match_response(response)
+        self.assert_login_email(
+            subject=auth_config.login_alert_email_subject,
+            recipient=self.test_user_1.email_address,
+        )
+
+    def test_login_with_email_disabled(self):
+        """
+        Test successful login with email notifications disabled.
+        """
+        auth_config.email_threading_enabled = False
+        auth_config.send_login_alert_emails = False
+
+        response = self.client.post(self.login_url, self.user_1_email_login_data)
+
+        self.assert_response_structure(response, "test_user1")
+        self.assert_cookies_match_response(response)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_user_device_creation(self):
+        """
+        Test that UserDevice is created after successful login.
+        """
+        initial_device_count = UserDevice.objects.count()
+        response = self.client.post(self.login_url, self.user_1_email_login_data)
+
+        self.assertEqual(UserDevice.objects.count(), initial_device_count + 1)
+
+        # Verify device properties
+        device = UserDevice.objects.latest("created_at")
+        self.assertEqual(device.account, self.test_user_1)
+        self.assertEqual(device.device_id, response.data["device_id"])
+        self.assertTrue(device.is_active)
+
+    def test_login_existing_device(self):
+        """
+        Test login with an existing device ID.
+        """
+        # First login to create device
+        first_response = self.client.post(self.login_url, self.user_1_phone_login_data)
+        first_device_id = first_response.data["device_id"]
+
+        # Second login with same credentials
+        second_response = self.client.post(self.login_url, self.user_1_phone_login_data)
+        second_device_id = second_response.data["device_id"]
+
+        # Verify new device is created
+        self.assertNotEqual(first_device_id, second_device_id)
 
     def test_login_invalid_credentials(self):
         """
@@ -109,12 +163,73 @@ class TestLogin(TestSetup):
         response = self.client.post(self.login_url, invalid_data)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(UserDevice.objects.filter(account=self.test_user_1).count(), 0)
+        self.assertEqual(len(mail.outbox), 0)
 
     def test_login_missing_fields(self):
         """
         Test login with missing required fields.
         """
-        incomplete_data = {"login_field": "test_user1"}
-        response = self.client.post(self.login_url, incomplete_data)
+        test_cases = [
+            {"login_field": "test_user1"},  # Missing password
+            {"password": "Test@12"},  # Missing login field
+            {},  # Missing both fields
+        ]
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        for test_data in test_cases:
+            response = self.client.post(self.login_url, test_data)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertEqual(
+                UserDevice.objects.filter(account=self.test_user_1).count(), 0
+            )
+
+    @patch("django.core.mail.send_mail")
+    def test_login_email_failure(self, mock_send_mail):
+        """
+        Test login behavior when email sending fails.
+        """
+        auth_config.email_threading_enabled = True
+        auth_config.send_login_alert_emails = True
+        mock_send_mail.side_effect = Exception("Email sending failed")
+
+        response = self.client.post(self.login_url, self.user_1_email_login_data)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assert_response_structure(response, "test_user1")
+
+    def test_login_with_email(self):
+        """
+        Test successful login using email address.
+        """
+        response = self.client.post(self.login_url, self.user_1_email_login_data)
+        self.assert_response_structure(response, "test_user1")
+        self.assert_cookies_match_response(response)
+
+        device = UserDevice.objects.latest("created_at")
+        self.assertEqual(device.account, self.test_user_1)
+        self.assertEqual(device.login_method, "email")
+
+    def test_login_with_phone(self):
+        """
+        Test successful login using phone number.
+        """
+        response = self.client.post(self.login_url, self.user_1_phone_login_data)
+        self.assert_response_structure(response, "test_user1")
+        self.assert_cookies_match_response(response)
+
+        device = UserDevice.objects.latest("created_at")
+        self.assertEqual(device.account, self.test_user_1)
+        self.assertEqual(device.login_method, "phone")
+
+    def test_login_with_username(self):
+        """
+        Test successful login using username.
+        """
+        response = self.client.post(self.login_url, self.user_1_username_login_data)
+
+        self.assert_response_structure(response, "test_user1")
+        self.assert_cookies_match_response(response)
+
+        device = UserDevice.objects.latest("created_at")
+        self.assertEqual(device.account, self.test_user_1)
+        self.assertEqual(device.login_method, "username")

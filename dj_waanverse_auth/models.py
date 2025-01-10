@@ -76,6 +76,7 @@ class UserDevice(models.Model):
     user_agent = models.TextField(blank=True, null=True)
     ip_address = models.GenericIPAddressField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
+    login_method = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
         return f"Device: {self.device_id}, Account: {self.account}"
