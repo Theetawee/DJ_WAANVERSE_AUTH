@@ -10,8 +10,8 @@ urlpatterns = [
     path(
         "email/initiate-verification/",
         initiate_email_verification,
-        name="email_initiate",
+        name="dj_waanverse_auth_initiate_email_verification",
     ),
-    path("email/verify/", verify_email, name="email_verify"),
+    path("email/verify/", verify_email, name="dj_waanverse_auth_verify_email"),
     path("", signup_view, name="dj_waanverse_auth_signup"),
 ]

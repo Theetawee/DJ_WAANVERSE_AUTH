@@ -17,9 +17,19 @@ class TestSetup(TestCase):
     def setUp(self):
         self.login_url = reverse("dj_waanverse_auth_login")
         self.signup_url = reverse("dj_waanverse_auth_signup")
+        self.initiate_email_verification_url = reverse(
+            "dj_waanverse_auth_initiate_email_verification"
+        )
+        self.verify_email_url = reverse("dj_waanverse_auth_verify_email")
         self.client = APIClient()
-        self.user_1_email_login_data = {"login_field": "test_user1@gmail.com", "password": "Test@12"}
-        self.user_1_username_login_data = {"login_field": "test_user1", "password": "Test@12"}
+        self.user_1_email_login_data = {
+            "login_field": "test_user1@gmail.com",
+            "password": "Test@12",
+        }
+        self.user_1_username_login_data = {
+            "login_field": "test_user1",
+            "password": "Test@12",
+        }
         self.user_1_phone_login_data = {
             "login_field": "256779020674",
             "password": "Test@12",

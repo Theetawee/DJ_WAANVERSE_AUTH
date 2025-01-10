@@ -170,7 +170,7 @@ class InitiateEmailVerificationSerializer(serializers.Serializer):
         validators=[
             UniqueValidator(
                 queryset=Account.objects.all(),
-                message=_("This email is already registered."),
+                message=_("email_exists"),
             )
         ],
     )
@@ -221,14 +221,12 @@ class VerifyEmailSerializer(serializers.Serializer):
 
             if verification.is_expired():
                 verification.delete()
-                raise serializers.ValidationError(
-                    {"code": "Verification code has expired."}
-                )
+                raise serializers.ValidationError({"code": "code_expired"})
 
             return data
 
         except VerificationCode.DoesNotExist:
-            raise serializers.ValidationError({"code": "Invalid verification code"})
+            raise serializers.ValidationError({"code": "invalid_code"})
 
     def create(self, validated_data):
         """

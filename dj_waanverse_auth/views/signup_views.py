@@ -28,7 +28,7 @@ def initiate_email_verification(request):
             return Response(
                 {
                     "message": "Email verification initiated.",
-                    "email": email,
+                    "email_address": email,
                     "status": "code_sent",
                 },
                 status=status.HTTP_200_OK,
@@ -38,7 +38,7 @@ def initiate_email_verification(request):
     except Exception as e:
         return Response(
             {"error": f"Failed to initiate email verification: {str(e)}"},
-            status=status.HTTP_400_BAD_REQUEST,
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
 
