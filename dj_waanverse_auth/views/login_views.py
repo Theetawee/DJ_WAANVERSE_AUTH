@@ -61,7 +61,7 @@ def login_view(request):
                 response.data["refresh_token"] = tokens["refresh_token"]
                 return response
         else:
-            token_manager = token_service.TokenService()
+            token_manager = token_service.TokenService(request=request)
             response = Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             response = token_manager.clear_all_cookies(response)
             return response

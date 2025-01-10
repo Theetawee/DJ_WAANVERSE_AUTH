@@ -31,6 +31,8 @@ from typing import Final
 
 from .version import __version__
 
+default_app_config = "dj_waanverse_auth.apps.WaanverseAuthConfig"
+
 # Package metadata
 __title__: Final = "dj_waanverse_auth"
 __author__: Final = "Waanverse Labs Inc."

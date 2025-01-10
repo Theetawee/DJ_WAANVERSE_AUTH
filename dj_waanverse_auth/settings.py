@@ -20,6 +20,7 @@ class AuthConfigSchema(TypedDict, total=False):
     TOKEN_CACHE_TTL: int
     CACHE_PREFIX: str
     PASSWORD_CHANGED_FIELD_NAME: str
+    DEVICE_AUTH_EXCLUDED_PATHS: List[str]
 
     # Cookie Configuration
     ACCESS_TOKEN_COOKIE_NAME: str
@@ -110,7 +111,10 @@ class AuthConfig:
         self.device_id_header_name = config_dict.get(
             "DEVICE_ID_HEADER_NAME", "X-Device-Id"
         )
-        self.device_cookie_name = config_dict.get("DEVICE_COOKIE_NAME", "device_id")
+        self.device_id_cookie_name = config_dict.get("DEVICE_COOKIE_NAME", "device_id")
+        self.device_auth_excluded_paths = config_dict.get(
+            "DEVICE_AUTH_EXCLUDED_PATHS", []
+        )
 
         # Cookie Settings
         self.access_token_cookie = config_dict.get(
@@ -120,7 +124,7 @@ class AuthConfig:
             "REFRESH_TOKEN_COOKIE_NAME", "refresh_token"
         )
         self.cookie_path = config_dict.get("COOKIE_PATH", "/")
-        self.cookie_domain = config_dict.get("COOKIE_DOMAIN")
+        self.cookie_domain = config_dict.get("COOKIE_DOMAIN", None)
         self.cookie_samesite = self._validate_samesite_policy(
             config_dict.get("COOKIE_SAMESITE_POLICY", "Lax")
         )

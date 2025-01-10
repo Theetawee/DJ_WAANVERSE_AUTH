@@ -75,6 +75,7 @@ class UserDevice(models.Model):
     last_updated = models.DateTimeField(auto_now=True)
     user_agent = models.TextField(blank=True, null=True)
     ip_address = models.GenericIPAddressField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"Device: {self.device_id}, Account: {self.account}"

@@ -32,7 +32,7 @@ class CookieSettings:
         )
         self.DOMAIN = auth_config.cookie_domain
         self.PATH = auth_config.cookie_path
-        self.DEVICE_ID_COOKIE_NAME = auth_config.device_cookie_name
+        self.DEVICE_ID_COOKIE_NAME = auth_config.device_id_cookie_name
         self.DEVICE_HEADER_NAME = auth_config.device_id_header_name
 
     def get_cookie_params(self):
