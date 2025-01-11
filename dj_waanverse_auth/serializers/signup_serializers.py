@@ -120,7 +120,7 @@ class SignupSerializer(serializers.Serializer):
             data["verification"] = verification
         except VerificationCode.DoesNotExist:
             raise serializers.ValidationError(
-                {"email_address": _("Email address is not verified.")}
+                {"email_address": _("unverified_email_address")}
             )
 
         return data

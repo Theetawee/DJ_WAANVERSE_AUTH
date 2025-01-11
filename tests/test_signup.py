@@ -224,4 +224,35 @@ class TestSignup(TestSetup):
         self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def test_signup_success(self):
-        pass
+        """Test successful signup with valid data"""
+        VerificationCode.objects.create(
+            email_address=self.valid_email, code="123456", is_verified=True
+        ).save()
+        data = {
+            "name": "Test User 2",
+            "username": "testuser",
+            "email_address": self.valid_email,
+            "password": "testpassword",
+            "confirm_password": "testpassword",
+        }
+
+        response = self.client.post(self.signup_url, data)
+        print(response.data)
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIn("access_token", response.data)
+        self.assertIn("refresh_token", response.data)
+
+    def test_signup_unverified_email(self):
+        """Test successful signup with valid data"""
+        data = {
+            "name": "Test User 2",
+            "username": "testuser",
+            "email_address": self.valid_email,
+            "password": "testpassword",
+            "confirm_password": "testpassword",
+        }
+
+        response = self.client.post(self.signup_url, data)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

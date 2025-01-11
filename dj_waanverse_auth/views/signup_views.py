@@ -77,25 +77,34 @@ def signup_view(request):
     if serializer.is_valid():
         try:
             user = serializer.save()
-            token_manager = TokenService(user=user)
-            tokens = token_manager.generate_tokens()
-            return token_manager.add_tokens_to_response(
-                response=Response(
-                    {
-                        "message": "Account created successfully.",
-                        "user": get_serializer_class(
-                            auth_config.basic_account_serializer_class
-                        )(user).data,
-                        "access_token": tokens["access_token"],
-                        "refresh_token": tokens["refresh_token"],
-                    },
-                    status=status.HTTP_201_CREATED,
-                ),
-                tokens=tokens,
+            token_manager = TokenService(user=user, request=request)
+            response = Response(
+                {
+                    "status": "success",
+                    "user": get_serializer_class(
+                        auth_config.basic_account_serializer_class
+                    )(user).data,
+                },
+                status=status.HTTP_201_CREATED,
             )
+            response_data = token_manager.setup_login_cookies(response=response)
+            response = response_data["response"]
+            tokens = response_data["tokens"]
+            device_id = response_data["device_id"]
+            response.data["device_id"] = device_id
+            response.data["access_token"] = tokens["access_token"]
+            response.data["refresh_token"] = tokens["refresh_token"]
+
+            return response
         except Exception as e:
-            return Response(
-                {"error": f"Failed to create account: {str(e)}"},
-                status=status.HTTP_400_BAD_REQUEST,
+            token_manager = TokenService(request=request)
+            return token_manager.clear_all_cookies(
+                response=(
+                    Response(
+                        {"error": f"Failed to create account: {str(e)}"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                )
             )
+
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

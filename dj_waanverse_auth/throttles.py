@@ -2,7 +2,7 @@ from rest_framework.throttling import SimpleRateThrottle
 
 
 class EmailVerificationThrottle(SimpleRateThrottle):
-    rate = "1/min"
+    rate = "2/min"
 
     def get_cache_key(self, request, view):
         email = request.data.get("email_address")
