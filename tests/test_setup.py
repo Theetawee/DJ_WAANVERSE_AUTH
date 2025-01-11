@@ -20,6 +20,7 @@ class TestSetup(TestCase):
         self.initiate_email_verification_url = reverse(
             "dj_waanverse_auth_initiate_email_verification"
         )
+        self.home_page_url = reverse("dj_waanverse_auth_home_page")
         self.verify_email_url = reverse("dj_waanverse_auth_verify_email")
         self.client = APIClient()
         self.user_1_email_login_data = {

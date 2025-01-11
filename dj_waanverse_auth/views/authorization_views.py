@@ -8,6 +8,15 @@ from dj_waanverse_auth.services.utils import get_serializer_class
 from dj_waanverse_auth.settings import auth_config
 
 
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def home_page(request):
+    return Response(
+        data={"status": "success", "message": "Welcome to Dj Waanverse Auth"},
+        status=status.HTTP_200_OK,
+    )
+
+
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def refresh_access_token(request):

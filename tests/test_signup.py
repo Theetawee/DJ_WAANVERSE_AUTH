@@ -237,7 +237,6 @@ class TestSignup(TestSetup):
         }
 
         response = self.client.post(self.signup_url, data)
-        print(response.data)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertIn("access_token", response.data)
