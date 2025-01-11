@@ -1,7 +1,7 @@
 import logging
 
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
@@ -12,12 +12,14 @@ from dj_waanverse_auth.serializers.signup_serializers import (
 from dj_waanverse_auth.services.token_service import TokenService
 from dj_waanverse_auth.services.utils import get_serializer_class
 from dj_waanverse_auth.settings import auth_config
+from dj_waanverse_auth.throttles import EmailVerificationThrottle
 
 logger = logging.getLogger(__name__)
 
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@throttle_classes([EmailVerificationThrottle])
 def initiate_email_verification(request):
     """ """
     serializer = InitiateEmailVerificationSerializer(data=request.data)

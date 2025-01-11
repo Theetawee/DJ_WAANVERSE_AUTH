@@ -145,14 +145,14 @@ class EmailService:
             email_address = email_address.lower().strip()
             local_part, domain = email_address.split("@")
 
-            if check_blacklist and domain in auth_config.blacklisted_domains:
-                return {"email": email_address, "error": "This email is not allowed."}
+            if check_blacklist and email_address in auth_config.blacklisted_emails:
+                return {"email": email_address, "error": "blacklisted_email"}
 
             # Check disposable email services
             if check_disposable and domain in auth_config.disposable_email_domains:
                 return {
                     "email": email_address,
-                    "error": "This email is disposable. Please use a different email.",
+                    "error": "disposable_email",
                 }
 
             # Check uniqueness if required

@@ -14,7 +14,7 @@ from .test_setup import TestSetup
 class TestSignup(TestSetup):
     def setUp(self):
         super().setUp()
-        mail.outbox = []  # Clear mail outbox before each test
+        mail.outbox = []
         self.valid_email = "test_email@gmail.com"
         self.valid_code = "123456"
         self.expired_time = timezone.now() - timedelta(
@@ -56,7 +56,14 @@ class TestSignup(TestSetup):
         self.assertEqual(verification_code.email_address, self.valid_email)
         self.assertFalse(verification_code.is_verified)
         self.assertIsNotNone(verification_code.code)
-        self.assertEqual(len(verification_code.code), 6)  # Assuming 6-digit code
+        self.assertEqual(
+            len(verification_code.code), auth_config.email_verification_code_length
+        )
+        self.assertTrue(
+            verification_code.code.isalnum()
+            if auth_config.email_verification_code_is_alphanumeric
+            else True
+        )
 
     def test_initiate_email_verification_existing_email(self):
         """Test email verification initiation with existing email"""
@@ -83,6 +90,30 @@ class TestSignup(TestSetup):
         self.assertIn(
             "Enter a valid email address", str(response.data["email_address"])
         )
+
+    def test_initiate_email_verification_blacklisted_email(self):
+        """Test email verification initiation with invalid email format"""
+        auth_config.blacklisted_emails = ["blacklist@gmail.com"]
+        response = self.client.post(
+            self.initiate_email_verification_url,
+            {"email_address": "blacklist@gmail.com"},
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertIn("email_address", response.data)
+        self.assertIn("blacklisted_email", str(response.data["email_address"]))
+
+    def test_initiate_email_verification_disposable_email(self):
+        """Test email verification initiation with invalid email format"""
+        auth_config.disposable_email_domains = ["gm.com"]
+        response = self.client.post(
+            self.initiate_email_verification_url,
+            {"email_address": "blacklist@gm.com"},
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertIn("email_address", response.data)
+        self.assertIn("disposable_email", str(response.data["email_address"]))
 
     def test_initiate_email_verification_empty_email(self):
         """Test email verification initiation with empty email"""
@@ -192,18 +223,5 @@ class TestSignup(TestSetup):
 
         self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    # def test_rate_limiting(self):
-    #     """Test rate limiting for verification code requests"""
-    #     # Make multiple requests in quick succession
-    #     for _ in range(5):
-    #         response = self.client.post(
-    #             self.initiate_email_verification_url,
-    #             {"email_address": self.valid_email},
-    #         )
-
-    #     response = self.client.post(
-    #         self.initiate_email_verification_url,
-    #         {"email_address": self.valid_email},
-    #     )
-
-    #     self.assertEqual(response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+    def test_signup_success(self):
+        pass

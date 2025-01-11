@@ -59,7 +59,7 @@ class AuthConfigSchema(TypedDict, total=False):
     EMAIL_SECURITY_NOTIFICATIONS_ENABLED: bool
     EMAIL_THREADING_ENABLED: bool
     AUTO_RESEND_VERIFICATION_EMAIL: bool
-    BLACKLISTED_DOMAINS: List[str]
+    BLACKLISTED_EMAILS: List[str]
     DISPOSABLE_EMAIL_DOMAINS: List[str]
     EMAIL_BATCH_SIZE: int
     EMAIL_RETRY_ATTEMPTS: int
@@ -207,7 +207,7 @@ class AuthConfig:
         self.auto_resend_verification = config_dict.get(
             "AUTO_RESEND_VERIFICATION_EMAIL", False
         )
-        self.blacklisted_domains = config_dict.get("BLACKLISTED_DOMAINS", [])
+        self.blacklisted_emails = config_dict.get("BLACKLISTED_EMAILS", [])
         self.disposable_email_domains = config_dict.get("DISPOSABLE_EMAIL_DOMAINS", [])
         self.email_batch_size = config_dict.get("EMAIL_BATCH_SIZE", 50)
         self.email_retry_attempts = config_dict.get("EMAIL_RETRY_ATTEMPTS", 3)

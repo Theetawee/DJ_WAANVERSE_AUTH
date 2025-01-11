@@ -184,9 +184,8 @@ class InitiateEmailVerificationSerializer(serializers.Serializer):
         Validate email with comprehensive checks and sanitization.
         """
         email_validation = self.email_service.validate_email(email_address)
-
-        if email_validation.get("errors"):
-            raise serializers.ValidationError(email_validation["errors"])
+        if email_validation.get("error"):
+            raise serializers.ValidationError(email_validation["error"])
 
         return email_address
 
