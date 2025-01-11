@@ -1,0 +1,263 @@
+[
+{
+    "model": "dj_waanverse_auth.multifactorauth",
+    "pk": 4,
+    "fields": {
+        "account": 1,
+        "activated": false,
+        "activated_at": null,
+        "recovery_codes": [],
+        "secret_key": null,
+        "last_updated": "2025-01-04T05:22:12.433Z"
+    }
+},
+{
+    "model": "dj_waanverse_auth.multifactorauth",
+    "pk": 5,
+    "fields": {
+        "account": 6,
+        "activated": true,
+        "activated_at": "2025-01-11T11:47:58.947Z",
+        "recovery_codes": [
+            "gAAAAABnglpuW2rbrTp2l2AdiFofSGPRQ2IB7aanXqNbBI_LxdNa-nmVB7BvPLR6SDrpXi4dGx8ZutxqlzfsJs7TWtlhS5oHbQ==",
+            "gAAAAABnglpu-07PE3rt4qt0CZ-4t2gPGQmQgf9ye2BMLr63zoUZ_qVs9NGYnVMPC6cqlNwpHYYFTVOCpwuFdM7kqqQtu6mtug==",
+            "gAAAAABnglpuaL8A9Tyef4tCRU28gIrWAZxg2cBVb3QRcMyugHeaFk89uL4ui3IHDgJRvSJWB1AoNduaAKC170psruW1iScyCw==",
+            "gAAAAABnglpuxoI27H5r0_oSwU4D_gH47bLU8iicAWuMSuHJnm1Mw3ISmxeYsVB7bk9nmZGCM-7iv9Hq2BQMcgBz9lKIBTVopw==",
+            "gAAAAABnglpugame3EuyuzXSU6OS65ktcVXhEEK24deFHoQfaHt3YO5f-PlIWyt2cTyPNSQkO9e4cu3yPOUVTuf-3kD8cdYckQ==",
+            "gAAAAABnglpuPk6mQzTXOMmm6-0_w9HP1CqC70gGm1Djle7WKxTOmc_wBSWWlvul4nZeH34JMHQMXAdliHlfAZHYjXNBTbdmJg==",
+            "gAAAAABnglpuoMkvJ58LWFcRuoqBPMzekyZM1vRWcorw8GDc9FsLSEwQsQBVOXBbAaaLomCr3q5g66xaU7YpfptAd372rTZUNA==",
+            "gAAAAABnglpuPn5JR567k-cm1G_GZ7xzImarqgp-dnuWBID1bFsNTQ54-Bnm3gn4jprHknpmuOZYcXgH-wMlRMcXLGmRl4EeNg==",
+            "gAAAAABnglpu9EWSz6Q6Ffm_6stakiiQH4Lt180KaawRZ8USCmmDwaowCE57h5kIuXh84t2B5BXJgIfPQlGS4ij9nzNeiQdHxA==",
+            "gAAAAABnglpuPZI_BcGYgjJoc0Y52QPmEYHabZYaJe10Z_sPse8gVPhrY9IWZsXh0hE8_Er4oGNsbrh5tb6-aYHwLRX4H9Rdfw=="
+        ],
+        "secret_key": "gAAAAABnglo3UuQNkosYfFcvcg3eZfzFad60C1gup0tNwLmFs2wzNWMVSxymhQQUUSC0jX7py7FL6WcrckpUOw3mp5FeNnij4VK78QODK-6jSiJD9mP655sc4Xtfk26wy29XUyEuxfdm",
+        "last_updated": "2025-01-11T11:47:58.954Z"
+    }
+},
+{
+    "model": "dj_waanverse_auth.userdevice",
+    "pk": 1,
+    "fields": {
+        "device_id": "95c9f6bc826e3cc8",
+        "account": 1,
+        "created_at": "2025-01-10T10:27:37.255Z",
+        "last_updated": "2025-01-10T10:27:37.270Z",
+        "user_agent": "PostmanRuntime/7.43.0",
+        "ip_address": "127.0.0.1",
+        "is_active": true,
+        "login_method": null
+    }
+},
+{
+    "model": "dj_waanverse_auth.userdevice",
+    "pk": 2,
+    "fields": {
+        "device_id": "500a0a6ad9d8ce47",
+        "account": 1,
+        "created_at": "2025-01-10T10:29:58.675Z",
+        "last_updated": "2025-01-10T10:29:58.691Z",
+        "user_agent": "PostmanRuntime/7.43.0",
+        "ip_address": "127.0.0.1",
+        "is_active": true,
+        "login_method": null
+    }
+},
+{
+    "model": "dj_waanverse_auth.userdevice",
+    "pk": 3,
+    "fields": {
+        "device_id": "f75bf6f06a25f590",
+        "account": 1,
+        "created_at": "2025-01-10T10:56:45.822Z",
+        "last_updated": "2025-01-10T10:56:45.837Z",
+        "user_agent": "PostmanRuntime/7.43.0",
+        "ip_address": "127.0.0.1",
+        "is_active": true,
+        "login_method": null
+    }
+},
+{
+    "model": "dj_waanverse_auth.userdevice",
+    "pk": 4,
+    "fields": {
+        "device_id": "50343be2cb5a481e",
+        "account": 1,
+        "created_at": "2025-01-10T12:06:20.664Z",
+        "last_updated": "2025-01-10T12:06:20.669Z",
+        "user_agent": "PostmanRuntime/7.43.0",
+        "ip_address": "127.0.0.1",
+        "is_active": true,
+        "login_method": null
+    }
+},
+{
+    "model": "dj_waanverse_auth.userdevice",
+    "pk": 5,
+    "fields": {
+        "device_id": "75177d40f025f1f0",
+        "account": 1,
+        "created_at": "2025-01-10T12:07:58.325Z",
+        "last_updated": "2025-01-10T12:07:58.340Z",
+        "user_agent": "PostmanRuntime/7.43.0",
+        "ip_address": "127.0.0.1",
+        "is_active": true,
+        "login_method": null
+    }
+},
+{
+    "model": "dj_waanverse_auth.userdevice",
+    "pk": 6,
+    "fields": {
+        "device_id": "64d4e76dddae4be5",
+        "account": 1,
+        "created_at": "2025-01-10T13:23:47.333Z",
+        "last_updated": "2025-01-10T13:23:47.346Z",
+        "user_agent": "PostmanRuntime/7.43.0",
+        "ip_address": "127.0.0.1",
+        "is_active": true,
+        "login_method": "unknown"
+    }
+},
+{
+    "model": "dj_waanverse_auth.userdevice",
+    "pk": 7,
+    "fields": {
+        "device_id": "0aa5a529efcd59b9",
+        "account": 1,
+        "created_at": "2025-01-10T13:29:31.811Z",
+        "last_updated": "2025-01-10T13:29:31.824Z",
+        "user_agent": "PostmanRuntime/7.43.0",
+        "ip_address": "127.0.0.1",
+        "is_active": true,
+        "login_method": ""
+    }
+},
+{
+    "model": "dj_waanverse_auth.userdevice",
+    "pk": 8,
+    "fields": {
+        "device_id": "e05b24abc0361c14",
+        "account": 1,
+        "created_at": "2025-01-10T13:30:48.165Z",
+        "last_updated": "2025-01-10T13:30:48.180Z",
+        "user_agent": "PostmanRuntime/7.43.0",
+        "ip_address": "127.0.0.1",
+        "is_active": true,
+        "login_method": "username"
+    }
+},
+{
+    "model": "dj_waanverse_auth.userdevice",
+    "pk": 9,
+    "fields": {
+        "device_id": "adaf4804897cdc4e",
+        "account": 1,
+        "created_at": "2025-01-10T13:33:16.231Z",
+        "last_updated": "2025-01-10T13:33:16.239Z",
+        "user_agent": "PostmanRuntime/7.43.0",
+        "ip_address": "127.0.0.1",
+        "is_active": true,
+        "login_method": "username"
+    }
+},
+{
+    "model": "dj_waanverse_auth.userdevice",
+    "pk": 10,
+    "fields": {
+        "device_id": "e77c582fea888426",
+        "account": 1,
+        "created_at": "2025-01-10T15:59:14.888Z",
+        "last_updated": "2025-01-10T15:59:14.896Z",
+        "user_agent": "PostmanRuntime/7.43.0",
+        "ip_address": "127.0.0.1",
+        "is_active": true,
+        "login_method": "username"
+    }
+},
+{
+    "model": "dj_waanverse_auth.userdevice",
+    "pk": 11,
+    "fields": {
+        "device_id": "d442af78447d4bcc",
+        "account": 6,
+        "created_at": "2025-01-11T11:09:23.726Z",
+        "last_updated": "2025-01-11T11:09:23.739Z",
+        "user_agent": "PostmanRuntime/7.43.0",
+        "ip_address": "127.0.0.1",
+        "is_active": true,
+        "login_method": null
+    }
+},
+{
+    "model": "dj_waanverse_auth.userdevice",
+    "pk": 12,
+    "fields": {
+        "device_id": "f83d622d01a3be25",
+        "account": 1,
+        "created_at": "2025-01-11T11:44:56.940Z",
+        "last_updated": "2025-01-11T11:44:56.954Z",
+        "user_agent": "PostmanRuntime/7.43.0",
+        "ip_address": "127.0.0.1",
+        "is_active": true,
+        "login_method": "username"
+    }
+},
+{
+    "model": "dj_waanverse_auth.userdevice",
+    "pk": 13,
+    "fields": {
+        "device_id": "52b0c1a92d7fb7ae",
+        "account": 6,
+        "created_at": "2025-01-11T11:45:53.212Z",
+        "last_updated": "2025-01-11T11:45:53.224Z",
+        "user_agent": "PostmanRuntime/7.43.0",
+        "ip_address": "127.0.0.1",
+        "is_active": true,
+        "login_method": "username"
+    }
+},
+{
+    "model": "accounts.account",
+    "pk": 1,
+    "fields": {
+        "password": "pbkdf2_sha256$870000$2o5caahY3dCit8uiUCuOgH$1MLAzDHyvS4nqJEDcNovCW4EcTbN4wTGvILC52460WQ=",
+        "is_superuser": true,
+        "username": "tawee",
+        "email_address": "tawee.drake@gmail.com",
+        "phone_number": null,
+        "date_joined": "2025-01-03T00:27:54.993Z",
+        "last_login": "2025-01-10T10:22:54.228Z",
+        "is_active": true,
+        "is_staff": true,
+        "password_last_updated": "2025-01-11T07:55:16.041Z",
+        "email_verified": false,
+        "phone_number_verified": false,
+        "name": "Tawee",
+        "date_of_birth": null,
+        "groups": [],
+        "user_permissions": []
+    }
+},
+{
+    "model": "accounts.account",
+    "pk": 6,
+    "fields": {
+        "password": "pbkdf2_sha256$870000$1HTnmq4Ed7ErwVfDoTNvkf$IUVoB4c3rt9KlCIISevGQgJVH3zcCFu4CduynhlaQ3M=",
+        "is_superuser": false,
+        "username": "axeman",
+        "email_address": "tawee@gmail.com",
+        "phone_number": null,
+        "date_joined": "2025-01-11T11:09:23.015Z",
+        "last_login": "2025-01-11T11:09:23.015Z",
+        "is_active": true,
+        "is_staff": false,
+        "password_last_updated": "2025-01-11T11:09:23.015Z",
+        "email_verified": false,
+        "phone_number_verified": false,
+        "name": "Tawee",
+        "date_of_birth": null,
+        "groups": [],
+        "user_permissions": []
+    }
+}
+]

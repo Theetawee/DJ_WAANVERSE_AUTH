@@ -4,7 +4,7 @@ cffi==1.17.1
 charset-normalizer==3.3.2
 coverage==7.6.1
 cryptography==43.0.1
--e git+https://github.com/Theetawee/DJ_WAANVERSE_AUTH.git@4796ddc84decccf394c35b564b5c21cf15125372#egg=dj_waanverse_auth
+-e git+https://github.com/Theetawee/DJ_WAANVERSE_AUTH.git@d2b2b0e6dc50ea6dca5cf11a7b8fabd9c96760ce#egg=dj_waanverse_auth
 Django==5.1.1
 django-dotenv==1.4.2
 djangorestframework==3.15.2

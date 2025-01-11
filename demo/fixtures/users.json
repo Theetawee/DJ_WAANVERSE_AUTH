@@ -1,13 +1,13 @@
 [
     {
         "model": "dj_waanverse_auth.multifactorauth",
-        "pk": 4,
+        "pk": 1,
         "fields": {
-            "account": 1,
-            "activated": false,
-            "activated_at": null,
+            "account": 2,
+            "activated": true,
+            "activated_at": "2025-01-03T00:27:54.993Z",
             "recovery_codes": [],
-            "secret_key": null,
+            "secret_key": "gAAAAABngltIBzR1G8-NsWr-71_XOch7bzGQFcURyxxNG5rHAOW1MbcUW3baTBAzvQEW6AorASSbS89m1W3Sj110hgNzHDUJXIDvW5SQbSZcx1pSO6uSZPbEY3ovV_ne-0cBNcWA2jPv",
             "last_updated": "2025-01-04T05:22:12.433Z"
         }
     },
@@ -29,6 +29,28 @@
             "email_verified": false,
             "phone_number_verified": false,
             "name": "Test User",
+            "date_of_birth": null,
+            "groups": [],
+            "user_permissions": []
+        }
+    },
+    {
+        "model": "accounts.account",
+        "pk": 2,
+        "fields": {
+            "password": "pbkdf2_sha256$870000$1HTnmq4Ed7ErwVfDoTNvkf$IUVoB4c3rt9KlCIISevGQgJVH3zcCFu4CduynhlaQ3M=",
+            "is_superuser": false,
+            "username": "axeman",
+            "email_address": "axeman@gmail.com",
+            "phone_number": null,
+            "date_joined": "2025-01-11T11:09:23.015Z",
+            "last_login": "2025-01-11T11:09:23.015Z",
+            "is_active": true,
+            "is_staff": false,
+            "password_last_updated": "2025-01-11T11:09:23.015Z",
+            "email_verified": false,
+            "phone_number_verified": false,
+            "name": "Axeman",
             "date_of_birth": null,
             "groups": [],
             "user_permissions": []

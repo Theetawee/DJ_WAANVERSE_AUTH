@@ -20,6 +20,8 @@ class DeviceAuthMiddleware:
         self.excluded_paths = auth_config.device_auth_excluded_paths + [
             reverse("dj_waanverse_auth_login"),
             reverse("dj_waanverse_auth_signup"),
+            reverse("dj_waanverse_auth_initiate_email_verification"),
+            reverse("dj_waanverse_auth_mfa_login"),
         ]
         try:
             self.admin_url_prefix = reverse("admin:index")

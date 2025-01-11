@@ -22,6 +22,10 @@ class TestSetup(TestCase):
         )
         self.home_page_url = reverse("dj_waanverse_auth_home_page")
         self.verify_email_url = reverse("dj_waanverse_auth_verify_email")
+        self.get_mfa_secret_view_url = reverse("dj_waanverse_auth_get_mfa_secret")
+        self.activate_mfa_url = reverse("dj_waanverse_auth_activate_mfa")
+        self.mfa_login_url = reverse("dj_waanverse_auth_mfa_login")
+        self.deactivate_mfa_url = reverse("dj_waanverse_auth_deactivate_mfa")
         self.client = APIClient()
         self.user_1_email_login_data = {
             "login_field": "test_user1@gmail.com",
@@ -37,5 +41,10 @@ class TestSetup(TestCase):
         }
 
         self.test_user_1 = Account.objects.get(username="test_user1")
+        self.test_user_with_mfa = Account.objects.get(username="axeman")
+        self.test_user_with_mfa_login_data = {
+            "login_field": "axeman",
+            "password": "testUserP",
+        }
         mail.outbox = []
         return super().setUp()

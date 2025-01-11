@@ -75,7 +75,11 @@ class MFAHandler:
         """Decode the stored secret key."""
         if not self.mfa.secret_key:
             raise ValueError("No MFA secret found.")
-        return self.fernet.decrypt(self.mfa.secret_key.encode()).decode()
+        try:
+            return self.fernet.decrypt(self.mfa.secret_key.encode()).decode()
+        except Exception as e:
+            logger.error(f"Error decrypting MFA secret: {str(e)}")
+            raise e
 
     def get_provisioning_uri(self):
         """

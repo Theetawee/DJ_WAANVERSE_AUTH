@@ -1,7 +1,6 @@
 from django.contrib.auth import authenticate
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -10,7 +9,7 @@ from dj_waanverse_auth.services.mfa_service import MFAHandler
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
-def activate_mfa_view(request):
+def get_mfa_secret_view(request):
     """Activate MFA for the authenticated user."""
     user = request.user
     mfa_handler = MFAHandler(user)
@@ -32,7 +31,7 @@ def activate_mfa_view(request):
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
-def activate_mfa_with_code_view(request):
+def activate_mfa_view(request):
     """Activate MFA for the authenticated user using a code."""
     user = request.user
     mfa_handler = MFAHandler(user)
@@ -66,6 +65,7 @@ def activate_mfa_with_code_view(request):
 def deactivate_mfa_view(request):
     """Deactivate MFA for the authenticated user."""
     user = request.user
+    print(user.username)
     mfa_handler = MFAHandler(user)
 
     if not mfa_handler.is_mfa_enabled():
@@ -77,7 +77,10 @@ def deactivate_mfa_view(request):
     code = request.data.get("code")
 
     if not password or not authenticate(username=user.username, password=password):
-        raise AuthenticationFailed("Invalid password.")
+        return Response(
+            {"detail": "Invalid password."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
     if not code:
         return Response(
