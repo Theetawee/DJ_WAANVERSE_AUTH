@@ -80,3 +80,23 @@ class UserDevice(models.Model):
 
     def __str__(self):
         return f"Device: {self.device_id}, Account: {self.account}"
+
+
+class ResetPasswordToken(models.Model):
+    account = models.ForeignKey(
+        Account, related_name="reset_password_tokens", on_delete=models.CASCADE
+    )
+    code = models.CharField(max_length=255, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def is_expired(self):
+        """
+        Check if the reset password token is expired based on the configured expiry duration.
+        """
+        expiration_time = self.created_at + timedelta(
+            minutes=auth_config.password_reset_expiry_in_minutes
+        )
+        return timezone.now() > expiration_time
+
+    def __str__(self):
+        return f"Account: {self.account.username}"

@@ -3,7 +3,12 @@ from dj_waanverse_auth.settings import auth_config
 if auth_config.enable_admin:
     from django.contrib import admin
 
-    from .models import MultiFactorAuth, UserDevice, VerificationCode
+    from .models import (
+        MultiFactorAuth,
+        ResetPasswordToken,
+        UserDevice,
+        VerificationCode,
+    )
 
     # if auth_config.USE_UNFOLD:
     #     from unfold.admin import ModelAdmin
@@ -27,3 +32,4 @@ if auth_config.enable_admin:
     admin.site.register(MultiFactorAuth)
     admin.site.register(VerificationCode)
     admin.site.register(UserDevice)
+    admin.site.register(ResetPasswordToken)

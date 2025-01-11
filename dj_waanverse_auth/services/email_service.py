@@ -70,7 +70,12 @@ class EmailConfig:
     VERIFICATION_EMAIL_EXPIRATION_TIME = (
         f"{auth_config.verification_email_code_expiry_in_minutes} minutes"
     )
+    PASSWORD_RESET_EMAIL_SUBJECT = auth_config.password_reset_email_subject
+    PASSWORD_RESET_CODE_EXPIRATION_TIME = (
+        f"{auth_config.password_reset_expiry_in_minutes} minutes"
+    )
     MFA_CHANGED_EMAIL_SUBJECT = auth_config.mfa_changed_email_subject
+    PASSWORD_RESET_EMAIL_SUBJECT = auth_config.password_reset_email_subject
 
 
 class EmailValidationError(ValidationError):
@@ -328,19 +333,29 @@ class EmailService:
                 priority=EmailPriority.HIGH,
             )
 
-    def send_password_reset_email(self, email: str, reset_token: str) -> bool:
+    def send_password_reset_email(self, account) -> bool:
         """Send password reset email."""
-        context = {
-            "reset_token": reset_token,
-            "expiry_hours": settings.PASSWORD_RESET_EXPIRY_HOURS,
-        }
-        return self.send_email(
-            subject="Reset Your Password",
-            template_name=EmailTemplate.PASSWORD_RESET,
-            context=context,
-            recipient_list=email,
-            priority=EmailPriority.HIGH,
-        )
+        from dj_waanverse_auth.models import ResetPasswordToken
+
+        with transaction.atomic():
+            code = self.generate_verification_code(
+                auth_config.password_reset_code_length,
+                alphanumeric=auth_config.email_verification_code_is_alphanumeric,
+            )
+            ResetPasswordToken.objects.filter(account=account).delete()
+            new_code = ResetPasswordToken.objects.create(account=account, code=code)
+            new_code.save()
+            context = {
+                "code": code,
+                "expiry_time": self.config.PASSWORD_RESET_CODE_EXPIRATION_TIME,
+            }
+            return self.send_email(
+                subject=self.config.PASSWORD_RESET_EMAIL_SUBJECT,
+                template_name=EmailTemplate.PASSWORD_RESET,
+                context=context,
+                recipient_list=account.email_address,
+                priority=EmailPriority.HIGH,
+            )
 
     def send_login_alert(self, email: str) -> bool:
         """Send new login alert.

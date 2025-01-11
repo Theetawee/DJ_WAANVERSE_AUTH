@@ -72,9 +72,9 @@ class AuthConfigSchema(TypedDict, total=False):
     SEND_LOGIN_ALERT_EMAILS: bool
 
     # Password Reset
-    PASSWORD_RESET_CODE_EXPIRY: timedelta
+    PASSWORD_RESET_CODE_EXPIRY_IN_MINUTES: int
     PASSWORD_RESET_COOLDOWN: int  # minutes
-
+    PASSWORD_RESET_EMAIL_SUBJECT: str
     # Admin Interface
     ENABLE_ADMIN_PANEL: bool
     USE_UNFOLD_THEME: bool
@@ -224,13 +224,19 @@ class AuthConfig:
             "LOGIN_ALERT_EMAIL_SUBJECT", "New login alert"
         )
         self.send_login_alert_emails = config_dict.get("SEND_LOGIN_ALERT_EMAILS", False)
-
         # Password Reset Settings
-        self.password_reset_expiry = config_dict.get(
-            "PASSWORD_RESET_CODE_EXPIRY", timedelta(minutes=10)
+        self.password_reset_expiry_in_minutes = config_dict.get(
+            "PASSWORD_RESET_CODE_EXPIRY_IN_MINUTES", 10
         )
-        self.password_reset_cooldown = config_dict.get("PASSWORD_RESET_COOLDOWN", 5)
-
+        self.password_reset_code_length = self._validate_range(
+            config_dict.get("PASSWORD_RESET_CODE_LENGTH", 6),
+            "PASSWORD_RESET_CODE_LENGTH",
+            min_value=6,
+            max_value=12,
+        )
+        self.password_reset_email_subject = config_dict.get(
+            "PASSWORD_RESET_EMAIL_SUBJECT", "Password reset request"
+        )
         # Admin Interface
         self.enable_admin = config_dict.get("ENABLE_ADMIN_PANEL", False)
         self.use_unfold = config_dict.get("USE_UNFOLD_THEME", False)
