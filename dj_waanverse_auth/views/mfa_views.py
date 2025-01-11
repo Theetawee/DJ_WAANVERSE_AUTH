@@ -65,7 +65,6 @@ def activate_mfa_view(request):
 def deactivate_mfa_view(request):
     """Deactivate MFA for the authenticated user."""
     user = request.user
-    print(user.username)
     mfa_handler = MFAHandler(user)
 
     if not mfa_handler.is_mfa_enabled():

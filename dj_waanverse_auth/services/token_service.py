@@ -58,6 +58,7 @@ class TokenService:
         self.user_agent = request.headers.get("User-Agent", "")
         self.platform = request.headers.get("Sec-CH-UA-Platform", "Unknown").strip('"')
         self.login_method = login_method
+        self.is_refresh = bool(refresh_token)
 
     @property
     def tokens(self):
@@ -67,66 +68,51 @@ class TokenService:
         return self._tokens
 
     def generate_tokens(self):
-        """Generates new access and refresh tokens."""
+        """
+        Generates tokens based on the context:
+        - If refresh_token is provided, only generates new access token
+        - If user is provided, generates both new access and refresh tokens
+        """
         if not self.user and not self.refresh_token:
             raise ValueError("Either user or refresh_token must be provided")
 
         try:
             if self.refresh_token:
+                # Only generate new access token when refreshing
                 refresh = RefreshToken(self.refresh_token)
+                return {
+                    "refresh_token": self.refresh_token,  # Keep original refresh token
+                    "access_token": str(refresh.access_token),
+                }
             else:
+                # Generate both tokens for new login
                 refresh = RefreshToken.for_user(self.user)
-
-            return {
-                "refresh_token": str(refresh),
-                "access_token": str(refresh.access_token),
-            }
+                return {
+                    "refresh_token": str(refresh),
+                    "access_token": str(refresh.access_token),
+                }
         except TokenError as e:
             raise TokenError(f"Failed to generate tokens: {str(e)}")
 
     def generate_device_id(self) -> str:
         """Generates a unique and secure device identifier."""
         browser = self.user_agent.split(" ")[0] if self.user_agent else "Unknown"
-
         raw_string = f"{self.user.id}|{self.platform}|{browser}|{uuid.uuid4()}"
         hashed_id = hashlib.sha256(raw_string.encode()).hexdigest()
         return f"{hashed_id[:16]}"
 
     def setup_login_cookies(self, response):
         """
-        Sets up all necessary cookies after successful login.
-
-        Args:
-            response: HttpResponse object
-            request: HttpRequest object (optional, needed for device ID generation)
-            tokens: Dictionary containing access and refresh tokens ie {"access_token": "token", "refresh_token": "token"}
-
-        Returns:
-            Dictionary containing:
-                - response: HttpResponse with all login-related cookies set
-                - tokens: Dictionary with access and refresh tokens
-                - device_id: Device ID if generated, None otherwise
+        Sets up cookies based on the context:
+        - For token refresh: Only updates access token cookie
+        - For new login: Sets up all cookies and registers device
         """
-        if not self.user:
-            raise ValueError("User is required for cookie setup")
-        # remove the mfa cookie
-        response.delete_cookie(
-            self.cookie_settings.MFA_COOKIE_NAME,
-            domain=self.cookie_settings.DOMAIN,
-            path=self.cookie_settings.PATH,
-        )
         try:
             cookie_params = self.cookie_settings.get_cookie_params()
+            tokens = self.tokens
             device_id = None
 
-            tokens = self.tokens
-            response.set_cookie(
-                self.cookie_settings.REFRESH_COOKIE_NAME,
-                tokens["refresh_token"],
-                max_age=self.cookie_settings.REFRESH_COOKIE_MAX_AGE,
-                **cookie_params,
-            )
-
+            # Always set the new access token
             response.set_cookie(
                 self.cookie_settings.ACCESS_COOKIE_NAME,
                 tokens["access_token"],
@@ -134,27 +120,45 @@ class TokenService:
                 **cookie_params,
             )
 
-            device_id = self.generate_device_id()
-            ip_address = get_ip_address(self.request)
-            try:
-                new_device = UserDevice.objects.create(
-                    device_id=device_id,
-                    account=self.user,
-                    ip_address=ip_address,
-                    user_agent=self.user_agent,
-                    login_method=self.login_method,
-                )
-                new_device.save()
-
+            # Only proceed with full login setup if this is not a refresh
+            if not self.is_refresh:
+                # Set refresh token cookie
                 response.set_cookie(
-                    self.cookie_settings.DEVICE_ID_COOKIE_NAME,
-                    device_id,
+                    self.cookie_settings.REFRESH_COOKIE_NAME,
+                    tokens["refresh_token"],
                     max_age=self.cookie_settings.REFRESH_COOKIE_MAX_AGE,
                     **cookie_params,
                 )
-            except Exception as e:
-                logger.error(f"Failed to set device cookie: {str(e)}")
-                raise TokenError(f"Failed to set device cookie: {str(e)}")
+
+                device_id = self.generate_device_id()
+                ip_address = get_ip_address(self.request)
+
+                try:
+                    new_device = UserDevice.objects.create(
+                        device_id=device_id,
+                        account=self.user,
+                        ip_address=ip_address,
+                        user_agent=self.user_agent,
+                        login_method=self.login_method,
+                    )
+                    new_device.save()
+
+                    response.set_cookie(
+                        self.cookie_settings.DEVICE_ID_COOKIE_NAME,
+                        device_id,
+                        max_age=self.cookie_settings.REFRESH_COOKIE_MAX_AGE,
+                        **cookie_params,
+                    )
+                except Exception as e:
+                    logger.error(f"Failed to set device cookie: {str(e)}")
+                    raise TokenError(f"Failed to set device cookie: {str(e)}")
+
+                # Clear MFA cookie on new login
+                response.delete_cookie(
+                    self.cookie_settings.MFA_COOKIE_NAME,
+                    domain=self.cookie_settings.DOMAIN,
+                    path=self.cookie_settings.PATH,
+                )
 
             return {"response": response, "tokens": tokens, "device_id": device_id}
         except Exception as e:
@@ -162,15 +166,7 @@ class TokenService:
             raise
 
     def clear_all_cookies(self, response):
-        """
-        Removes all authentication-related cookies.
-
-        Args:
-            response: HttpResponse object
-
-        Returns:
-            HttpResponse with all auth cookies removed
-        """
+        """Removes all authentication-related cookies."""
         cookie_params = {
             "domain": self.cookie_settings.DOMAIN,
             "path": self.cookie_settings.PATH,
@@ -193,19 +189,7 @@ class TokenService:
         return response
 
     def handle_mfa_state(self, response, action="add", preserve_other_cookies=True):
-        """
-        Manages MFA-related cookies while optionally preserving other authentication cookies.
-
-        Args:
-            response: HttpResponse object
-            action: str, either 'add' or 'remove'
-            preserve_other_cookies: bool, whether to keep other auth cookies
-
-        Returns:
-            Dictionary containing:
-                - response: HttpResponse with updated cookies
-                - mfa_token: MFA token if action is 'add', None if 'remove'
-        """
+        """Manages MFA-related cookies while optionally preserving other authentication cookies."""
         if action not in ["add", "remove"]:
             raise ValueError("Invalid action for MFA cookie handling")
 

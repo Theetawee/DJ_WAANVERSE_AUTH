@@ -30,6 +30,9 @@ class TestSetup(TestCase):
             "dj_waanverse_auth_generate_recovery_codes"
         )
         self.get_recovery_codes_url = reverse("dj_waanverse_auth_get_recovery_codes")
+        self.refresh_access_token_url = reverse(
+            "dj_waanverse_auth_refresh_access_token"
+        )
         self.client = APIClient()
         self.user_1_email_login_data = {
             "login_field": "test_user1@gmail.com",
