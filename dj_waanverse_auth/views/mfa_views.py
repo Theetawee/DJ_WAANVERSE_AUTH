@@ -171,7 +171,7 @@ def get_recovery_codes_view(request):
 
     if not recovery_codes:
         return Response(
-            {"detail": "No recovery codes available."},
+            {"msg": "no_codes"},
             status=status.HTTP_404_NOT_FOUND,
         )
 

@@ -129,5 +129,5 @@ check_dependencies()
 if sys.stdout.isatty():
     print(f"Powered by Dj Waanverse Auth v{__version__}")
     print(
-        f"Copyright © {datetime.now().year} {__author__}. Waanverse Labs Inc. All rights reserved.\n"
+        f"Copyright © {datetime.now().year} {__author__}. All rights reserved.\n"
     )

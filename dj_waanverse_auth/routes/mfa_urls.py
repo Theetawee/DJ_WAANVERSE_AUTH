@@ -18,10 +18,14 @@ urlpatterns = [
         activate_mfa_view,
         name="dj_waanverse_auth_activate_mfa",
     ),
-    path("recovery-codes/", get_recovery_codes_view, name="get_recovery_codes"),
+    path(
+        "recovery-codes/",
+        get_recovery_codes_view,
+        name="dj_waanverse_auth_get_recovery_codes",
+    ),
     path(
         "generate-recovery-codes/",
         generate_recovery_codes_view,
-        name="generate_recovery_codes",
+        name="dj_waanverse_auth_generate_recovery_codes",
     ),
 ]

@@ -26,6 +26,10 @@ class TestSetup(TestCase):
         self.activate_mfa_url = reverse("dj_waanverse_auth_activate_mfa")
         self.mfa_login_url = reverse("dj_waanverse_auth_mfa_login")
         self.deactivate_mfa_url = reverse("dj_waanverse_auth_deactivate_mfa")
+        self.generate_mfa_recovery_codes_url = reverse(
+            "dj_waanverse_auth_generate_recovery_codes"
+        )
+        self.get_recovery_codes_url = reverse("dj_waanverse_auth_get_recovery_codes")
         self.client = APIClient()
         self.user_1_email_login_data = {
             "login_field": "test_user1@gmail.com",
