@@ -1,8 +1,7 @@
 import logging
 
-from django.urls import reverse
-from rest_framework.response import Response
-from rest_framework.status import HTTP_403_FORBIDDEN
+from django.http import HttpResponseForbidden
+from django.urls import NoReverseMatch, reverse
 
 from dj_waanverse_auth.models import UserDevice
 from dj_waanverse_auth.settings import auth_config
@@ -22,6 +21,10 @@ class DeviceAuthMiddleware:
             reverse("dj_waanverse_auth_login"),
             reverse("dj_waanverse_auth_signup"),
         ]
+        try:
+            self.admin_url_prefix = reverse("admin:index")
+        except NoReverseMatch:
+            self.admin_url_prefix = "/admin/"
 
     def get_device_id(self, request):
         """
@@ -47,9 +50,11 @@ class DeviceAuthMiddleware:
 
     def should_skip_auth(self, request):
         """
-        Determines if the current path is in the excluded paths.
+        Determines if the current path is in the excluded paths or admin URL.
         """
-        return any(request.path.startswith(path) for path in self.excluded_paths)
+        return any(
+            request.path.startswith(path) for path in self.excluded_paths
+        ) or request.path.startswith(self.admin_url_prefix)
 
     def __call__(self, request):
         """
@@ -62,13 +67,11 @@ class DeviceAuthMiddleware:
 
         if not device_id:
             logger.warning("Device ID not found in request")
-            return Response({"error": "Device ID not found"}, status=HTTP_403_FORBIDDEN)
+            return HttpResponseForbidden("Device ID not found")
 
         if not self.validate_device(device_id):
             logger.warning(f"Invalid or inactive device ID: {device_id}")
-            return Response(
-                {"error": "Invalid or inactive device"}, status=HTTP_403_FORBIDDEN
-            )
+            return HttpResponseForbidden("Invalid or inactive device ID")
 
         response = self.get_response(request)
         return response

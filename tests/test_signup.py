@@ -189,7 +189,6 @@ class TestSignup(TestSetup):
             self.initiate_email_verification_url,
             {"email_address": self.valid_email},
         )
-        print(response.data)
 
         self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
 

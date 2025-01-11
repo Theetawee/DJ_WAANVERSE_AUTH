@@ -156,12 +156,12 @@ class TestLogin(TestSetup):
         self.assertNotEqual(first_device_id, second_device_id)
 
     def test_login_invalid_credentials(self):
+        auth_config.email_threading_enabled = False
         """
         Test login with invalid credentials.
         """
         invalid_data = {"login_field": "test_user1", "password": "wrong_password"}
         response = self.client.post(self.login_url, invalid_data)
-
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(UserDevice.objects.filter(account=self.test_user_1).count(), 0)
         self.assertEqual(len(mail.outbox), 0)

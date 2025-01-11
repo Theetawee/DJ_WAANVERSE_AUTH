@@ -4,7 +4,6 @@ from .models import Account
 
 
 class AccountAdmin(admin.ModelAdmin):
-    # Define the fields to be displayed in the list view
     list_display = (
         "email_address",
         "is_active",
@@ -23,7 +22,7 @@ class AccountAdmin(admin.ModelAdmin):
 
     # Define how the fields should be grouped on the edit page
     fieldsets = (
-        (None, {"fields": ("email", "password")}),
+        (None, {"fields": ("email_address", "password")}),
         (
             "Personal info",
             {
@@ -32,7 +31,6 @@ class AccountAdmin(admin.ModelAdmin):
                     "username",
                     "date_of_birth",
                     "phone_number",
-                    "profile_image",
                 )
             },
         ),
@@ -40,7 +38,10 @@ class AccountAdmin(admin.ModelAdmin):
             "Permissions",
             {"fields": ("is_active", "is_staff", "is_superuser", "user_permissions")},
         ),
-        ("Important dates", {"fields": ("last_login", "date_joined")}),
+        (
+            "Important dates",
+            {"fields": ("last_login", "date_joined")},
+        ),
     )
 
     # Define which fields to include in filter options
@@ -62,7 +63,6 @@ class AccountAdmin(admin.ModelAdmin):
                     "password2",
                     "date_of_birth",
                     "phone_number",
-                    "profile_image",
                 )
             },
         ),
