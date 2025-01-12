@@ -5,6 +5,7 @@ from django.contrib.auth.models import (
 )
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Q
 
 
 class AccountManager(BaseUserManager):
@@ -43,17 +44,20 @@ class AbstractBaseAccount(AbstractBaseUser, PermissionsMixin):
     """
 
     username = models.CharField(
-        max_length=10, unique=True, help_text="Required. 10 characters or fewer."
+        max_length=10,
+        unique=True,
+        db_index=True,
+        help_text="Required. 10 characters or fewer.",
     )
     email_address = models.EmailField(
-        max_length=255, unique=True, blank=True, null=True, verbose_name="Email"
+        max_length=255, blank=True, null=True, verbose_name="Email", db_index=True
     )
     phone_number = models.CharField(
         max_length=15,
-        unique=True,
         blank=True,
         null=True,
         help_text="E.164 format recommended (+1234567890)",
+        db_index=True,
     )
     date_joined = models.DateTimeField(auto_now_add=True)
     last_login = models.DateTimeField(auto_now=True)
@@ -70,6 +74,18 @@ class AbstractBaseAccount(AbstractBaseUser, PermissionsMixin):
 
     class Meta:
         abstract = True
+        constraints = [
+            models.UniqueConstraint(
+                fields=["phone_number"],
+                name="unique_phone_number",
+                condition=~Q(phone_number=None),
+            ),
+            models.UniqueConstraint(
+                fields=["email_address"],
+                name="unique_email_address",
+                condition=~Q(email_address=None),
+            ),
+        ]
 
     def clean(self):
         """Validate that either email or phone is provided"""
