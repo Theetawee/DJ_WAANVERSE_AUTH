@@ -22,6 +22,8 @@ class DeviceAuthMiddleware:
             reverse("dj_waanverse_auth_signup"),
             reverse("dj_waanverse_auth_initiate_email_verification"),
             reverse("dj_waanverse_auth_mfa_login"),
+            reverse("dj_waanverse_auth_initiate_password_reset"),
+            reverse("dj_waanverse_auth_reset_password"),
         ]
         try:
             self.admin_url_prefix = reverse("admin:index")

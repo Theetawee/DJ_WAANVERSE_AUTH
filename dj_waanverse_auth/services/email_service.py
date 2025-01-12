@@ -333,29 +333,19 @@ class EmailService:
                 priority=EmailPriority.HIGH,
             )
 
-    def send_password_reset_email(self, account) -> bool:
+    def send_password_reset_email(self, account, token) -> bool:
         """Send password reset email."""
-        from dj_waanverse_auth.models import ResetPasswordToken
-
-        with transaction.atomic():
-            code = self.generate_verification_code(
-                auth_config.password_reset_code_length,
-                alphanumeric=auth_config.email_verification_code_is_alphanumeric,
-            )
-            ResetPasswordToken.objects.filter(account=account).delete()
-            new_code = ResetPasswordToken.objects.create(account=account, code=code)
-            new_code.save()
-            context = {
-                "code": code,
-                "expiry_time": self.config.PASSWORD_RESET_CODE_EXPIRATION_TIME,
-            }
-            return self.send_email(
-                subject=self.config.PASSWORD_RESET_EMAIL_SUBJECT,
-                template_name=EmailTemplate.PASSWORD_RESET,
-                context=context,
-                recipient_list=account.email_address,
-                priority=EmailPriority.HIGH,
-            )
+        context = {
+            "code": token,
+            "expiry_time": self.config.PASSWORD_RESET_CODE_EXPIRATION_TIME,
+        }
+        return self.send_email(
+            subject=self.config.PASSWORD_RESET_EMAIL_SUBJECT,
+            template_name=EmailTemplate.PASSWORD_RESET,
+            context=context,
+            recipient_list=account.email_address,
+            priority=EmailPriority.HIGH,
+        )
 
     def send_login_alert(self, email: str) -> bool:
         """Send new login alert.

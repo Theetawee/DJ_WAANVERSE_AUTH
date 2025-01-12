@@ -29,6 +29,10 @@ class TestSetup(TestCase):
         self.generate_mfa_recovery_codes_url = reverse(
             "dj_waanverse_auth_generate_recovery_codes"
         )
+        self.initiate_password_reset_url = reverse(
+            "dj_waanverse_auth_initiate_password_reset"
+        )
+        self.reset_new_password_url = reverse("dj_waanverse_auth_reset_password")
         self.get_recovery_codes_url = reverse("dj_waanverse_auth_get_recovery_codes")
         self.refresh_access_token_url = reverse(
             "dj_waanverse_auth_refresh_access_token"

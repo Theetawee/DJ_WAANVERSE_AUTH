@@ -1,3 +1,4 @@
+import secrets
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
@@ -88,15 +89,30 @@ class ResetPasswordToken(models.Model):
     )
     code = models.CharField(max_length=255, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    is_used = models.BooleanField(default=False)
+
+    @classmethod
+    def generate_code(cls):
+        """Generate a secure random code."""
+        return secrets.token_urlsafe(7)
+
+    @classmethod
+    def create_for_user(cls, user):
+        """Create a new reset token for user, invalidating any existing ones."""
+        cls.objects.filter(account=user, is_used=False).update(is_used=True)
+        return cls.objects.create(account=user, code=cls.generate_code())
 
     def is_expired(self):
-        """
-        Check if the reset password token is expired based on the configured expiry duration.
-        """
+        """Check if the reset password token is expired."""
         expiration_time = self.created_at + timedelta(
             minutes=auth_config.password_reset_expiry_in_minutes
         )
-        return timezone.now() > expiration_time
+        return timezone.now() > expiration_time or self.is_used
+
+    def use_token(self):
+        """Mark token as used."""
+        self.is_used = True
+        self.save()
 
     def __str__(self):
-        return f"Account: {self.account.username}"
+        return f"Reset token for {self.account.email_address}"
