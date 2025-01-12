@@ -6,12 +6,13 @@ from django.contrib.auth.models import (
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
+from django.utils import timezone
 
 
 class AccountManager(BaseUserManager):
     def create_user(self, username, password=None, **extra_fields):
         if not username:
-            raise ValueError("The Username field must be set")
+            raise ValueError("Username is required")
 
         email = extra_fields.get("email_address")
         phone = extra_fields.get("phone_number")
@@ -19,28 +20,31 @@ class AccountManager(BaseUserManager):
             raise ValueError("Either email address or phone number must be provided")
 
         user = self.model(username=username, **extra_fields)
-        user.set_password(password)
+
+        if password:
+            user.set_password(password)
+        else:
+            user.set_unusable_password()
+
         user.full_clean()
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, username, password=None, **extra_fields):
-        extra_fields.setdefault("is_staff", True)
-        extra_fields.setdefault("is_superuser", True)
-        extra_fields.setdefault("is_active", True)
-
-        if extra_fields.get("is_staff") is not True:
-            raise ValueError("Superuser must have is_staff=True.")
-        if extra_fields.get("is_superuser") is not True:
-            raise ValueError("Superuser must have is_superuser=True.")
-
-        return self.create_user(username=username, password=password, **extra_fields)
+    def create_superuser(self, username, password, **extra_fields):
+        return self.create_user(
+            username=username,
+            password=password,
+            is_staff=True,
+            is_superuser=True,
+            is_active=True,
+            **extra_fields
+        )
 
 
 class AbstractBaseAccount(AbstractBaseUser, PermissionsMixin):
     """
-    Abstract base user model that can be extended.
-    Provides core authentication fields and functionality.
+    Abstract base user model with support for both email and phone authentication.
+    Includes core user management functionality and flexible contact methods.
     """
 
     username = models.CharField(
@@ -50,7 +54,11 @@ class AbstractBaseAccount(AbstractBaseUser, PermissionsMixin):
         help_text="Required. 10 characters or fewer.",
     )
     email_address = models.EmailField(
-        max_length=255, blank=True, null=True, verbose_name="Email", db_index=True
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="Email",
+        db_index=True,
     )
     phone_number = models.CharField(
         max_length=15,
@@ -60,10 +68,10 @@ class AbstractBaseAccount(AbstractBaseUser, PermissionsMixin):
         db_index=True,
     )
     date_joined = models.DateTimeField(auto_now_add=True)
-    last_login = models.DateTimeField(auto_now=True)
+    last_login = models.DateTimeField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
-    password_last_updated = models.DateTimeField(auto_now=True)
+    password_last_updated = models.DateTimeField(default=timezone.now)
     email_verified = models.BooleanField(default=False)
     phone_number_verified = models.BooleanField(default=False)
 
@@ -77,18 +85,28 @@ class AbstractBaseAccount(AbstractBaseUser, PermissionsMixin):
         constraints = [
             models.UniqueConstraint(
                 fields=["phone_number"],
-                name="unique_phone_number",
+                name="%(app_label)s_%(class)s_unique_phone",
                 condition=~Q(phone_number=None),
             ),
             models.UniqueConstraint(
                 fields=["email_address"],
-                name="unique_email_address",
+                name="%(app_label)s_%(class)s_unique_email",
                 condition=~Q(email_address=None),
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=["username"], name="%(app_label)s_%(class)s_username_idx"
+            ),
+            models.Index(
+                fields=["email_address"], name="%(app_label)s_%(class)s_email_idx"
+            ),
+            models.Index(
+                fields=["phone_number"], name="%(app_label)s_%(class)s_phone_idx"
             ),
         ]
 
     def clean(self):
-        """Validate that either email or phone is provided"""
         if not self.email_address and not self.phone_number:
             raise ValidationError(
                 "At least one contact method (email or phone number) must be provided."
@@ -96,7 +114,7 @@ class AbstractBaseAccount(AbstractBaseUser, PermissionsMixin):
         super().clean()
 
     def __str__(self):
-        return self.email_address or self.phone_number or self.username
+        return self.get_primary_contact() or self.username
 
     def get_full_name(self):
         return self.username
@@ -104,12 +122,12 @@ class AbstractBaseAccount(AbstractBaseUser, PermissionsMixin):
     def get_short_name(self):
         return self.username
 
+    @property
+    def get_primary_contact(self):
+        return self.email_address or self.phone_number
+
     def has_perm(self, perm, obj=None):
         return self.is_staff
 
     def has_module_perms(self, app_label):
         return True
-
-    def get_primary_contact(self):
-        """Returns the primary contact method (email or phone)"""
-        return self.email_address or self.phone_number

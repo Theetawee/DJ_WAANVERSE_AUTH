@@ -37,6 +37,10 @@ class TestSetup(TestCase):
         self.refresh_access_token_url = reverse(
             "dj_waanverse_auth_refresh_access_token"
         )
+        self.logout_url = reverse("dj_waanverse_auth_logout")
+        self.get_authenticated_user_url = reverse(
+            "dj_waanverse_auth_authenticated_user"
+        )
         self.client = APIClient()
         self.user_1_email_login_data = {
             "login_field": "test_user1@gmail.com",

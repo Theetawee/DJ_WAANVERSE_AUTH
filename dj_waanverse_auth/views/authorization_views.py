@@ -97,7 +97,7 @@ def authenticated_user(request):
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def logout_view(request):
-    token_manager = TokenService()
-    return token_manager.delete_tokens_from_response(
+    token_manager = TokenService(request=request)
+    return token_manager.clear_all_cookies(
         Response(status=status.HTTP_200_OK, data={"status": "success"})
     )
