@@ -1,4 +1,5 @@
 # dj_waanverse_auth
+![Coverage Badge](https://img.shields.io/badge/coverage-81%25-brightgreen)
 
 Welcome to **dj_waanverse_auth**!
 
