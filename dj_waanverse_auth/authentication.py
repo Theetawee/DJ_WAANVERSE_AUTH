@@ -23,8 +23,6 @@ class JWTAuthentication(authentication.BaseAuthentication):
     HEADER_NAME = auth_config.header_name
     COOKIE_NAME = auth_config.access_token_cookie
     USER_ID_CLAIM = auth_config.user_id_claim
-    TOKEN_CACHE_TTL = auth_config.token_cache_ttl
-    CACHE_PREFIX = auth_config.cache_prefix
 
     def __init__(self):
         if not self.PUBLIC_KEY_PATH:
@@ -112,9 +110,7 @@ class JWTAuthentication(authentication.BaseAuthentication):
         Additional user validation checks.
         """
         if payload.get("iat"):
-            password_changed = getattr(
-                user, auth_config.password_changed_field_name, None
-            )
+            password_changed = getattr(user, "password_last_updated", None)
             if password_changed and password_changed.timestamp() > payload["iat"]:
                 raise exceptions.AuthenticationFailed("Password has been changed")
 

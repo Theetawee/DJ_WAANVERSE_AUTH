@@ -9,16 +9,12 @@ from django.core.exceptions import ImproperlyConfigured
 class AuthConfigSchema(TypedDict, total=False):
     """TypedDict defining all possible authentication configuration options."""
 
-    # Security Settings
-    AUTH_METHODS: List[str]
     PUBLIC_KEY_PATH: Optional[str]
     PRIVATE_KEY_PATH: Optional[str]
     HEADER_NAME: str
     DEVICE_ID_HEADER_NAME: str
     DEVICE_COOKIE_NAME: str
     USER_ID_CLAIM: str
-    TOKEN_CACHE_TTL: int
-    CACHE_PREFIX: str
     PASSWORD_CHANGED_FIELD_NAME: str
     DEVICE_AUTH_EXCLUDED_PATHS: List[str]
 
@@ -75,6 +71,7 @@ class AuthConfigSchema(TypedDict, total=False):
     PASSWORD_RESET_CODE_EXPIRY_IN_MINUTES: int
     PASSWORD_RESET_COOLDOWN: int  # minutes
     PASSWORD_RESET_EMAIL_SUBJECT: str
+
     # Admin Interface
     ENABLE_ADMIN_PANEL: bool
     USE_UNFOLD_THEME: bool
@@ -96,15 +93,10 @@ class AuthConfig:
 
     def __init__(self, config_dict: AuthConfigSchema):
         # Security Settings
-        self.auth_methods = self._validate_auth_methods(
-            config_dict.get("AUTH_METHODS", ["username"])
-        )
         self.public_key_path = config_dict.get("PUBLIC_KEY_PATH")
         self.private_key_path = config_dict.get("PRIVATE_KEY_PATH")
         self.header_name = config_dict.get("HEADER_NAME", "X-Auth-Token")
         self.user_id_claim = config_dict.get("USER_ID_CLAIM", "user_id")
-        self.token_cache_ttl = config_dict.get("TOKEN_CACHE_TTL", 300)
-        self.cache_prefix = config_dict.get("CACHE_PREFIX", "jwt_token_")
         self.password_changed_field_name = config_dict.get(
             "PASSWORD_CHANGED_FIELD_NAME", "password_changed_at"
         )
