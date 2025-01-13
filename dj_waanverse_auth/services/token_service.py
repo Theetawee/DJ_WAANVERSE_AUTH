@@ -76,7 +76,7 @@ class TokenService:
                 refresh = RefreshToken(self.refresh_token)
                 return {
                     "refresh_token": self.refresh_token,
-                    "access_token": str(refresh.access_token()),
+                    "access_token": str(refresh.access_token),
                 }
             else:
 
@@ -100,7 +100,6 @@ class TokenService:
         try:
             cookie_params = self.cookie_settings.get_cookie_params()
             tokens = self.tokens
-
             # Always set the new access token
             response.set_cookie(
                 self.cookie_settings.ACCESS_COOKIE_NAME,
@@ -195,5 +194,4 @@ class TokenService:
             RefreshToken(token)
             return True
         except TokenError:
-            return False
             return False

@@ -51,12 +51,12 @@ class TestAuthorizationViews(TestSetup):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_logout(self):
-        login_response = self.client.post(
+        self.client.post(
             self.login_url, data=self.user_1_email_login_data
         )
 
         response = self.client.post(
-            self.logout_url, data={"device_id": login_response.data["device_id"]}
+            self.logout_url
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)

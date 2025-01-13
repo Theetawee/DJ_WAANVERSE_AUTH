@@ -8,7 +8,6 @@ class AuthCookieMiddleware:
 
     def __call__(self, request):
         response = self.get_response(request)
-        print(request.META.get("HTTP_X_COOKIES_TO_DELETE", ""))
         if request.META.get("HTTP_X_COOKIES_TO_DELETE", ""):
             response = self.auth_class.delete_marked_cookies(response, request)
 

@@ -133,8 +133,6 @@ def mfa_login_view(request):
         response_data = token_manager.setup_login_cookies(response=response)
         response = response_data["response"]
         tokens = response_data["tokens"]
-        device_id = response_data["device_id"]
-        response.data["device_id"] = device_id
         response.data["access_token"] = tokens["access_token"]
         response.data["refresh_token"] = tokens["refresh_token"]
         return response

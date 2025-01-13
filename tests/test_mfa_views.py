@@ -9,13 +9,6 @@ from .test_setup import TestSetup
 
 
 class TestMFALogin(TestSetup):
-    def test_get_mfa_secret_view_device_id_not_provided(self):
-        response = self.client.post(
-            self.get_mfa_secret_view_url,
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
     def test_get_mfa_secret_view_success(self):
         self.client.post(self.login_url, data=self.user_1_email_login_data)
         response = self.client.post(
@@ -76,7 +69,6 @@ class TestMFALogin(TestSetup):
         self.assertNotIn("access_token", response.data)
         self.assertNotIn("refresh_token", response.data)
         self.assertNotIn("user", response.data)
-        self.assertNotIn("device_id", response.data)
         self.assertIn("mfa", response.data)
         self.assertIn(auth_config.mfa_token_cookie_name, self.client.cookies)
         self.assertEqual(response.data["mfa"], self.test_user_with_mfa.id)
@@ -100,7 +92,6 @@ class TestMFALogin(TestSetup):
         self.assertIn("access_token", response.data)
         self.assertIn("refresh_token", response.data)
         self.assertIn("user", response.data)
-        self.assertIn("device_id", response.data)
 
     def test_login_mfa_verify_invalid_code(self):
         self.client.post(self.login_url, data=self.test_user_with_mfa_login_data)
@@ -115,7 +106,6 @@ class TestMFALogin(TestSetup):
         self.assertNotIn("access_token", response.data)
         self.assertNotIn("refresh_token", response.data)
         self.assertNotIn("user", response.data)
-        self.assertNotIn("device_id", response.data)
 
     def test_mfa_login_view_recovery_code(self):
         """Handle MFA login using a provided recovery code."""
@@ -138,7 +128,6 @@ class TestMFALogin(TestSetup):
         self.assertIn("access_token", response.data)
         self.assertIn("refresh_token", response.data)
         self.assertIn("user", response.data)
-        self.assertIn("device_id", response.data)
 
     def test_deactivate_mfa_no_password(self):
         self.client.post(self.login_url, data=self.test_user_with_mfa_login_data)

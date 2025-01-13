@@ -79,8 +79,8 @@ def refresh_access_token(request):
             },
             status=status.HTTP_401_UNAUTHORIZED,
         )
-
-        return token_service.clear_all_cookies(response)
+        return response
+        # return token_service.clear_all_cookies(response)
 
 
 @api_view(["GET"])

@@ -12,10 +12,7 @@ class AuthConfigSchema(TypedDict, total=False):
     PUBLIC_KEY_PATH: Optional[str]
     PRIVATE_KEY_PATH: Optional[str]
     HEADER_NAME: str
-    DEVICE_ID_HEADER_NAME: str
-    DEVICE_COOKIE_NAME: str
     USER_ID_CLAIM: str
-    DEVICE_AUTH_EXCLUDED_PATHS: List[str]
 
     # Cookie Configuration
     ACCESS_TOKEN_COOKIE_NAME: str
@@ -90,13 +87,6 @@ class AuthConfig:
         self.private_key_path = config_dict.get("PRIVATE_KEY_PATH")
         self.header_name = config_dict.get("HEADER_NAME", "X-Auth-Token")
         self.user_id_claim = config_dict.get("USER_ID_CLAIM", "user_id")
-        self.device_id_header_name = config_dict.get(
-            "DEVICE_ID_HEADER_NAME", "X-Device-Id"
-        )
-        self.device_id_cookie_name = config_dict.get("DEVICE_COOKIE_NAME", "device_id")
-        self.device_auth_excluded_paths = config_dict.get(
-            "DEVICE_AUTH_EXCLUDED_PATHS", []
-        )
 
         # Cookie Settings
         self.access_token_cookie = config_dict.get(
