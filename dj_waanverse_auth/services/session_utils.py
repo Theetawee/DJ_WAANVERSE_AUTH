@@ -6,15 +6,14 @@ from dj_waanverse_auth.models import UserSession
 from dj_waanverse_auth.security.utils import get_ip_address
 
 
-def create_session(user, request) -> str:
+def create_session(user, request, login_method) -> str:
     """
     Create a new session for a user and return the session ID.
 
     Args:
-        user: The user object for whom the session is being created.
-        device_info: A dictionary containing device details (type, browser, OS, name).
-        ip_address: Optional IP address of the device.
-
+        user: The user object associated with the session.
+        request: The request object.
+        login_method: The login method used for the session.
     Returns:
         A string representing the newly created session ID.
     """
@@ -25,6 +24,7 @@ def create_session(user, request) -> str:
         session_id=session_id,
         ip_address=get_ip_address(request),
         user_agent=user_agent,
+        login_method=login_method,
     )
 
     return session_id

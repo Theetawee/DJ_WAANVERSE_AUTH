@@ -80,7 +80,9 @@ class TokenService:
                 }
             else:
 
-                session_id = create_session(user=self.user, request=self.request)
+                session_id = create_session(
+                    user=self.user, request=self.request, login_method=self.login_method
+                )
                 refresh = RefreshToken.for_user(self.user, session_id=session_id)
                 return {
                     "refresh_token": str(refresh),

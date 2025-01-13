@@ -79,6 +79,7 @@ class UserSession(models.Model):
     )
     user_agent = models.TextField(blank=True, null=True)
     ip_address = models.GenericIPAddressField(blank=True, null=True)
+    login_method = models.CharField(max_length=255, blank=True, null=True)
 
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
