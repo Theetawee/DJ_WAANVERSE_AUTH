@@ -17,7 +17,19 @@ class DeviceAuthMiddleware:
 
     def __init__(self, get_response):
         self.get_response = get_response
-        self.excluded_paths = auth_config.device_auth_excluded_paths + [
+        self.excluded_paths = self.get_excluded_paths()
+
+        try:
+            self.admin_url_prefix = reverse("admin:index")
+        except NoReverseMatch:
+            self.admin_url_prefix = "/admin/"
+
+    def get_excluded_paths(self):
+        """
+        Resolves URL names to paths using reverse(). If reverse() fails for a name,
+        logs the issue and excludes it from the list.
+        """
+        resolved_paths = [
             reverse("dj_waanverse_auth_login"),
             reverse("dj_waanverse_auth_signup"),
             reverse("dj_waanverse_auth_initiate_email_verification"),
@@ -26,10 +38,12 @@ class DeviceAuthMiddleware:
             reverse("dj_waanverse_auth_reset_password"),
             reverse("dj_waanverse_auth_logout"),
         ]
-        try:
-            self.admin_url_prefix = reverse("admin:index")
-        except NoReverseMatch:
-            self.admin_url_prefix = "/admin/"
+        for url_name in auth_config.device_auth_excluded_paths:
+            try:
+                resolved_paths.append(reverse(url_name))
+            except NoReverseMatch:
+                logger.warning(f"Invalid URL name in excluded paths: {url_name}")
+        return resolved_paths
 
     def get_device_id(self, request):
         """

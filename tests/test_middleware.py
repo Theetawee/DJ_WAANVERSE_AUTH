@@ -58,6 +58,7 @@ class TestMiddleware(TestSetup):
         """
         Ensure that middleware does not enforce device authentication for excluded paths.
         """
+        auth_config.device_auth_excluded_paths = ["dj_waanverse_auth_home_page"]
         auth_config.device_auth_excluded_paths.append(self.home_page_url)
         response = self.client.get(self.home_page_url)
         self.assertEqual(response.status_code, HTTP_200_OK)
