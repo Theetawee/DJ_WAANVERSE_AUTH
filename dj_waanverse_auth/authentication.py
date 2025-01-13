@@ -1,9 +1,12 @@
 import logging
+from typing import Optional, Tuple
 
 from django.contrib.auth import get_user_model
 from rest_framework import authentication, exceptions
 from rest_framework.request import Request
+from rest_framework.response import Response
 
+from dj_waanverse_auth.services.session_utils import validate_session
 from dj_waanverse_auth.services.utils import decode_token
 from dj_waanverse_auth.settings import auth_config
 
@@ -18,40 +21,61 @@ class JWTAuthentication(authentication.BaseAuthentication):
     comprehensive logging, and enhanced security features.
     """
 
-    ALGORITHM = "RS256"
-    PUBLIC_KEY_PATH = auth_config.public_key_path
     HEADER_NAME = auth_config.header_name
     COOKIE_NAME = auth_config.access_token_cookie
     USER_ID_CLAIM = auth_config.user_id_claim
 
-    def __init__(self):
-        if not self.PUBLIC_KEY_PATH:
-            raise exceptions.AuthenticationFailed(
-                "JWT_PUBLIC_KEY_PATH must be set in Dj Waanverse Auth settings"
-            )
-        self._public_key = None
-
-    def authenticate(self, request: Request):
-        """
-        Main authentication method that handles the token validation process.
-        Returns a tuple of (user, token) if authentication is successful.
-        """
+    def authenticate(self, request: Request) -> Optional[Tuple]:
         try:
             token = self._get_token_from_request(request)
             if not token:
                 return None
 
             payload = self._decode_token(token)
-            user = self._get_user_from_payload(payload=payload, request=request)
 
+            if not validate_session(payload["sid"]):
+                self._mark_cookie_for_deletion(request)
+                raise exceptions.AuthenticationFailed("identity_error")
+
+            user = self._get_user_from_payload(payload=payload, request=request)
             return user, token
 
         except exceptions.AuthenticationFailed as e:
             logger.warning(f"Authentication failed: {str(e)}")
+            self._mark_cookie_for_deletion(request)
             raise
         except Exception as e:
             logger.error(f"Unexpected error during authentication: {str(e)}")
+            self._mark_cookie_for_deletion(request)
             raise exceptions.AuthenticationFailed("Authentication failed")
+
+    def _mark_cookie_for_deletion(self, request) -> None:
+        """
+        Mark the authentication cookies for deletion using request.META.
+        """
+        cookies_to_delete = [
+            auth_config.access_token_cookie,
+            auth_config.refresh_token_cookie,
+        ]
+        request.META["HTTP_X_COOKIES_TO_DELETE"] = ",".join(cookies_to_delete)
+
+    @staticmethod
+    def delete_marked_cookies(response: Response, request: Request) -> Response:
+        """
+        Delete any cookies that were marked for deletion during authentication.
+        """
+        cookies_header = request.META.get("HTTP_X_COOKIES_TO_DELETE", "")
+        cookies_to_delete = cookies_header.split(",") if cookies_header else []
+
+        for cookie_name in cookies_to_delete:
+            response.delete_cookie(
+                cookie_name,
+                domain=auth_config.cookie_domain,
+                path=auth_config.cookie_path,
+                samesite=auth_config.cookie_samesite,
+            )
+
+        return response
 
     def _get_token_from_request(self, request):
         """

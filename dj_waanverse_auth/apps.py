@@ -16,26 +16,7 @@ class WaanverseAuthConfig(AppConfig):
         Validate middleware configuration when the app is ready.
         This runs during Django's initialization process.
         """
-        self.validate_middleware_settings()
         self.validate_required_settings()
-
-    def validate_middleware_settings(self):
-        """
-        Ensures the DeviceAuthMiddleware is properly configured in settings.MIDDLEWARE
-        """
-        middleware_path = f"{self.name}.middleware.DeviceAuthMiddleware"
-
-        if not hasattr(settings, "MIDDLEWARE"):
-            raise ImproperlyConfigured(
-                "MIDDLEWARE setting is not defined. "
-                "Please configure your middleware settings properly."
-            )
-
-        if middleware_path not in settings.MIDDLEWARE:
-            raise ImproperlyConfigured(
-                f"DeviceAuthMiddleware is not found in your MIDDLEWARE setting. "
-                f"Please add '{middleware_path}' to your MIDDLEWARE setting."
-            )
 
     def validate_required_settings(self):
         """

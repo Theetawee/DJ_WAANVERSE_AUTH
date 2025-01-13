@@ -1,96 +1,15 @@
-import logging
-
-from django.http import HttpResponseForbidden
-from django.urls import NoReverseMatch, reverse
-
-from dj_waanverse_auth.models import UserDevice
-from dj_waanverse_auth.settings import auth_config
-
-logger = logging.getLogger(__name__)
+from dj_waanverse_auth.authentication import JWTAuthentication
 
 
-class DeviceAuthMiddleware:
-    """
-    Middleware to enforce device authentication.
-    Checks for device_id in either cookies or headers and validates against the database.
-    """
-
+class AuthCookieMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
-        self.excluded_paths = self.get_excluded_paths()
-
-        try:
-            self.admin_url_prefix = reverse("admin:index")
-        except NoReverseMatch:
-            self.admin_url_prefix = "/admin/"
-
-    def get_excluded_paths(self):
-        """
-        Resolves URL names to paths using reverse(). If reverse() fails for a name,
-        logs the issue and excludes it from the list.
-        """
-        resolved_paths = [
-            reverse("dj_waanverse_auth_login"),
-            reverse("dj_waanverse_auth_signup"),
-            reverse("dj_waanverse_auth_initiate_email_verification"),
-            reverse("dj_waanverse_auth_mfa_login"),
-            reverse("dj_waanverse_auth_initiate_password_reset"),
-            reverse("dj_waanverse_auth_reset_password"),
-            reverse("dj_waanverse_auth_logout"),
-        ]
-        for url_name in auth_config.device_auth_excluded_paths:
-            try:
-                resolved_paths.append(reverse(url_name))
-            except NoReverseMatch:
-                logger.warning(f"Invalid URL name in excluded paths: {url_name}")
-        return resolved_paths
-
-    def get_device_id(self, request):
-        """
-        Retrieves device ID from either cookie or header.
-        """
-        device_id = request.COOKIES.get(auth_config.device_id_cookie_name)
-        if not device_id:
-            device_id = request.headers.get(auth_config.device_id_header_name)
-        return device_id
-
-    def validate_device(self, device_id):
-        """
-        Validates device ID against the database.
-        """
-        try:
-            device = UserDevice.objects.get(device_id=device_id)
-            return device.is_active
-        except UserDevice.DoesNotExist:
-            return False
-        except Exception as e:
-            logger.error(f"Error validating device: {str(e)}")
-            return False
-
-    def should_skip_auth(self, request):
-        """
-        Determines if the current path is in the excluded paths or admin URL.
-        """
-        return any(
-            request.path.startswith(path) for path in self.excluded_paths
-        ) or request.path.startswith(self.admin_url_prefix)
+        self.auth_class = JWTAuthentication()
 
     def __call__(self, request):
-        """
-        Middleware entry point for processing requests and responses.
-        """
-        if self.should_skip_auth(request):
-            return self.get_response(request)
-
-        device_id = self.get_device_id(request)
-
-        if not device_id:
-            logger.warning("Device ID not found in request")
-            return HttpResponseForbidden("identity_error")
-
-        if not self.validate_device(device_id):
-            logger.warning(f"Invalid or inactive device ID: {device_id}")
-            return HttpResponseForbidden("identity_error")
-
         response = self.get_response(request)
+        print(request.META.get("HTTP_X_COOKIES_TO_DELETE", ""))
+        if request.META.get("HTTP_X_COOKIES_TO_DELETE", ""):
+            response = self.auth_class.delete_marked_cookies(response, request)
+
         return response

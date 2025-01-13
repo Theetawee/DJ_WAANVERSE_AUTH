@@ -67,20 +67,44 @@ class VerificationCode(models.Model):
         verbose_name_plural = _("Verification Codes")
 
 
-class UserDevice(models.Model):
-    device_id = models.CharField(max_length=255, unique=True)
+class UserSession(models.Model):
+    """
+    Represents a user's session tied to a specific device and account.
+    Used for tracking and managing session-related data.
+    """
+
+    session_id = models.CharField(max_length=64, unique=True)
     account = models.ForeignKey(
-        Account, related_name="devices", on_delete=models.CASCADE
+        Account, related_name="sessions", on_delete=models.CASCADE
     )
-    created_at = models.DateTimeField(auto_now_add=True)
-    last_updated = models.DateTimeField(auto_now=True)
     user_agent = models.TextField(blank=True, null=True)
     ip_address = models.GenericIPAddressField(blank=True, null=True)
+
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_updated = models.DateTimeField(auto_now=True)
+    last_used = models.DateTimeField(default=timezone.now)
+
+    # Status
     is_active = models.BooleanField(default=True)
-    login_method = models.CharField(max_length=255, blank=True, null=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["account", "is_active"]),
+            models.Index(fields=["session_id"]),
+        ]
+        verbose_name = "User Session"
+        verbose_name_plural = "User Sessions"
 
     def __str__(self):
-        return f"Device: {self.device_id}, Account: {self.account}"
+        return f"Session: {self.session_id}, Account: {self.account}"
+
+    def mark_active(self):
+        """
+        Marks the session as active and updates the last_used timestamp.
+        """
+        self.last_used = timezone.now()
+        self.save(update_fields=["last_used", "last_updated"])
 
 
 class ResetPasswordToken(models.Model):

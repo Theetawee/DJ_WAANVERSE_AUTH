@@ -1,4 +1,3 @@
-# tokens.py
 import logging
 from functools import cached_property
 
@@ -16,7 +15,13 @@ class TokenError(Exception):
 
 
 class RefreshToken:
-    REQUIRED_CLAIMS = {"user_id", "exp", "iat", "iss"}
+    REQUIRED_CLAIMS = {
+        "user_id",
+        "exp",
+        "iat",
+        "iss",
+        "sid",
+    }
 
     def __init__(self, token=None):
         self.token = token
@@ -37,7 +42,7 @@ class RefreshToken:
             raise TokenError(f"Missing required claims: {missing}")
 
     @classmethod
-    def for_user(cls, user):
+    def for_user(cls, user, session_id: str):
         """Generate a refresh token for a user with error handling"""
         try:
             expiration = now() + auth_config.refresh_token_cookie_max_age
@@ -47,8 +52,11 @@ class RefreshToken:
                 "iat": now(),
                 "iss": auth_config.platform_name,
                 "token_type": "refresh",
+                "sid": session_id,
             }
-            token = encode_token(payload)
+            token = encode_token(
+                payload=payload
+            )
             return cls(token)
         except Exception as e:
             logger.error(f"Failed to create refresh token: {str(e)}")
@@ -76,8 +84,13 @@ class RefreshToken:
                 "iat": now(),
                 "iss": auth_config.platform_name,
                 "token_type": "access",
+                "sid": self._payload[
+                    "sid"
+                ],
             }
-            return encode_token(access_payload)
+            return encode_token(
+                payload=access_payload
+            )
         except Exception as e:
             logger.error(f"Failed to generate access token: {str(e)}")
             raise TokenError("Could not generate access token")

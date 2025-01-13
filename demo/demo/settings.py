@@ -54,7 +54,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "dj_waanverse_auth.middleware.DeviceAuthMiddleware",
+    "dj_waanverse_auth.middleware.AuthCookieMiddleware",
 ]
 
 ROOT_URLCONF = "demo.urls"

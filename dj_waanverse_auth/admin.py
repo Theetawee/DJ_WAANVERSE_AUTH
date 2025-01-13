@@ -6,7 +6,7 @@ if auth_config.enable_admin:
     from .models import (
         MultiFactorAuth,
         ResetPasswordToken,
-        UserDevice,
+        UserSession,
         VerificationCode,
     )
 
@@ -31,5 +31,5 @@ if auth_config.enable_admin:
 
     admin.site.register(MultiFactorAuth)
     admin.site.register(VerificationCode)
-    admin.site.register(UserDevice)
+    admin.site.register(UserSession)
     admin.site.register(ResetPasswordToken)

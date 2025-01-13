@@ -67,7 +67,13 @@ def decode_token(token):
                 "verify_exp": True,
                 "verify_nbf": True,
                 "verify_iat": True,
-                "require": ["exp", "iat", "iss", "user_id"],
+                "require": [
+                    "exp",
+                    "iat",
+                    "iss",
+                    "user_id",
+                    "sid",
+                ],
             },
         )
         return payload
@@ -84,12 +90,15 @@ def decode_token(token):
     except jwt.InvalidIssuerError:
         logger.warning("Invalid token issuer")
         raise exceptions.AuthenticationFailed("Invalid token issuer")
+    except jwt.MissingRequiredClaimError as e:
+        logger.warning(f"Missing required claim: {str(e)}")
+        raise exceptions.AuthenticationFailed("Missing required claim in token")
     except Exception as e:
         logger.error(f"Unexpected error decoding token: {str(e)}")
         raise exceptions.AuthenticationFailed("Token validation failed")
 
 
-def encode_token(payload):
+def encode_token(payload) -> str:
     """
     Encode payload into JWT token with error handling and logging
     """
@@ -100,7 +109,6 @@ def encode_token(payload):
     missing_claims = required_claims - set(payload.keys())
     if missing_claims:
         raise ValueError(f"Missing required claims: {missing_claims}")
-
     try:
         private_key = get_key("private")
         token = jwt.encode(payload, private_key, algorithm="RS256")

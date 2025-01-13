@@ -53,15 +53,14 @@ def login_view(request):
                     },
                     status=status.HTTP_200_OK,
                 )
-                email_manager = email_service.EmailService(request=request)
-                email_manager.send_login_alert(user.email_address)
                 response_data = token_manager.setup_login_cookies(response=response)
                 response = response_data["response"]
                 tokens = response_data["tokens"]
-                device_id = response_data["device_id"]
-                response.data["device_id"] = device_id
                 response.data["access_token"] = tokens["access_token"]
                 response.data["refresh_token"] = tokens["refresh_token"]
+                email_manager = email_service.EmailService(request=request)
+                email_manager.send_login_alert(user.email_address)
+
                 return response
         else:
             token_manager = token_service.TokenService(request=request)

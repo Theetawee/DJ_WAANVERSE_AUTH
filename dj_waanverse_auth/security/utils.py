@@ -1,8 +1,9 @@
 import logging
 from ipaddress import ip_address, ip_network
+from typing import Dict
 
 import requests
-from user_agents import parse
+from user_agents import parse  # pip install pyyaml ua-parser user-agents
 
 logger = logging.getLogger(__name__)
 
@@ -118,3 +119,39 @@ def get_device(request):
         return "Unknown device"
 
     return " on ".join(device_info)
+
+
+def parse_user_agent(user_agent_string: str) -> Dict[str, str]:
+    """
+    Parse User-Agent string to extract detailed device information
+    """
+    if not user_agent_string:
+        return {
+            "device_type": "unknown",
+            "browser": "unknown",
+            "os": "unknown",
+            "device_name": "unknown",
+        }
+
+    # Parse using user-agents library
+    user_agent = parse(user_agent_string)
+
+    # Determine device type more accurately
+    if user_agent.is_mobile:
+        device_type = "mobile"
+    elif user_agent.is_tablet:
+        device_type = "tablet"
+    elif user_agent.is_pc:
+        device_type = "desktop"
+    else:
+        device_type = "other"
+
+    return {
+        "device_type": device_type,
+        "browser": f"{user_agent.browser.family} {user_agent.browser.version_string}",
+        "os": f"{user_agent.os.family} {user_agent.os.version_string}",
+        "device_name": user_agent.device.family,
+        "is_bot": user_agent.is_bot,
+        "browser_family": user_agent.browser.family,
+        "os_family": user_agent.os.family,
+    }

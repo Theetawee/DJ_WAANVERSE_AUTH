@@ -5,7 +5,6 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from dj_waanverse_auth.models import UserDevice
 from dj_waanverse_auth.services.token_service import TokenService
 from dj_waanverse_auth.services.utils import get_serializer_class
 from dj_waanverse_auth.settings import auth_config
@@ -29,9 +28,6 @@ def refresh_access_token(request):
     View to refresh the access token using a valid refresh token.
     The refresh token can be provided either in cookies or request body.
     """
-    device_id = request.COOKIES.get(
-        auth_config.device_id_cookie_name
-    ) or request.headers.get(auth_config.device_id_header_name)
 
     # Get refresh token from cookie or request body
     refresh_token = request.COOKIES.get(
@@ -46,8 +42,6 @@ def refresh_access_token(request):
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
-        if device_id:
-            UserDevice.objects.filter(device_id=device_id).delete()
         return TokenService(request=request).clear_all_cookies(response)
 
     token_service = TokenService(request=request, refresh_token=refresh_token)
@@ -85,8 +79,6 @@ def refresh_access_token(request):
             },
             status=status.HTTP_401_UNAUTHORIZED,
         )
-        if device_id:
-            UserDevice.objects.filter(device_id=device_id).delete()
 
         return token_service.clear_all_cookies(response)
 
@@ -107,14 +99,7 @@ def authenticated_user(request):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def logout_view(request):
-    device_id = request.data.get("device_id")
 
-    if not device_id:
-        return Response(
-            {"error": "Device ID is required."}, status=status.HTTP_400_BAD_REQUEST
-        )
-
-    UserDevice.objects.filter(device_id=device_id).delete()
     token_manager = TokenService(request=request)
 
     return token_manager.clear_all_cookies(
