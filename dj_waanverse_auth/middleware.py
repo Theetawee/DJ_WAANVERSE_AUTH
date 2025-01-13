@@ -24,6 +24,7 @@ class DeviceAuthMiddleware:
             reverse("dj_waanverse_auth_mfa_login"),
             reverse("dj_waanverse_auth_initiate_password_reset"),
             reverse("dj_waanverse_auth_reset_password"),
+            reverse("dj_waanverse_auth_logout"),
         ]
         try:
             self.admin_url_prefix = reverse("admin:index")
@@ -71,11 +72,11 @@ class DeviceAuthMiddleware:
 
         if not device_id:
             logger.warning("Device ID not found in request")
-            return HttpResponseForbidden("Device ID not found")
+            return HttpResponseForbidden("identity_error")
 
         if not self.validate_device(device_id):
             logger.warning(f"Invalid or inactive device ID: {device_id}")
-            return HttpResponseForbidden("Invalid or inactive device ID")
+            return HttpResponseForbidden("identity_error")
 
         response = self.get_response(request)
         return response

@@ -15,7 +15,6 @@ class AuthConfigSchema(TypedDict, total=False):
     DEVICE_ID_HEADER_NAME: str
     DEVICE_COOKIE_NAME: str
     USER_ID_CLAIM: str
-    PASSWORD_CHANGED_FIELD_NAME: str
     DEVICE_AUTH_EXCLUDED_PATHS: List[str]
 
     # Cookie Configuration
@@ -30,13 +29,11 @@ class AuthConfigSchema(TypedDict, total=False):
     REFRESH_TOKEN_COOKIE_MAX_AGE: timedelta
 
     # Multi-Factor Authentication
-    MFA_ENABLED: bool
     MFA_TOKEN_COOKIE_NAME: str
     MFA_TOKEN_COOKIE_MAX_AGE: timedelta
     MFA_RECOVERY_CODE_COUNT: int
     MFA_ISSUER_NAME: str
     MFA_CODE_LENGTH: int
-    MFA_EMAIL_NOTIFICATIONS: bool
     MFA_CHANGED_EMAIL_SUBJECT: str
 
     # User Configuration
@@ -46,15 +43,12 @@ class AuthConfigSchema(TypedDict, total=False):
     # Serializer Classes
     BASIC_ACCOUNT_SERIALIZER: str
     REGISTRATION_SERIALIZER: str
-    USER_DETAIL_SERIALIZER: str
 
     # Email Settings
-    EMAIL_VERIFICATION_ENABLED: bool
     EMAIL_VERIFICATION_CODE_LENGTH: int
     EMAIL_VERIFICATION_CODE_IS_ALPHANUMERIC: bool
     EMAIL_SECURITY_NOTIFICATIONS_ENABLED: bool
     EMAIL_THREADING_ENABLED: bool
-    AUTO_RESEND_VERIFICATION_EMAIL: bool
     BLACKLISTED_EMAILS: List[str]
     DISPOSABLE_EMAIL_DOMAINS: List[str]
     EMAIL_BATCH_SIZE: int
@@ -69,7 +63,6 @@ class AuthConfigSchema(TypedDict, total=False):
 
     # Password Reset
     PASSWORD_RESET_CODE_EXPIRY_IN_MINUTES: int
-    PASSWORD_RESET_COOLDOWN: int  # minutes
     PASSWORD_RESET_EMAIL_SUBJECT: str
 
     # Admin Interface
@@ -97,9 +90,6 @@ class AuthConfig:
         self.private_key_path = config_dict.get("PRIVATE_KEY_PATH")
         self.header_name = config_dict.get("HEADER_NAME", "X-Auth-Token")
         self.user_id_claim = config_dict.get("USER_ID_CLAIM", "user_id")
-        self.password_changed_field_name = config_dict.get(
-            "PASSWORD_CHANGED_FIELD_NAME", "password_changed_at"
-        )
         self.device_id_header_name = config_dict.get(
             "DEVICE_ID_HEADER_NAME", "X-Device-Id"
         )
@@ -130,7 +120,6 @@ class AuthConfig:
         )
 
         # MFA Settings
-        self.mfa_enabled = config_dict.get("MFA_ENABLED", True)
         self.mfa_token_cookie_name = config_dict.get("MFA_TOKEN_COOKIE_NAME", "mfa")
         self.mfa_token_cookie_max_age = config_dict.get(
             "MFA_TOKEN_COOKIE_MAX_AGE", timedelta(minutes=2)
@@ -148,7 +137,6 @@ class AuthConfig:
             min_value=6,
             max_value=8,
         )
-        self.mfa_email_notifications = config_dict.get("MFA_EMAIL_NOTIFICATIONS", True)
         self.mfa_changed_email_subject = config_dict.get(
             "MFA_CHANGED_EMAIL_SUBJECT", "Account security alert"
         )
@@ -175,14 +163,8 @@ class AuthConfig:
             "REGISTRATION_SERIALIZER",
             "dj_waanverse_auth.serializers.signup_serializers.SignupSerializer",
         )
-        self.user_detail_serializer = config_dict.get(
-            "USER_DETAIL_SERIALIZER", "auth.serializers.UserDetailSerializer"
-        )
 
         # Email Settings
-        self.email_verification_enabled = config_dict.get(
-            "EMAIL_VERIFICATION_ENABLED", True
-        )
         self.email_verification_code_length = self._validate_range(
             config_dict.get("EMAIL_VERIFICATION_CODE_LENGTH", 6),
             "EMAIL_VERIFICATION_CODE_LENGTH",
@@ -196,9 +178,6 @@ class AuthConfig:
             "EMAIL_SECURITY_NOTIFICATIONS_ENABLED", True
         )
         self.email_threading_enabled = config_dict.get("EMAIL_THREADING_ENABLED", True)
-        self.auto_resend_verification = config_dict.get(
-            "AUTO_RESEND_VERIFICATION_EMAIL", False
-        )
         self.blacklisted_emails = config_dict.get("BLACKLISTED_EMAILS", [])
         self.disposable_email_domains = config_dict.get("DISPOSABLE_EMAIL_DOMAINS", [])
         self.email_batch_size = config_dict.get("EMAIL_BATCH_SIZE", 50)
@@ -280,8 +259,7 @@ class AuthConfig:
 
     def _validate_configuration(self) -> None:
         """Validate the complete configuration."""
-        if self.email_verification_enabled or self.email_notifications_enabled:
-            self._validate_email_settings()
+        self._validate_email_settings()
 
         if self.use_unfold:
             self._validate_unfold_installation()

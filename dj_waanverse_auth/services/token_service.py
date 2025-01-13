@@ -167,6 +167,10 @@ class TokenService:
 
     def clear_all_cookies(self, response):
         """Removes all authentication-related cookies."""
+        device_id = self.request.COOKIES.get(
+            auth_config.device_id_cookie_name
+        ) or self.request.headers.get(auth_config.device_id_header_name)
+
         cookie_params = {
             "domain": self.cookie_settings.DOMAIN,
             "path": self.cookie_settings.PATH,
@@ -182,7 +186,6 @@ class TokenService:
         for cookie_name in cookies_to_remove:
             response.delete_cookie(cookie_name, **cookie_params)
 
-        device_id = response.cookies.get(self.cookie_settings.DEVICE_ID_COOKIE_NAME)
         if device_id:
             UserDevice.objects.filter(device_id=device_id).delete()
 
