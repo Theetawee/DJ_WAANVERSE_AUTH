@@ -5,6 +5,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
+from dj_waanverse_auth.models import UserSession
+from dj_waanverse_auth.serializers.authorization_serializer import SessionSerializer
 from dj_waanverse_auth.services.token_service import TokenService
 from dj_waanverse_auth.services.utils import get_serializer_class
 from dj_waanverse_auth.settings.settings import auth_config
@@ -105,3 +107,13 @@ def logout_view(request):
     return token_manager.clear_all_cookies(
         Response(status=status.HTTP_200_OK, data={"status": "success"})
     )
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_user_sessions(request):
+    user = request.user
+    sessions = UserSession.objects.filter(account=user)
+    serializer = SessionSerializer(sessions, many=True)
+
+    return Response(serializer.data, status=status.HTTP_200_OK)
