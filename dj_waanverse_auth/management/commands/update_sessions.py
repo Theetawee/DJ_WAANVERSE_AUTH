@@ -36,7 +36,7 @@ class Command(BaseCommand):
 
             count = expired_sessions.count()
 
-            if options["dry-run"]:
+            if options["dry_run"]:  # Fixed key access
                 self.stdout.write(
                     self.style.WARNING(
                         f"Would delete {count} expired sessions (dry run)"
