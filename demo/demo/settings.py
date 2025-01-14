@@ -166,7 +166,6 @@ WAANVERSE_AUTH_CONFIG = {
         "guerrillamail.com",
         "mailinator.com",
     ],
-    "SEND_LOGIN_ALERT_EMAILS": True,
     "ENABLE_ADMIN_PANEL": True,
     "MFA_TOKEN_COOKIE_MAX_AGE": timedelta(minutes=30),
     "REGISTRATION_SERIALIZER": "accounts.serializers.SignupSerializer",

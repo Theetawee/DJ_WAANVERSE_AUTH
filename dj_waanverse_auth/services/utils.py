@@ -7,7 +7,7 @@ from cryptography.hazmat.primitives import serialization
 from django.utils.module_loading import import_string
 from rest_framework import exceptions
 
-from dj_waanverse_auth.settings import auth_config
+from dj_waanverse_auth.settings.settings import auth_config
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +53,7 @@ def decode_token(token):
     """
     Decode and validate JWT token with comprehensive error handling and logging
     """
+    user_claim = auth_config.user_id_claim
     if not token:
         raise exceptions.AuthenticationFailed("No token provided")
 
@@ -71,7 +72,7 @@ def decode_token(token):
                     "exp",
                     "iat",
                     "iss",
-                    "user_id",
+                    user_claim,
                     "sid",
                 ],
             },
@@ -102,10 +103,12 @@ def encode_token(payload) -> str:
     """
     Encode payload into JWT token with error handling and logging
     """
+    user_claim = auth_config.user_id_claim
+
     if not isinstance(payload, dict):
         raise ValueError("Payload must be a dictionary")
 
-    required_claims = {"user_id", "exp", "iat", "iss"}
+    required_claims = {user_claim, "exp", "iat", "iss"}
     missing_claims = required_claims - set(payload.keys())
     if missing_claims:
         raise ValueError(f"Missing required claims: {missing_claims}")

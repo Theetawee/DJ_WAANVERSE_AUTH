@@ -11,7 +11,7 @@ from django.utils.timezone import now
 
 from dj_waanverse_auth.models import MultiFactorAuth
 from dj_waanverse_auth.services.email_service import EmailService
-from dj_waanverse_auth.settings import auth_config
+from dj_waanverse_auth.settings.settings import auth_config
 
 logger = logging.getLogger(__name__)
 
@@ -64,10 +64,11 @@ class MFAHandler:
                 self.mfa.save()
 
                 self.set_recovery_codes()
-                email_manager = EmailService()
-                email_manager.send_mfa_change_notification(
-                    self.user.email_address, "enable"
-                )
+                if auth_config.email_security_notifications_enabled:
+                    email_manager = EmailService()
+                    email_manager.send_mfa_change_notification(
+                        self.user.email_address, "enable"
+                    )
         except Exception as e:
             logger.error(f"Error activating MFA: {str(e)}")
 
@@ -116,11 +117,11 @@ class MFAHandler:
                 self.mfa.secret_key = None
                 self.mfa.recovery_codes = None
                 self.mfa.save()
-
-                email_manager = EmailService()
-                email_manager.send_mfa_change_notification(
-                    self.user.email_address, "disable"
-                )
+                if auth_config.email_security_notifications_enabled:
+                    email_manager = EmailService()
+                    email_manager.send_mfa_change_notification(
+                        self.user.email_address, "disable"
+                    )
         except Exception as e:
             logger.error(f"Error disabling MFA: {str(e)}")
             raise e

@@ -24,7 +24,7 @@ from dj_waanverse_auth.security.utils import (
     get_ip_address,
     get_location_from_ip,
 )
-from dj_waanverse_auth.settings import auth_config
+from dj_waanverse_auth.settings.settings import auth_config
 
 logger = logging.getLogger(__name__)
 
@@ -355,24 +355,20 @@ class EmailService:
         """
         if not self.request:
             raise ValueError("Request object is required")
-        if auth_config.send_login_alert_emails:
-            ip_address = get_ip_address(self.request)
-            context = {
-                "device_info": get_device(self.request),
-                "location_info": get_location_from_ip(ip_address=ip_address),
-                "timestamp": timezone.now(),
-                "ip_address": ip_address,
-            }
-            return self.send_email(
-                subject=auth_config.login_alert_email_subject,
-                template_name=EmailTemplate.LOGIN_ALERT,
-                context=context,
-                recipient_list=email,
-                priority=EmailPriority.HIGH,
-            )
-        else:
-            logger.warning("Login alert email sending is disabled.")
-            return False
+        ip_address = get_ip_address(self.request)
+        context = {
+            "device_info": get_device(self.request),
+            "location_info": get_location_from_ip(ip_address=ip_address),
+            "timestamp": timezone.now(),
+            "ip_address": ip_address,
+        }
+        return self.send_email(
+            subject=auth_config.login_alert_email_subject,
+            template_name=EmailTemplate.LOGIN_ALERT,
+            context=context,
+            recipient_list=email,
+            priority=EmailPriority.HIGH,
+        )
 
     def send_account_locked_notification(self, email: str) -> bool:
         """Send account locked notification."""
@@ -392,27 +388,23 @@ class EmailService:
         """Send MFA enabled notification.
         type: 'enable' or 'disable'
         """
-        if auth_config.email_security_notifications_enabled:
-            if change_type not in ["enable", "disable"]:
-                raise ValueError("Type must be 'enable' or 'disable'.")
-            context = {
-                "mfa_time": timezone.now(),
-            }
+        if change_type not in ["enable", "disable"]:
+            raise ValueError("Type must be 'enable' or 'disable'.")
+        context = {
+            "mfa_time": timezone.now(),
+        }
 
-            return self.send_email(
-                subject=self.config.MFA_CHANGED_EMAIL_SUBJECT,
-                template_name=(
-                    EmailTemplate.MFA_ENABLED
-                    if change_type == "enable"
-                    else EmailTemplate.MFA_DISABLED
-                ),
-                context=context,
-                recipient_list=email_address,
-                priority=EmailPriority.HIGH,
-            )
-        else:
-            logger.warning("MFA enabled notification email sending is disabled.")
-            return False
+        return self.send_email(
+            subject=self.config.MFA_CHANGED_EMAIL_SUBJECT,
+            template_name=(
+                EmailTemplate.MFA_ENABLED
+                if change_type == "enable"
+                else EmailTemplate.MFA_DISABLED
+            ),
+            context=context,
+            recipient_list=email_address,
+            priority=EmailPriority.HIGH,
+        )
 
     def send_batch_emails(
         self,

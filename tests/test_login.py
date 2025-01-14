@@ -3,7 +3,7 @@ from unittest.mock import patch
 from django.core import mail
 from rest_framework import status
 
-from dj_waanverse_auth.settings import auth_config
+from dj_waanverse_auth.settings.settings import auth_config
 
 from .test_setup import TestSetup
 
@@ -94,7 +94,7 @@ class TestLogin(TestSetup):
         Test successful login with email notifications enabled.
         """
         auth_config.email_threading_enabled = True
-        auth_config.send_login_alert_emails = True
+        auth_config.email_security_notifications_enabled = True
 
         response = self.client.post(self.login_url, self.user_1_username_login_data)
 
@@ -110,7 +110,7 @@ class TestLogin(TestSetup):
         Test successful login with email notifications disabled.
         """
         auth_config.email_threading_enabled = False
-        auth_config.send_login_alert_emails = False
+        auth_config.email_security_notifications_enabled = False
 
         response = self.client.post(self.login_url, self.user_1_email_login_data)
 
@@ -138,7 +138,6 @@ class TestLogin(TestSetup):
         Test login behavior when email sending fails.
         """
         auth_config.email_threading_enabled = True
-        auth_config.send_login_alert_emails = True
         mock_send_mail.side_effect = Exception("Email sending failed")
 
         response = self.client.post(self.login_url, self.user_1_email_login_data)

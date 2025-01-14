@@ -3,7 +3,7 @@ from functools import cached_property
 
 from django.utils.timezone import now
 
-from dj_waanverse_auth.settings import auth_config
+from dj_waanverse_auth.settings.settings import auth_config
 
 from .utils import decode_token, encode_token
 
@@ -16,7 +16,7 @@ class TokenError(Exception):
 
 class RefreshToken:
     REQUIRED_CLAIMS = {
-        "user_id",
+        auth_config.user_id_claim,
         "exp",
         "iat",
         "iss",
@@ -47,16 +47,14 @@ class RefreshToken:
         try:
             expiration = now() + auth_config.refresh_token_cookie_max_age
             payload = {
-                "user_id": user.id,
+                auth_config.user_id_claim: user.id,
                 "exp": expiration,
                 "iat": now(),
                 "iss": auth_config.platform_name,
                 "token_type": "refresh",
                 "sid": session_id,
             }
-            token = encode_token(
-                payload=payload
-            )
+            token = encode_token(payload=payload)
             return cls(token)
         except Exception as e:
             logger.error(f"Failed to create refresh token: {str(e)}")
@@ -79,18 +77,14 @@ class RefreshToken:
         try:
             expiration = now() + auth_config.access_token_cookie_max_age
             access_payload = {
-                "user_id": self._payload["user_id"],
+                auth_config.user_id_claim: self._payload[auth_config.user_id_claim],
                 "exp": expiration,
                 "iat": now(),
                 "iss": auth_config.platform_name,
                 "token_type": "access",
-                "sid": self._payload[
-                    "sid"
-                ],
+                "sid": self._payload["sid"],
             }
-            return encode_token(
-                payload=access_payload
-            )
+            return encode_token(payload=access_payload)
         except Exception as e:
             logger.error(f"Failed to generate access token: {str(e)}")
             raise TokenError("Could not generate access token")

@@ -6,7 +6,7 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from dj_waanverse_auth.settings import auth_config
+from dj_waanverse_auth.settings.settings import auth_config
 
 Account = get_user_model()
 
@@ -83,7 +83,6 @@ class UserSession(models.Model):
 
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
-    last_updated = models.DateTimeField(auto_now=True)
     last_used = models.DateTimeField(default=timezone.now)
 
     # Status

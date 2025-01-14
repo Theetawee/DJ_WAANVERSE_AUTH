@@ -10,7 +10,7 @@ from dj_waanverse_auth.serializers.login_serializers import LoginSerializer
 from dj_waanverse_auth.services import email_service, token_service
 from dj_waanverse_auth.services.mfa_service import MFAHandler
 from dj_waanverse_auth.services.utils import get_serializer_class
-from dj_waanverse_auth.settings import auth_config
+from dj_waanverse_auth.settings.settings import auth_config
 
 logger = logging.getLogger(__name__)
 
@@ -58,14 +58,15 @@ def login_view(request):
                 tokens = response_data["tokens"]
                 response.data["access_token"] = tokens["access_token"]
                 response.data["refresh_token"] = tokens["refresh_token"]
-                email_manager = email_service.EmailService(request=request)
-                email_manager.send_login_alert(user.email_address)
+                if auth_config.email_security_notifications_enabled:
+                    email_manager = email_service.EmailService(request=request)
+                    email_manager.send_login_alert(user.email_address)
 
                 return response
         else:
             token_manager = token_service.TokenService(request=request)
             response = Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            response = token_manager.clear_all_cookies(response)
+            # response = token_manager.clear_all_cookies(response)
             return response
 
     except Exception as e:
@@ -135,6 +136,10 @@ def mfa_login_view(request):
         tokens = response_data["tokens"]
         response.data["access_token"] = tokens["access_token"]
         response.data["refresh_token"] = tokens["refresh_token"]
+        if auth_config.email_security_notifications_enabled:
+            email_manager = email_service.EmailService(request=request)
+            email_manager.send_login_alert(user.email_address)
+
         return response
     else:
         return Response(

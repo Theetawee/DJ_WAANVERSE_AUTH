@@ -5,7 +5,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from dj_waanverse_auth.models import UserSession
-from dj_waanverse_auth.settings import auth_config
+from dj_waanverse_auth.settings.settings import auth_config
 
 logger = logging.getLogger(__name__)
 

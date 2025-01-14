@@ -1,4 +1,4 @@
-from dj_waanverse_auth.settings import auth_config
+from dj_waanverse_auth.settings.settings import auth_config
 
 if auth_config.enable_admin:
     from django.contrib import admin
