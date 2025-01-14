@@ -99,7 +99,7 @@ def authenticated_user(request):
 
 
 @api_view(["POST"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def logout_view(request):
 
     token_manager = TokenService(request=request)
