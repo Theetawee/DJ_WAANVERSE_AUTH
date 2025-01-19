@@ -9,6 +9,7 @@ from .test_setup import TestSetup
 
 
 class TestLogin(TestSetup):
+
     def assert_cookie_attributes(self, cookie, expected_value, max_age=None):
         """
         Helper function to assert cookie attributes.
@@ -90,7 +91,6 @@ class TestLogin(TestSetup):
         self.assertEqual(email.to[0], recipient)
 
     def test_login_with_email_enabled(self):
-        auth_config.user_id_claim = "user"
         """
         Test successful login with email notifications enabled.
         """
@@ -158,7 +158,6 @@ class TestLogin(TestSetup):
         """
         Test successful login using phone number.
         """
-        auth_config.user_id_claim = "user_id"
 
         response = self.client.post(self.login_url, self.user_1_phone_login_data)
         self.assert_response_structure(response, "test_user1")
