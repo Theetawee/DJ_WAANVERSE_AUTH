@@ -225,6 +225,9 @@ class TestSignup(TestSetup):
 
     def test_signup_success(self):
         """Test successful signup with valid data"""
+
+        auth_config.username_min_length = 3
+        auth_config.username_max_length = 20
         VerificationCode.objects.create(
             email_address=self.valid_email, code="123456", is_verified=True
         ).save()
@@ -237,7 +240,8 @@ class TestSignup(TestSetup):
         }
 
         response = self.client.post(self.signup_url, data)
-
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to[0], self.valid_email)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertIn("access_token", response.data)
         self.assertIn("refresh_token", response.data)
@@ -255,3 +259,41 @@ class TestSignup(TestSetup):
         response = self.client.post(self.signup_url, data)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_signup_short_username(self):
+        """Test length of username"""
+        auth_config.username_min_length = 10
+        VerificationCode.objects.create(
+            email_address=self.valid_email, code="123456", is_verified=True
+        ).save()
+        data = {
+            "name": "Test User 2",
+            "username": "testuser",
+            "email_address": self.valid_email,
+            "password": "testpassword",
+            "confirm_password": "testpassword",
+        }
+
+        response = self.client.post(self.signup_url, data)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("username", response.data)
+
+    def test_signup_max_length_username(self):
+        """Test length of username"""
+        auth_config.username_max_length = 4
+        VerificationCode.objects.create(
+            email_address=self.valid_email, code="123456", is_verified=True
+        ).save()
+        data = {
+            "name": "Test User 2",
+            "username": "testuser",
+            "email_address": self.valid_email,
+            "password": "testpassword",
+            "confirm_password": "testpassword",
+        }
+
+        response = self.client.post(self.signup_url, data)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("username", response.data)

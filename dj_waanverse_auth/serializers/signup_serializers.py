@@ -82,6 +82,12 @@ class SignupSerializer(serializers.Serializer):
                     f"Username must be at least {auth_config.username_min_length} characters long."
                 )
             )
+        if len(username) > auth_config.username_max_length:
+            raise serializers.ValidationError(
+                _(
+                    f"Username cannot exceed {auth_config.username_max_length} characters."
+                )
+            )
         if username in auth_config.reserved_usernames:
             raise serializers.ValidationError(
                 _("This username is reserved and cannot be used.")

@@ -27,10 +27,12 @@ class AuthConfigSchema(TypedDict, total=False):
     MFA_ISSUER_NAME: str
     MFA_CODE_LENGTH: int
     SECURITY_EMAIL_SUBJECT: str
+    EMAIL_SECURITY_NOTIFICATIONS_ENABLED: bool
 
     # User Configuration
     USERNAME_MIN_LENGTH: int
     RESERVED_USERNAMES: List[str]
+    USERNAME_MAX_LENGTH: int
 
     # Serializer Classes
     BASIC_ACCOUNT_SERIALIZER: str
@@ -39,7 +41,6 @@ class AuthConfigSchema(TypedDict, total=False):
     # Email Settings
     EMAIL_VERIFICATION_CODE_LENGTH: int
     EMAIL_VERIFICATION_CODE_IS_ALPHANUMERIC: bool
-    EMAIL_SECURITY_NOTIFICATIONS_ENABLED: bool
     EMAIL_THREADING_ENABLED: bool
     BLACKLISTED_EMAILS: List[str]
     DISPOSABLE_EMAIL_DOMAINS: List[str]
@@ -50,11 +51,10 @@ class AuthConfigSchema(TypedDict, total=False):
     EMAIL_THREAD_POOL_SIZE: int
     VERIFICATION_EMAIL_SUBJECT: str
     VERIFICATION_EMAIL_CODE_EXPIRATION_TIME_MINUTES: int  # minutes
-    LOGIN_ALERT_EMAIL_SUBJECT: str
     # Password Reset
     PASSWORD_RESET_CODE_EXPIRY_IN_MINUTES: int
     PASSWORD_RESET_EMAIL_SUBJECT: str
-
+    PASSWORD_RESET_CODE_LENGTH: int
     # Admin Interface
     ENABLE_ADMIN_PANEL: bool
     USE_UNFOLD_THEME: bool

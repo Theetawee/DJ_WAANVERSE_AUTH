@@ -75,7 +75,6 @@ class EmailConfig:
         f"{auth_config.password_reset_expiry_in_minutes} minutes"
     )
     SECURITY_EMAIL_SUBJECT = auth_config.security_email_subject
-    PASSWORD_RESET_EMAIL_SUBJECT = auth_config.password_reset_email_subject
 
 
 class EmailValidationError(ValidationError):
@@ -259,12 +258,18 @@ class EmailService:
         Args:
             subject: Email subject
             template_name: Template name or EmailTemplate enum
+                The template name should be without the .html extension found in the base folder template folder this will resolve to emails/{template_name}.html
             context: Template context
             recipient_list: Recipients
+                Can be a string or a list of strings
             priority: Email priority
+                EmailPriority.HIGH, MEDIUM, LOW
             attachments: Email attachments
             async_send: Whether to send asynchronously
-
+        The following context variables are available:
+            site_name: Platform name
+            company_address: Platform address
+            support_email: Platform support email
         Returns:
             bool: Whether the email was sent successfully
         """

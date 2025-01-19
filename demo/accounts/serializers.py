@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from dj_waanverse_auth.serializers.signup_serializers import SignupSerializer as Base
+from dj_waanverse_auth.services.email_service import EmailService
 
 from .models import Account
 
@@ -36,3 +37,14 @@ class SignupSerializer(Base):
     def get_additional_fields(self, validated_data):
 
         return {"name": validated_data["name"]}
+
+    def perform_post_creation_tasks(self, user):
+        request = self.context.get("request")
+        manager = EmailService(request)
+        manager.send_email(
+            subject="Account Created Successfully",
+            template_name="account_created",
+            context={"user": user},
+            recipient_list=user.email_address,
+        )
+        return super().perform_post_creation_tasks(user)

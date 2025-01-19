@@ -118,7 +118,7 @@ class ResetPasswordToken(models.Model):
     @classmethod
     def generate_code(cls):
         """Generate a secure random code."""
-        return secrets.token_urlsafe(7)
+        return secrets.token_urlsafe(auth_config.password_reset_code_length)
 
     @classmethod
     def create_for_user(cls, user):

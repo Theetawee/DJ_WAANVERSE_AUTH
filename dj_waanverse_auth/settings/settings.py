@@ -21,7 +21,6 @@ class AuthConfig:
         # Security Settings
         self.public_key_path = config_dict.get("PUBLIC_KEY_PATH")
         self.private_key_path = config_dict.get("PRIVATE_KEY_PATH")
-        self.header_name = config_dict.get("HEADER_NAME", "X-Auth-Token")
         self.user_id_claim = config_dict.get("USER_ID_CLAIM", "id")
 
         # Cookie Settings

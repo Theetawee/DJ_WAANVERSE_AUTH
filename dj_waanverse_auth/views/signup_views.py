@@ -22,7 +22,9 @@ logger = logging.getLogger(__name__)
 @throttle_classes([EmailVerificationThrottle])
 def initiate_email_verification(request):
     """ """
-    serializer = InitiateEmailVerificationSerializer(data=request.data)
+    serializer = InitiateEmailVerificationSerializer(
+        data=request.data, context={"request": request}
+    )
     try:
         if serializer.is_valid():
             serializer.save()
@@ -50,7 +52,7 @@ def verify_email(request):
     """
     Function-based view to verify email.
     """
-    serializer = VerifyEmailSerializer(data=request.data)
+    serializer = VerifyEmailSerializer(data=request.data, context={"request": request})
     if serializer.is_valid():
         serializer.save()
         email = serializer.validated_data["email_address"]
@@ -73,7 +75,7 @@ def signup_view(request):
     Function-based view to handle user signup.
     """
     signup_serializer = get_serializer_class(auth_config.registration_serializer)
-    serializer = signup_serializer(data=request.data)
+    serializer = signup_serializer(data=request.data, context={"request": request})
     if serializer.is_valid():
         try:
             user = serializer.save()
