@@ -51,13 +51,9 @@ class TestAuthorizationViews(TestSetup):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_logout(self):
-        self.client.post(
-            self.login_url, data=self.user_1_email_login_data
-        )
+        self.client.post(self.login_url, data=self.user_1_email_login_data)
 
-        response = self.client.post(
-            self.logout_url
-        )
+        response = self.client.post(self.logout_url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -70,6 +66,27 @@ class TestAuthorizationViews(TestSetup):
 
     def test_get_authenticated_user(self):
         self.client.post(self.login_url, data=self.user_1_email_login_data)
+
+        response = self.client.get(self.get_authenticated_user_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["username"], self.test_user_1.username)
+
+    def test_get_authenticated_user_with_bearer_token(self):
+        login_response = self.client.post(
+            self.login_url, data=self.user_1_email_login_data
+        )
+
+        access_token = login_response.data["access_token"]
+
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {access_token}")
+
+        # remove cookie
+        self.client.cookies.pop(
+            auth_config.access_token_cookie,
+        )
+
+        self.assertNotIn(auth_config.access_token_cookie, self.client.cookies)
 
         response = self.client.get(self.get_authenticated_user_url)
 

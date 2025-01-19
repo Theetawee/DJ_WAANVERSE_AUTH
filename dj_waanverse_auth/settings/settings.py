@@ -71,7 +71,13 @@ class AuthConfig:
             config_dict.get("USERNAME_MIN_LENGTH", 4),
             "USERNAME_MIN_LENGTH",
             min_value=3,
-            max_value=32,
+            max_value=5,
+        )
+        self.username_max_length = self._validate_range(
+            config_dict.get("USERNAME_MAX_LENGTH", 20),
+            "USERNAME_MAX_LENGTH",
+            min_value=10,
+            max_value=30,
         )
         self.reserved_usernames = set(
             config_dict.get(

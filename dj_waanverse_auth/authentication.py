@@ -21,7 +21,6 @@ class JWTAuthentication(authentication.BaseAuthentication):
     comprehensive logging, and enhanced security features.
     """
 
-    HEADER_NAME = auth_config.header_name
     COOKIE_NAME = auth_config.access_token_cookie
     USER_ID_CLAIM = auth_config.user_id_claim
 
@@ -79,15 +78,22 @@ class JWTAuthentication(authentication.BaseAuthentication):
 
     def _get_token_from_request(self, request):
         """
-        Extract token from request headers or cookies with enhanced security checks.
+        Extract token from request Authorization header or cookies with enhanced security checks.
         """
-        token = request.headers.get(self.HEADER_NAME)
+        token = None
 
+        # Try extracting token from the Authorization header
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split(" ")[1]
+
+        # If token is not in the Authorization header, check cookies
         if not token and self.COOKIE_NAME in request.COOKIES:
             if not request.is_secure():
                 logger.warning("Cookie token accessed over non-HTTPS connection")
             token = request.COOKIES.get(self.COOKIE_NAME)
 
+        # Sanitize the token if it was found
         if token:
             token = self._sanitize_token(token)
 
