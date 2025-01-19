@@ -142,6 +142,7 @@ class SignupSerializer(serializers.Serializer):
             "username": validated_data["username"],
             "password": validated_data["password"],
             **additional_fields,
+            "email_verified": True,
         }
 
         try:
