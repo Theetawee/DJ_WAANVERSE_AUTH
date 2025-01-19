@@ -167,7 +167,6 @@ WAANVERSE_AUTH_CONFIG = {
         "mailinator.com",
     ],
     "ENABLE_ADMIN_PANEL": True,
-    "MFA_TOKEN_COOKIE_MAX_AGE": timedelta(minutes=30),
     "REGISTRATION_SERIALIZER": "accounts.serializers.SignupSerializer",
 }
 
