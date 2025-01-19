@@ -22,7 +22,9 @@ class AuthConfig:
         self.public_key_path = config_dict.get("PUBLIC_KEY_PATH")
         self.private_key_path = config_dict.get("PRIVATE_KEY_PATH")
         self.user_id_claim = config_dict.get("USER_ID_CLAIM", "id")
-
+        self.cloudflare_turnstile_secret = config_dict.get(
+            "CLOUDFLARE_TURNSTILE_SECRET_KEY", None
+        )
         # Cookie Settings
         self.access_token_cookie = config_dict.get(
             "ACCESS_TOKEN_COOKIE_NAME", "access_token"

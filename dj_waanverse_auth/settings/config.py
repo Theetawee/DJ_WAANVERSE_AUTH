@@ -8,6 +8,7 @@ class AuthConfigSchema(TypedDict, total=False):
     PUBLIC_KEY_PATH: str
     PRIVATE_KEY_PATH: str
     USER_ID_CLAIM: str
+    CLOUDFLARE_TURNSTILE_SECRET_KEY: str
 
     # Cookie Configuration
     ACCESS_TOKEN_COOKIE_NAME: str

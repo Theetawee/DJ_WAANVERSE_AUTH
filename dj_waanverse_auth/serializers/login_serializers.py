@@ -2,6 +2,7 @@ from django.contrib.auth import authenticate
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
+from dj_waanverse_auth.security.utils import validate_turnstile_token
 from dj_waanverse_auth.services.mfa_service import MFAHandler
 
 
@@ -30,6 +31,8 @@ class LoginSerializer(serializers.Serializer):
         },
     )
 
+    turnstile_token = serializers.CharField(required=False)
+
     def validate_login_field(self, value):
         """
         Validate login field format based on type (email/phone/username).
@@ -46,11 +49,20 @@ class LoginSerializer(serializers.Serializer):
         Validate login credentials and authenticate the user.
         Handles MFA validation and account status checks.
         """
+        turnstile_token = attrs.get("turnstile_token")
+
+        # Validate Turnstile captcha token if provided
+        if turnstile_token:
+            if not validate_turnstile_token(turnstile_token):
+                raise serializers.ValidationError(
+                    {"turnstile_token": [_("Invalid Turnstile token.")]},
+                    code="captcha_invalid",
+                )
+
         login_field = attrs.get("login_field")
         password = attrs.get("password")
         request = self.context.get("request")
 
-        # Authenticate user
         user = authenticate(
             request=self.context.get("request"),
             login_field=login_field,
