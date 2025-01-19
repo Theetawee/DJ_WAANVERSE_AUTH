@@ -5,9 +5,8 @@ from typing import List, Optional, TypedDict
 class AuthConfigSchema(TypedDict, total=False):
     """TypedDict defining all possible authentication configuration options."""
 
-    PUBLIC_KEY_PATH: Optional[str]
-    PRIVATE_KEY_PATH: Optional[str]
-    HEADER_NAME: str
+    PUBLIC_KEY_PATH: str
+    PRIVATE_KEY_PATH: str
     USER_ID_CLAIM: str
 
     # Cookie Configuration
@@ -27,7 +26,7 @@ class AuthConfigSchema(TypedDict, total=False):
     MFA_RECOVERY_CODE_COUNT: int
     MFA_ISSUER_NAME: str
     MFA_CODE_LENGTH: int
-    MFA_CHANGED_EMAIL_SUBJECT: str
+    SECURITY_EMAIL_SUBJECT: str
 
     # User Configuration
     USERNAME_MIN_LENGTH: int

@@ -1,24 +1,44 @@
+"""
+    Raises:
+        ImproperlyConfigured: If either `WAANVERSE_AUTH_CONFIG` or email settings are missing.
+"""
+
+from typing import List
+
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
+    """
+    Command to check if the required settings
+    """
+
     help = "Checks if required settings for dj-waanverse-auth are properly configured."
 
-    def handle(self, *args, **kwargs):
+    def handle(self, *args, **options) -> None:
+        """
+        Entry point for the command execution.
+        Calls functions to check both `WAANVERSE_AUTH_CONFIG` and email settings.
+        """
         self._check_waanverse_auth_config()
-
         self._check_email_settings()
 
-    def _check_waanverse_auth_config(self):
-        """Check if the required WAANVERSE_AUTH_CONFIG settings are set."""
-        required_keys = [
+    def _check_waanverse_auth_config(self) -> None:
+        """
+        Checks if the required `WAANVERSE_AUTH_CONFIG` settings are set in Django settings.
+
+        This function verifies that the keys:
+        - 'PUBLIC_KEY_PATH'
+        - 'PRIVATE_KEY_PATH'
+        - 'PLATFORM_NAME'
+
+        are present in the `WAANVERSE_AUTH_CONFIG` dictionary in Django settings.
+        """
+        required_keys: List[str] = [
             "PUBLIC_KEY_PATH",
             "PRIVATE_KEY_PATH",
-            "ACCESS_TOKEN_COOKIE_MAX_AGE",
-            "REFRESH_TOKEN_COOKIE_MAX_AGE",
-            "PASSWORD_CHANGED_FIELD_NAME",
             "PLATFORM_NAME",
         ]
 
@@ -41,9 +61,19 @@ class Command(BaseCommand):
         except ImproperlyConfigured as e:
             self.stdout.write(self.style.ERROR(str(e)))
 
-    def _check_email_settings(self):
-        """Check if the required email settings are configured."""
-        required_email_keys = [
+    def _check_email_settings(self) -> None:
+        """
+        Checks if the required email settings are configured in Django settings.
+
+        This function verifies that the following keys are set:
+        - 'EMAIL_BACKEND'
+        - 'EMAIL_HOST'
+        - 'EMAIL_PORT'
+        - 'EMAIL_USE_TLS'
+        - 'EMAIL_HOST_USER'
+        - 'EMAIL_HOST_PASSWORD'
+        """
+        required_email_keys: List[str] = [
             "EMAIL_BACKEND",
             "EMAIL_HOST",
             "EMAIL_PORT",

@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import timedelta
 from typing import List
+
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
@@ -62,8 +63,8 @@ class AuthConfig:
             min_value=6,
             max_value=8,
         )
-        self.mfa_changed_email_subject = config_dict.get(
-            "MFA_CHANGED_EMAIL_SUBJECT", "Account security alert"
+        self.security_email_subject = config_dict.get(
+            "SECURITY_EMAIL_SUBJECT", "Account security alert"
         )
 
         # User Settings

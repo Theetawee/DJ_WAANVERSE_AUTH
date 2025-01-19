@@ -74,7 +74,7 @@ class EmailConfig:
     PASSWORD_RESET_CODE_EXPIRATION_TIME = (
         f"{auth_config.password_reset_expiry_in_minutes} minutes"
     )
-    MFA_CHANGED_EMAIL_SUBJECT = auth_config.mfa_changed_email_subject
+    SECURITY_EMAIL_SUBJECT = auth_config.security_email_subject
     PASSWORD_RESET_EMAIL_SUBJECT = auth_config.password_reset_email_subject
 
 
@@ -395,7 +395,7 @@ class EmailService:
         }
 
         return self.send_email(
-            subject=self.config.MFA_CHANGED_EMAIL_SUBJECT,
+            subject=self.config.SECURITY_EMAIL_SUBJECT,
             template_name=(
                 EmailTemplate.MFA_ENABLED
                 if change_type == "enable"
