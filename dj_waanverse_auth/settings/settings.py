@@ -47,10 +47,6 @@ class AuthConfig:
         )
 
         # MFA Settings
-        self.mfa_token_cookie_name = config_dict.get("MFA_TOKEN_COOKIE_NAME", "mfa")
-        self.mfa_token_cookie_max_age = config_dict.get(
-            "MFA_TOKEN_COOKIE_MAX_AGE", timedelta(minutes=2)
-        )
         self.mfa_recovery_codes_count = self._validate_range(
             config_dict.get("MFA_RECOVERY_CODE_COUNT", 10),
             "MFA_RECOVERY_CODE_COUNT",

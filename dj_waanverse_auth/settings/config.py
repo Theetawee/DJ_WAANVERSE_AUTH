@@ -22,8 +22,6 @@ class AuthConfigSchema(TypedDict, total=False):
     REFRESH_TOKEN_COOKIE_MAX_AGE: timedelta
 
     # Multi-Factor Authentication
-    MFA_TOKEN_COOKIE_NAME: str
-    MFA_TOKEN_COOKIE_MAX_AGE: timedelta
     MFA_RECOVERY_CODE_COUNT: int
     MFA_ISSUER_NAME: str
     MFA_CODE_LENGTH: int

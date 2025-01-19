@@ -31,17 +31,11 @@ def login_view(request):
 
             if mfa:
                 response = Response(
-                    data={"status": "success"},
+                    data={"status": "success", "mfa": user.id},
                     status=status.HTTP_200_OK,
                 )
-                response_data = token_manager.handle_mfa_state(
-                    response, preserve_other_cookies=False
-                )
-                response = response_data["response"]
-                mfa_token = response_data["mfa_token"]
-                response.data["mfa"] = mfa_token
+                response = token_manager.clear_all_cookies(response)
                 return response
-
             else:
                 basic_serializer = get_serializer_class(
                     auth_config.basic_account_serializer_class
@@ -66,7 +60,7 @@ def login_view(request):
         else:
             token_manager = token_service.TokenService(request=request)
             response = Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            # response = token_manager.clear_all_cookies(response)
+            response = token_manager.clear_all_cookies(response)
             return response
 
     except Exception as e:
@@ -79,7 +73,7 @@ def login_view(request):
 def mfa_login_view(request):
     """Handle MFA login using a provided MFA or recovery code."""
     # Retrieve MFA cookie with user ID
-    user_id = request.COOKIES.get(auth_config.mfa_token_cookie_name, None)
+    user_id = request.data.get("user_id", None)
     is_valid = False
     if not user_id:
         return Response(

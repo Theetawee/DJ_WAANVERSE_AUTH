@@ -70,22 +70,17 @@ class TestMFALogin(TestSetup):
         self.assertNotIn("refresh_token", response.data)
         self.assertNotIn("user", response.data)
         self.assertIn("mfa", response.data)
-        self.assertIn(auth_config.mfa_token_cookie_name, self.client.cookies)
         self.assertEqual(response.data["mfa"], self.test_user_with_mfa.id)
-        self.assertEqual(
-            self.client.cookies[auth_config.mfa_token_cookie_name]["max-age"],
-            auth_config.mfa_token_cookie_max_age.total_seconds(),
-        )
 
     def test_login_mfa_verify(self):
-        self.client.post(self.login_url, data=self.test_user_with_mfa_login_data)
-
+        login_response = self.client.post(
+            self.login_url, data=self.test_user_with_mfa_login_data
+        )
+        user_id = login_response.data["mfa"]
         secret = MFAHandler(user=self.test_user_with_mfa).get_decoded_secret()
 
-        code = TOTP(secret).now()
         response = self.client.post(
-            self.mfa_login_url,
-            {"code": code},
+            self.mfa_login_url, {"code": TOTP(secret).now(), "user_id": user_id}
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -94,12 +89,15 @@ class TestMFALogin(TestSetup):
         self.assertIn("user", response.data)
 
     def test_login_mfa_verify_invalid_code(self):
-        self.client.post(self.login_url, data=self.test_user_with_mfa_login_data)
-
+        login_response = self.client.post(
+            self.login_url, data=self.test_user_with_mfa_login_data
+        )
+        print(login_response.data)
+        user_id = login_response.data["mfa"]
         code = "invalid_code"
         response = self.client.post(
             self.mfa_login_url,
-            {"code": code},
+            {"code": code, "user_id": user_id},
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -115,10 +113,13 @@ class TestMFALogin(TestSetup):
             len(mfa_handler.mfa.recovery_codes), auth_config.mfa_recovery_codes_count
         )
         code = mfa_handler.get_recovery_codes()[0]
-        self.client.post(self.login_url, data=self.test_user_with_mfa_login_data)
+        login_response = self.client.post(
+            self.login_url, data=self.test_user_with_mfa_login_data
+        )
+        user_id = login_response.data["mfa"]
         response = self.client.post(
             self.mfa_login_url,
-            {"code": code},
+            {"code": code, "user_id": user_id},
         )
         self.assertTrue(
             len(mfa_handler.mfa.recovery_codes),
@@ -130,22 +131,32 @@ class TestMFALogin(TestSetup):
         self.assertIn("user", response.data)
 
     def test_deactivate_mfa_no_password(self):
-        self.client.post(self.login_url, data=self.test_user_with_mfa_login_data)
+        login_response = self.client.post(
+            self.login_url, data=self.test_user_with_mfa_login_data
+        )
         mfa_manager = MFAHandler(user=self.test_user_with_mfa)
         secret = mfa_manager.get_decoded_secret()
 
-        self.client.post(self.mfa_login_url, {"code": TOTP(secret).now()})
+        self.client.post(
+            self.mfa_login_url,
+            {"code": TOTP(secret).now(), "user_id": login_response.data["mfa"]},
+        )
         response = self.client.post(
             self.deactivate_mfa_url,
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_deactivate_mfa_with_password_no_code(self):
-        self.client.post(self.login_url, data=self.test_user_with_mfa_login_data)
+        login_response = self.client.post(
+            self.login_url, data=self.test_user_with_mfa_login_data
+        )
         mfa_manager = MFAHandler(user=self.test_user_with_mfa)
         secret = mfa_manager.get_decoded_secret()
 
-        self.client.post(self.mfa_login_url, {"code": TOTP(secret).now()})
+        self.client.post(
+            self.mfa_login_url,
+            {"code": TOTP(secret).now(), "user_id": login_response.data["mfa"]},
+        )
         response = self.client.post(
             self.deactivate_mfa_url,
             {"password": self.test_user_with_mfa_login_data["password"]},
@@ -153,11 +164,16 @@ class TestMFALogin(TestSetup):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_deactivate_mfa_with_password_and_code(self):
-        self.client.post(self.login_url, data=self.test_user_with_mfa_login_data)
+        login_response = self.client.post(
+            self.login_url, data=self.test_user_with_mfa_login_data
+        )
         mfa_manager = MFAHandler(user=self.test_user_with_mfa)
         secret = mfa_manager.get_decoded_secret()
 
-        self.client.post(self.mfa_login_url, {"code": TOTP(secret).now()})
+        self.client.post(
+            self.mfa_login_url,
+            {"code": TOTP(secret).now(), "user_id": login_response.data["mfa"]},
+        )
         response = self.client.post(
             self.deactivate_mfa_url,
             {
@@ -173,11 +189,16 @@ class TestMFALogin(TestSetup):
         )
 
     def test_deactivate_mfa_with_password_and_invalid_code(self):
-        self.client.post(self.login_url, data=self.test_user_with_mfa_login_data)
+        login_response = self.client.post(
+            self.login_url, data=self.test_user_with_mfa_login_data
+        )
         mfa_manager = MFAHandler(user=self.test_user_with_mfa)
         secret = mfa_manager.get_decoded_secret()
 
-        self.client.post(self.mfa_login_url, {"code": TOTP(secret).now()})
+        self.client.post(
+            self.mfa_login_url,
+            {"code": TOTP(secret).now(), "user_id": login_response.data["mfa"]},
+        )
         response = self.client.post(
             self.deactivate_mfa_url,
             {
@@ -193,11 +214,16 @@ class TestMFALogin(TestSetup):
         )
 
     def test_generate_recovery_codes(self):
-        self.client.post(self.login_url, data=self.test_user_with_mfa_login_data)
+        login_response = self.client.post(
+            self.login_url, data=self.test_user_with_mfa_login_data
+        )
         mfa_manager = MFAHandler(user=self.test_user_with_mfa)
         secret = mfa_manager.get_decoded_secret()
 
-        self.client.post(self.mfa_login_url, {"code": TOTP(secret).now()})
+        self.client.post(
+            self.mfa_login_url,
+            {"code": TOTP(secret).now(), "user_id": login_response.data["mfa"]},
+        )
 
         response = self.client.post(
             self.generate_mfa_recovery_codes_url,
@@ -218,11 +244,16 @@ class TestMFALogin(TestSetup):
         )
 
     def test_get_recovery_codes_no_codes(self):
-        self.client.post(self.login_url, data=self.test_user_with_mfa_login_data)
+        login_response = self.client.post(
+            self.login_url, data=self.test_user_with_mfa_login_data
+        )
+        user_id = login_response.data["mfa"]
         mfa_manager = MFAHandler(user=self.test_user_with_mfa)
         secret = mfa_manager.get_decoded_secret()
 
-        self.client.post(self.mfa_login_url, {"code": TOTP(secret).now()})
+        self.client.post(
+            self.mfa_login_url, {"code": TOTP(secret).now(), "user_id": user_id}
+        )
 
         response = self.client.get(
             self.get_recovery_codes_url,
@@ -231,11 +262,16 @@ class TestMFALogin(TestSetup):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_get_recovery_codes(self):
-        self.client.post(self.login_url, data=self.test_user_with_mfa_login_data)
+        login_response = self.client.post(
+            self.login_url, data=self.test_user_with_mfa_login_data
+        )
         mfa_manager = MFAHandler(user=self.test_user_with_mfa)
         secret = mfa_manager.get_decoded_secret()
         mfa_manager.set_recovery_codes()
-        self.client.post(self.mfa_login_url, {"code": TOTP(secret).now()})
+        self.client.post(
+            self.mfa_login_url,
+            {"code": TOTP(secret).now(), "user_id": login_response.data["mfa"]},
+        )
 
         response = self.client.get(
             self.get_recovery_codes_url,

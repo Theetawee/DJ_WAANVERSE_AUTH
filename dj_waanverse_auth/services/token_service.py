@@ -1,5 +1,7 @@
 import logging
 
+from rest_framework.response import Response
+
 from dj_waanverse_auth.services.session_utils import create_session
 from dj_waanverse_auth.settings.settings import auth_config
 
@@ -17,15 +19,11 @@ class CookieSettings:
         self.SAME_SITE = auth_config.cookie_samesite
         self.ACCESS_COOKIE_NAME = auth_config.access_token_cookie
         self.REFRESH_COOKIE_NAME = auth_config.refresh_token_cookie
-        self.MFA_COOKIE_NAME = auth_config.mfa_token_cookie_name
         self.ACCESS_COOKIE_MAX_AGE = int(
             (auth_config.access_token_cookie_max_age).total_seconds()
         )
         self.REFRESH_COOKIE_MAX_AGE = int(
             (auth_config.refresh_token_cookie_max_age).total_seconds()
-        )
-        self.MFA_COOKIE_MAX_AGE = int(
-            (auth_config.mfa_token_cookie_max_age).total_seconds()
         )
         self.DOMAIN = auth_config.cookie_domain
         self.PATH = auth_config.cookie_path
@@ -117,19 +115,12 @@ class TokenService:
                     **cookie_params,
                 )
 
-                # Clear MFA cookie on new login
-                response.delete_cookie(
-                    self.cookie_settings.MFA_COOKIE_NAME,
-                    domain=self.cookie_settings.DOMAIN,
-                    path=self.cookie_settings.PATH,
-                )
-
             return {"response": response, "tokens": tokens}
         except Exception as e:
             logger.error(f"Failed to set login cookies: {str(e)}")
             raise
 
-    def clear_all_cookies(self, response):
+    def clear_all_cookies(self, response: Response) -> Response:
         """Removes all authentication-related cookies."""
         cookie_params = {
             "domain": self.cookie_settings.DOMAIN,
@@ -139,44 +130,12 @@ class TokenService:
         cookies_to_remove = [
             self.cookie_settings.REFRESH_COOKIE_NAME,
             self.cookie_settings.ACCESS_COOKIE_NAME,
-            self.cookie_settings.MFA_COOKIE_NAME,
         ]
 
         for cookie_name in cookies_to_remove:
             response.delete_cookie(cookie_name, **cookie_params)
 
         return response
-
-    def handle_mfa_state(self, response, action="add", preserve_other_cookies=True):
-        """Manages MFA-related cookies while optionally preserving other authentication cookies."""
-        if action not in ["add", "remove"]:
-            raise ValueError("Invalid action for MFA cookie handling")
-
-        cookie_params = self.cookie_settings.get_cookie_params()
-        mfa_token = None
-
-        if action == "add":
-            if not self.user:
-                raise ValueError("User is required for MFA cookie setup")
-
-            mfa_token = str(self.user.id)
-            response.set_cookie(
-                self.cookie_settings.MFA_COOKIE_NAME,
-                mfa_token,
-                max_age=self.cookie_settings.MFA_COOKIE_MAX_AGE,
-                **cookie_params,
-            )
-        else:
-            response.delete_cookie(
-                self.cookie_settings.MFA_COOKIE_NAME,
-                domain=self.cookie_settings.DOMAIN,
-                path=self.cookie_settings.PATH,
-            )
-
-            if not preserve_other_cookies:
-                response = self.clear_all_cookies(response)
-
-        return {"response": response, "mfa_token": mfa_token}
 
     @staticmethod
     def get_token_from_cookies(request, token_type="access"):
