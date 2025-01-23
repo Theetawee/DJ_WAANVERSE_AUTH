@@ -352,16 +352,17 @@ class EmailService:
             priority=EmailPriority.HIGH,
         )
 
-    def send_login_alert(self, email: str) -> bool:
+    def send_login_alert(self, user) -> bool:
         """Send new login alert.
 
         Args:
-            email: Recipient email
+            user: User object
         """
         if not self.request:
             raise ValueError("Request object is required")
         ip_address = get_ip_address(self.request)
         context = {
+            "user": user,
             "device_info": get_device(self.request),
             "location_info": get_location_from_ip(ip_address=ip_address),
             "timestamp": timezone.now(),
@@ -371,7 +372,7 @@ class EmailService:
             subject=auth_config.login_alert_email_subject,
             template_name=EmailTemplate.LOGIN_ALERT,
             context=context,
-            recipient_list=email,
+            recipient_list=user.email_address,
             priority=EmailPriority.HIGH,
         )
 

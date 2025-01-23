@@ -54,7 +54,7 @@ def login_view(request):
                 response.data["refresh_token"] = tokens["refresh_token"]
                 if auth_config.email_security_notifications_enabled:
                     email_manager = email_service.EmailService(request=request)
-                    email_manager.send_login_alert(user.email_address)
+                    email_manager.send_login_alert(user)
 
                 return response
         else:
@@ -132,7 +132,7 @@ def mfa_login_view(request):
         response.data["refresh_token"] = tokens["refresh_token"]
         if auth_config.email_security_notifications_enabled:
             email_manager = email_service.EmailService(request=request)
-            email_manager.send_login_alert(user.email_address)
+            email_manager.send_login_alert(user)
 
         return response
     else:
