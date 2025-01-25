@@ -10,6 +10,7 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
 from dj_waanverse_auth.models import VerificationCode
+from dj_waanverse_auth.security.utils import validate_turnstile_token
 from dj_waanverse_auth.services.email_service import EmailService
 from dj_waanverse_auth.settings.settings import auth_config
 
@@ -181,6 +182,7 @@ class InitiateEmailVerificationSerializer(serializers.Serializer):
             )
         ],
     )
+    turnstile_token = serializers.CharField(required=False)
 
     def __init__(self, instance=None, data=None, **kwargs):
         self.email_service = EmailService()
@@ -195,6 +197,19 @@ class InitiateEmailVerificationSerializer(serializers.Serializer):
             raise serializers.ValidationError(email_validation["error"])
 
         return email_address
+
+    def validate(self, attrs):
+        turnstile_token = attrs.get("turnstile_token")
+
+        # Validate Turnstile captcha token if provided
+        if turnstile_token:
+            if not validate_turnstile_token(turnstile_token):
+                raise serializers.ValidationError(
+                    {"turnstile_token": [_("Invalid Turnstile token.")]},
+                    code="captcha_invalid",
+                )
+
+        return attrs
 
     def create(self, validated_data):
         try:

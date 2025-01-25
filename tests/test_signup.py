@@ -38,7 +38,6 @@ class TestSignup(TestSetup):
             self.initiate_email_verification_url,
             {"email_address": self.valid_email},
         )
-
         # Check response
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["status"], "code_sent")

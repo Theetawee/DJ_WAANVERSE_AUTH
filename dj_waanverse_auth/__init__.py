@@ -29,6 +29,7 @@ from datetime import datetime
 from logging.handlers import RotatingFileHandler
 from typing import Final
 
+logger = logging.getLogger(__name__)
 from .version import __version__
 
 default_app_config = "dj_waanverse_auth.apps.WaanverseAuthConfig"
@@ -64,46 +65,6 @@ __version__ = __version__
 __all__ = []
 
 
-# Configure logging
-def setup_logging():
-    """Configure package-level logging with rotation and formatting."""
-    logger = logging.getLogger(__name__)
-
-    if not logger.handlers:
-        logger.setLevel(logging.INFO)
-
-        # Console handler
-        console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setLevel(logging.INFO)
-        console_formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
-        console_handler.setFormatter(console_formatter)
-        logger.addHandler(console_handler)
-
-        try:
-            # File handler with rotation
-            file_handler = RotatingFileHandler(
-                "waanverse_auth.log", maxBytes=10485760, backupCount=5  # 10MB
-            )
-            file_handler.setLevel(logging.DEBUG)
-            file_formatter = logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            )
-            file_handler.setFormatter(file_formatter)
-            logger.addHandler(file_handler)
-        except (IOError, PermissionError):
-            logger.warning(
-                "Could not set up file logging. Continuing with console logging only."
-            )
-
-    return logger
-
-
-# Initialize logger
-logger = setup_logging()
-
-# Package initialization log
 logger.info(f"Dj Waanverse Auth v{__version__} initialized")
 if __debug__:
     logger.debug("Running in debug mode")
@@ -128,6 +89,4 @@ check_dependencies()
 # Package banner
 if sys.stdout.isatty():
     print(f"Powered by Dj Waanverse Auth v{__version__}")
-    print(
-        f"Copyright © {datetime.now().year} {__author__} All rights reserved.\n"
-    )
+    print(f"Copyright © {datetime.now().year} {__author__} All rights reserved.\n")
