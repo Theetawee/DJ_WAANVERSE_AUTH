@@ -90,6 +90,30 @@ class TestLogin(TestSetup):
         self.assertEqual(email.subject, subject)
         self.assertEqual(email.to[0], recipient)
 
+    def test_login_with_turnstile_success(self):
+        """
+        Test successful login with turnstile enabled.
+        """
+        auth_config.cloudflare_turnstile_secret = "1x0000000000000000000000000000000AA"
+        data = self.user_1_username_login_data
+
+        data["turnstile_token"] = "XXXX.DUMMY.TOKEN.XXXX"
+        response = self.client.post(self.login_url, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assert_response_structure(response, "test_user1")
+
+        self.assert_cookies_match_response(response)
+
+    def test_login_with_turnstile_failure(self):
+        """
+        Test login with turnstile failure.
+        """
+        auth_config.cloudflare_turnstile_secret = "2x0000000000000000000000000000000AA"
+        data = self.user_1_username_login_data
+        data["turnstile_token"] = "XXXX.DUMMY.TOKEN.XXXX"
+        response = self.client.post(self.login_url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_login_with_email_enabled(self):
         """
         Test successful login with email notifications enabled.
