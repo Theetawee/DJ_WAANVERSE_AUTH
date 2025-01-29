@@ -1,5 +1,6 @@
 import logging
 from functools import lru_cache
+from typing import Any, Dict
 
 import jwt
 from cryptography.exceptions import InvalidKey
@@ -49,9 +50,39 @@ def get_key(key_type):
         raise KeyLoadError(f"Failed to load {key_type} key")
 
 
-def decode_token(token):
+def decode_token(token: str) -> Dict[str, Any]:
     """
-    Decode and validate JWT token with comprehensive error handling and logging
+    Decode and validate a JWT token with comprehensive error handling and logging.
+
+    This function performs thorough validation of JWT tokens including:
+    - Signature verification using RS256 algorithm
+    - Expiration time validation
+    - Not Before Time (NBF) validation
+    - Issued At Time (IAT) validation
+    - Required claims verification
+
+    Args:
+        token (str): The JWT token string to decode and validate
+
+    Returns:
+        Dict[str, Any]: The decoded token payload containing claims
+
+    Raises:
+        exceptions.AuthenticationFailed: Raised in the following cases:
+            - No token provided
+            - Token has expired
+            - Invalid token structure
+            - Invalid token signature
+            - Invalid token issuer
+            - Missing required claims
+            - Other unexpected validation errors
+
+    Example:
+        >>> try:
+        ...     payload = decode_token("eyJ0eXAiOiJKV1QiLC...")
+        ...     user_id = payload[auth_config.user_id_claim]
+        ... except exceptions.AuthenticationFailed as e:
+        ...     print(f"Authentication failed: {str(e)}")
     """
     user_claim = auth_config.user_id_claim
     if not token:

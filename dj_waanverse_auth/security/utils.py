@@ -1,5 +1,6 @@
 import logging
 from ipaddress import ip_address, ip_network
+from typing import Optional
 
 import requests
 from django.utils.translation import gettext_lazy as _
@@ -12,28 +13,51 @@ from .constants import TRUSTED_PROXIES
 logger = logging.getLogger(__name__)
 
 
-def get_ip_address(request):
-    """Extracts the real IP address from the request."""
+def is_cloudflare_ip(ip: str) -> bool:
+    """
+    Verify if an IP belongs to Cloudflare's network.
 
-    def is_trusted_proxy(ip):
-        return any(ip_address(ip) in ip_network(proxy) for proxy in TRUSTED_PROXIES)
+    Args:
+        ip (str): IP address to check
 
-    ip_headers = [
-        ("HTTP_CF_CONNECTING_IP", None),
-        ("HTTP_X_FORWARDED_FOR", lambda x: x.split(",")[0].strip()),
-        ("HTTP_X_REAL_IP", None),
-        ("REMOTE_ADDR", None),
-    ]
+    Returns:
+        bool: True if IP is from Cloudflare's network, False otherwise
+    """
+    try:
+        ip_obj = ip_address(ip)
+        return any(ip_obj in ip_network(cf_range) for cf_range in TRUSTED_PROXIES)
+    except ValueError:
+        return False
 
-    for header, processor in ip_headers:
-        ip = request.META.get(header)
-        if ip:
-            if processor:
-                ip = processor(ip)
-            if not is_trusted_proxy(ip):
-                return ip
 
-    return None
+def get_ip_address(request) -> Optional[str]:
+    """
+    Extracts the real IP address from the request with Cloudflare verification.
+
+    Args:
+        request: The HTTP request object
+
+    Returns:
+        Optional[str]: The client IP address if it can be reliably determined
+    """
+    # First check if request is from Cloudflare
+    remote_addr = request.META.get("REMOTE_ADDR")
+    cf_connecting_ip = request.META.get("HTTP_CF_CONNECTING_IP")
+
+    if remote_addr and cf_connecting_ip:
+        if is_cloudflare_ip(remote_addr):
+            return cf_connecting_ip
+
+    # If not from Cloudflare, try X-Forwarded-For
+    forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
+    if forwarded_for:
+        # Get the first IP in the chain
+        client_ip = forwarded_for.split(",")[0].strip()
+        if client_ip:
+            return client_ip
+
+    # Fall back to REMOTE_ADDR if everything else fails
+    return remote_addr if remote_addr else None
 
 
 def get_location_from_ip(ip_address: str) -> str:

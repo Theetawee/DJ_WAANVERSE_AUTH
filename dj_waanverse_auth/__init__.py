@@ -28,7 +28,7 @@ import sys
 from datetime import datetime
 from logging.handlers import RotatingFileHandler
 from typing import Final
-
+from dj_waanverse_auth.config.settings import auth_config as settings
 logger = logging.getLogger(__name__)
 from .version import __version__
 
@@ -62,11 +62,14 @@ __version__ = __version__
 
 # Public API exports
 
-__all__ = []
+__all__ = [
+    "settings",
+]
 
 
 logger.info(f"Dj Waanverse Auth v{__version__} initialized")
 if __debug__:
+
     logger.debug("Running in debug mode")
 
 

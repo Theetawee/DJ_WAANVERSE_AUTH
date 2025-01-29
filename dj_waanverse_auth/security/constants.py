@@ -1,4 +1,8 @@
-# last update : Sep 28, 2023:
+"""
+https://www.cloudflare.com/ips/
+Last updated: Sep 28, 2023
+"""
+
 TRUSTED_PROXIES = [
     # # IPv4 ranges
     # "127.0.0.1",  # localhost

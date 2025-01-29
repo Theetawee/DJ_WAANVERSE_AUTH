@@ -6,9 +6,9 @@ from rest_framework import authentication, exceptions
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from dj_waanverse_auth.config.settings import auth_config
 from dj_waanverse_auth.services.session_utils import validate_session
 from dj_waanverse_auth.services.utils import decode_token
-from dj_waanverse_auth.config.settings import auth_config
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -132,7 +132,7 @@ class JWTAuthentication(authentication.BaseAuthentication):
         except User.DoesNotExist:
             logger.warning(f"User {user_id} from token not found or inactive")
             raise exceptions.AuthenticationFailed(
-                "User not found or inactive", code="user_not_found"
+                "user_not_found", code="user_not_found"
             )
 
     def _validate_user(self, user, payload):

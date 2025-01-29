@@ -7,6 +7,8 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APIClient
 
+from dj_waanverse_auth import settings as auth_settings
+
 Account = get_user_model()
 
 
@@ -15,8 +17,10 @@ class TestSetup(TestCase):
     fixtures = [os.path.join(settings.BASE_DIR, "fixtures/users.json")]
 
     def setUp(self):
+        auth_settings.email_threading_enabled = False
         self.login_url = reverse("dj_waanverse_auth_login")
         self.signup_url = reverse("dj_waanverse_auth_signup")
+
         self.initiate_email_verification_url = reverse(
             "dj_waanverse_auth_initiate_email_verification"
         )

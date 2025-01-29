@@ -1,6 +1,7 @@
 from rest_framework import status
 
 from dj_waanverse_auth.config.settings import auth_config
+from dj_waanverse_auth.services.utils import decode_token, encode_token
 
 from .test_setup import TestSetup
 
@@ -92,3 +93,35 @@ class TestAuthorizationViews(TestSetup):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["username"], self.test_user_1.username)
+
+    def test_access_with_invalid_sid(self):
+        login_response = self.client.post(
+            self.login_url, data=self.user_1_email_login_data
+        )
+
+        access_token = login_response.data["access_token"]
+        payload = decode_token(access_token)
+        payload["sid"] = "invalid"
+        access_token = encode_token(payload)
+
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {access_token}")
+
+        response = self.client.get(self.get_authenticated_user_url)
+        self.assertIn("identity_error", response.data["detail"])
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_access_with_invalid_user_id(self):
+        login_response = self.client.post(
+            self.login_url, data=self.user_1_email_login_data
+        )
+
+        access_token = login_response.data["access_token"]
+        payload = decode_token(access_token)
+        payload[auth_config.user_id_claim] = "0"
+        access_token = encode_token(payload)
+
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {access_token}")
+
+        response = self.client.get(self.get_authenticated_user_url)
+        self.assertIn("user_not_found", response.data["detail"])
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
