@@ -11,7 +11,7 @@ from django.utils.timezone import now
 
 from dj_waanverse_auth.models import MultiFactorAuth
 from dj_waanverse_auth.services.email_service import EmailService
-from dj_waanverse_auth.settings.settings import auth_config
+from dj_waanverse_auth.config.settings import auth_config
 
 logger = logging.getLogger(__name__)
 
@@ -98,7 +98,7 @@ class MFAHandler:
             issuer_name=issuer_name,
         )
 
-    def verify_token(self, token):
+    def verify_token(self, token: str) -> bool:
         """
         Verify an MFA token provided by the user.
         :param token: The TOTP token to verify.
@@ -106,7 +106,13 @@ class MFAHandler:
         """
         raw_secret = self.get_decoded_secret()
         totp = pyotp.TOTP(raw_secret)
-        return totp.verify(token)
+        is_valid = totp.verify(token)
+
+        if settings.DEBUG and auth_config.mfa_debug_code:
+            if token == auth_config.mfa_debug_code:
+                is_valid = True
+
+        return is_valid
 
     def disable_mfa(self):
         """Disable MFA for the user."""

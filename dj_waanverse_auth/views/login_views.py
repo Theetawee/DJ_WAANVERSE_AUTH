@@ -10,7 +10,7 @@ from dj_waanverse_auth.serializers.login_serializers import LoginSerializer
 from dj_waanverse_auth.services import email_service, token_service
 from dj_waanverse_auth.services.mfa_service import MFAHandler
 from dj_waanverse_auth.services.utils import get_serializer_class
-from dj_waanverse_auth.settings.settings import auth_config
+from dj_waanverse_auth.config.settings import auth_config
 
 logger = logging.getLogger(__name__)
 

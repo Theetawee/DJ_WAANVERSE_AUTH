@@ -8,7 +8,7 @@ from rest_framework.response import Response
 
 from dj_waanverse_auth.services.session_utils import validate_session
 from dj_waanverse_auth.services.utils import decode_token
-from dj_waanverse_auth.settings.settings import auth_config
+from dj_waanverse_auth.config.settings import auth_config
 
 logger = logging.getLogger(__name__)
 User = get_user_model()

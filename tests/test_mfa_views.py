@@ -3,7 +3,7 @@ from rest_framework import status
 
 from dj_waanverse_auth.models import MultiFactorAuth
 from dj_waanverse_auth.services.mfa_service import MFAHandler
-from dj_waanverse_auth.settings.settings import auth_config
+from dj_waanverse_auth.config.settings import auth_config
 
 from .test_setup import TestSetup
 

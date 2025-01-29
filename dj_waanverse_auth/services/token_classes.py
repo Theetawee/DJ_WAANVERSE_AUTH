@@ -3,7 +3,7 @@ from functools import cached_property
 
 from django.utils.timezone import now
 
-from dj_waanverse_auth.settings.settings import auth_config
+from dj_waanverse_auth.config.settings import auth_config
 
 from .utils import decode_token, encode_token
 

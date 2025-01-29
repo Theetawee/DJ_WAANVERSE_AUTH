@@ -47,6 +47,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "dj_waanverse_auth.middleware.client_hints.ClientHintsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -54,7 +55,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "dj_waanverse_auth.middleware.AuthCookieMiddleware",
+    "dj_waanverse_auth.middleware.auth.AuthCookieMiddleware",
 ]
 
 ROOT_URLCONF = "demo.urls"

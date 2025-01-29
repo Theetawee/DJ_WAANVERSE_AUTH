@@ -11,7 +11,7 @@ from dj_waanverse_auth.serializers.signup_serializers import (
 )
 from dj_waanverse_auth.services.token_service import TokenService
 from dj_waanverse_auth.services.utils import get_serializer_class
-from dj_waanverse_auth.settings.settings import auth_config
+from dj_waanverse_auth.config.settings import auth_config
 from dj_waanverse_auth.throttles import EmailVerificationThrottle
 
 logger = logging.getLogger(__name__)

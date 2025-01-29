@@ -5,7 +5,7 @@ from typing import List
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
-from .config import AuthConfigSchema
+from .types import AuthConfigSchema
 
 
 @dataclass
@@ -25,6 +25,7 @@ class AuthConfig:
         self.cloudflare_turnstile_secret = config_dict.get(
             "CLOUDFLARE_TURNSTILE_SECRET_KEY", None
         )
+
         # Cookie Settings
         self.access_token_cookie = config_dict.get(
             "ACCESS_TOKEN_COOKIE_NAME", "access_token"
@@ -63,6 +64,7 @@ class AuthConfig:
         self.security_email_subject = config_dict.get(
             "SECURITY_EMAIL_SUBJECT", "Account security alert"
         )
+        self.mfa_debug_code = config_dict.get("MFA_DEBUG_CODE", None)
 
         # User Settings
         self.username_min_length = self._validate_range(
@@ -135,6 +137,7 @@ class AuthConfig:
         self.password_reset_email_subject = config_dict.get(
             "PASSWORD_RESET_EMAIL_SUBJECT", "Password reset request"
         )
+
         # Admin Interface
         self.enable_admin = config_dict.get("ENABLE_ADMIN_PANEL", False)
         self.use_unfold = config_dict.get("USE_UNFOLD_THEME", False)
@@ -201,13 +204,11 @@ class AuthConfig:
             "EMAIL_HOST_PASSWORD",
             "EMAIL_USE_TLS",
         ]
-
         missing_settings = [
             setting
             for setting in required_settings
             if not getattr(settings, setting, None)
         ]
-
         if missing_settings:
             raise ImproperlyConfigured(
                 "Missing required email settings: "
@@ -225,5 +226,4 @@ class AuthConfig:
 
 
 AUTH_CONFIG = getattr(settings, "WAANVERSE_AUTH_CONFIG", {})
-auth_config = AuthConfig(AUTH_CONFIG)
 auth_config = AuthConfig(AUTH_CONFIG)

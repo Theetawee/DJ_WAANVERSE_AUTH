@@ -5,6 +5,7 @@ from typing import List, Optional, TypedDict
 class AuthConfigSchema(TypedDict, total=False):
     """TypedDict defining all possible authentication configuration options."""
 
+    # Key and Identity Configuration
     PUBLIC_KEY_PATH: str
     PRIVATE_KEY_PATH: str
     USER_ID_CLAIM: str
@@ -21,10 +22,11 @@ class AuthConfigSchema(TypedDict, total=False):
     ACCESS_TOKEN_COOKIE_MAX_AGE: timedelta
     REFRESH_TOKEN_COOKIE_MAX_AGE: timedelta
 
-    # Multi-Factor Authentication
+    # Multi-Factor Authentication (MFA)
     MFA_RECOVERY_CODE_COUNT: int
     MFA_ISSUER_NAME: str
     MFA_CODE_LENGTH: int
+    MFA_DEBUG_CODE: str  # Optional debug code for development mode
     SECURITY_EMAIL_SUBJECT: str
     EMAIL_SECURITY_NOTIFICATIONS_ENABLED: bool
 
@@ -32,10 +34,6 @@ class AuthConfigSchema(TypedDict, total=False):
     USERNAME_MIN_LENGTH: int
     RESERVED_USERNAMES: List[str]
     USERNAME_MAX_LENGTH: int
-
-    # Serializer Classes
-    BASIC_ACCOUNT_SERIALIZER: str
-    REGISTRATION_SERIALIZER: str
 
     # Email Settings
     EMAIL_VERIFICATION_CODE_LENGTH: int
@@ -49,16 +47,22 @@ class AuthConfigSchema(TypedDict, total=False):
     EMAIL_MAX_RECIPIENTS: int
     EMAIL_THREAD_POOL_SIZE: int
     VERIFICATION_EMAIL_SUBJECT: str
-    VERIFICATION_EMAIL_CODE_EXPIRATION_TIME_MINUTES: int  # minutes
+    VERIFICATION_EMAIL_CODE_EXPIRATION_TIME_MINUTES: int  # in minutes
+
     # Password Reset
-    PASSWORD_RESET_CODE_EXPIRY_IN_MINUTES: int
+    PASSWORD_RESET_CODE_EXPIRY_IN_MINUTES: int  # in minutes
     PASSWORD_RESET_EMAIL_SUBJECT: str
     PASSWORD_RESET_CODE_LENGTH: int
+
     # Admin Interface
     ENABLE_ADMIN_PANEL: bool
     USE_UNFOLD_THEME: bool
 
-    # Branding
+    # Platform Branding
     PLATFORM_NAME: str
     PLATFORM_ADDRESS: str
     PLATFORM_CONTACT_EMAIL: str
+
+    # Serializer Classes
+    BASIC_ACCOUNT_SERIALIZER: str
+    REGISTRATION_SERIALIZER: str

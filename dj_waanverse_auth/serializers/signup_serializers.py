@@ -12,7 +12,7 @@ from rest_framework.validators import UniqueValidator
 from dj_waanverse_auth.models import VerificationCode
 from dj_waanverse_auth.security.utils import validate_turnstile_token
 from dj_waanverse_auth.services.email_service import EmailService
-from dj_waanverse_auth.settings.settings import auth_config
+from dj_waanverse_auth.config.settings import auth_config
 
 logger = logging.getLogger(__name__)
 

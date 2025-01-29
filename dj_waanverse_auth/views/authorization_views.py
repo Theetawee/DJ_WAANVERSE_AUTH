@@ -9,7 +9,7 @@ from dj_waanverse_auth.models import UserSession
 from dj_waanverse_auth.serializers.authorization_serializer import SessionSerializer
 from dj_waanverse_auth.services.token_service import TokenService
 from dj_waanverse_auth.services.utils import get_serializer_class
-from dj_waanverse_auth.settings.settings import auth_config
+from dj_waanverse_auth.config.settings import auth_config
 
 logger = logging.getLogger(__name__)
 
