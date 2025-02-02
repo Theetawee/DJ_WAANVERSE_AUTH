@@ -32,7 +32,7 @@ class SignupSerializer(serializers.Serializer):
     username = serializers.CharField(
         required=True,
         min_length=auth_config.username_min_length,
-        max_length=30,
+        max_length=auth_config.username_max_length,
         validators=[
             UniqueValidator(
                 queryset=Account.objects.all(),
@@ -44,7 +44,7 @@ class SignupSerializer(serializers.Serializer):
             "min_length": _(
                 f"Username must be at least {auth_config.username_min_length} characters long."
             ),
-            "max_length": _("Username cannot exceed 30 characters."),
+            "max_length": _(f"Username cannot exceed {auth_config.username_max_length} characters."),
         },
     )
 
