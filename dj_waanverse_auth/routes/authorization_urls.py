@@ -3,6 +3,7 @@ from django.urls import path
 from dj_waanverse_auth.views.authorization_views import (
     authenticated_user,
     get_user_sessions,
+    grant_access_view,
     home_page,
     logout_view,
     refresh_access_token,
@@ -16,4 +17,10 @@ urlpatterns = [
     path("logout/", logout_view, name="dj_waanverse_auth_logout"),
     path("home/", home_page, name="dj_waanverse_auth_home_page"),
     path("sessions/", get_user_sessions, name="dj_waanverse_auth_get_user_sessions"),
+    path(
+        "grant-access/",
+        grant_access_view,
+        name="dj_waanverse_auth_grant_access",
+
+    ),
 ]

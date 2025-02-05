@@ -6,11 +6,11 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
+from dj_waanverse_auth.config.settings import auth_config
 from dj_waanverse_auth.serializers.login_serializers import LoginSerializer
 from dj_waanverse_auth.services import email_service, token_service
 from dj_waanverse_auth.services.mfa_service import MFAHandler
 from dj_waanverse_auth.services.utils import get_serializer_class
-from dj_waanverse_auth.config.settings import auth_config
 
 logger = logging.getLogger(__name__)
 
@@ -104,13 +104,8 @@ def mfa_login_view(request):
             {"error": "MFA code or recovery code is required."},
             status=status.HTTP_400_BAD_REQUEST,
         )
-
     if mfa_handler.verify_token(code):
         is_valid = True
-
-    elif mfa_handler.verify_recovery_code(code):
-        is_valid = True
-
     if is_valid:
         token_manager = token_service.TokenService(user=user, request=request)
         basic_serializer = get_serializer_class(

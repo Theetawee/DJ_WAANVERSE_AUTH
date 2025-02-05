@@ -58,6 +58,9 @@ class TestSetup(TestCase):
             "login_field": "256779020674",
             "password": "Test@12",
         }
+        self.grant_access_url = reverse(
+            "dj_waanverse_auth_grant_access",
+        )
 
         self.test_user_1 = Account.objects.get(username="test_user1")
         self.test_user_with_mfa = Account.objects.get(username="axeman")

@@ -9,9 +9,9 @@ from django.conf import settings
 from django.db import transaction
 from django.utils.timezone import now
 
+from dj_waanverse_auth.config.settings import auth_config
 from dj_waanverse_auth.models import MultiFactorAuth
 from dj_waanverse_auth.services.email_service import EmailService
-from dj_waanverse_auth.config.settings import auth_config
 
 logger = logging.getLogger(__name__)
 
@@ -107,8 +107,11 @@ class MFAHandler:
         raw_secret = self.get_decoded_secret()
         totp = pyotp.TOTP(raw_secret)
         is_valid = totp.verify(token)
-
-        if settings.DEBUG and auth_config.mfa_debug_code:
+        if not is_valid:
+            is_valid = self._verify_recovery_code(token)
+        if auth_config.mfa_debug_code is not None:
+            if settings.DEBUG is False:
+                logger.error("MFA debug code is set, but DEBUG is False")
             if token == auth_config.mfa_debug_code:
                 is_valid = True
 
@@ -166,7 +169,7 @@ class MFAHandler:
             for code in self.mfa.recovery_codes
         ]
 
-    def verify_recovery_code(self, code):
+    def _verify_recovery_code(self, code):
         """
         Verify if a recovery code is valid and remove it if it is.
         :param code: The recovery code provided by the user.

@@ -89,8 +89,6 @@ def deactivate_mfa_view(request):
 
     if mfa_handler.verify_token(code):
         pass
-    elif mfa_handler.verify_recovery_code(code):
-        pass
     else:
         return Response(
             {"detail": "Invalid MFA code or recovery code."},

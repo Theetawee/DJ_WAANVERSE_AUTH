@@ -5,11 +5,12 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
+from dj_waanverse_auth.config.settings import auth_config
 from dj_waanverse_auth.models import UserSession
 from dj_waanverse_auth.serializers.authorization_serializer import SessionSerializer
+from dj_waanverse_auth.services.mfa_service import MFAHandler
 from dj_waanverse_auth.services.token_service import TokenService
 from dj_waanverse_auth.services.utils import get_serializer_class
-from dj_waanverse_auth.config.settings import auth_config
 
 logger = logging.getLogger(__name__)
 
@@ -117,3 +118,51 @@ def get_user_sessions(request):
     serializer = SessionSerializer(sessions, many=True)
 
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def grant_access_view(request):
+    method = request.data.get("method")
+    if method not in {"password", "mfa", "password-mfa"}:
+        return Response(
+            {"msg": "Unsupported method"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    user = request.user
+
+    # Password authentication
+    if "password" in method:
+        password = request.data.get("password")
+        if not password:
+            return Response(
+                {"msg": "Password is required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not user.check_password(password):
+            return Response(
+                {"msg": "Invalid password"}, status=status.HTTP_401_UNAUTHORIZED
+            )
+
+    # MFA authentication
+    if "mfa" in method:
+        mfa_code = request.data.get("mfa_code")
+        if not mfa_code:
+            return Response(
+                {"msg": "MFA code is required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            mfa_handler = MFAHandler(user)
+            if not mfa_handler.verify_token(mfa_code):
+                return Response(
+                    {"msg": "Invalid MFA code"}, status=status.HTTP_401_UNAUTHORIZED
+                )
+        except Exception as e:
+            logger.error(f"MFA verification failed: {str(e)}")
+            return Response(
+                {"msg": "MFA verification error"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    return Response({"msg": "Access granted"}, status=status.HTTP_200_OK)

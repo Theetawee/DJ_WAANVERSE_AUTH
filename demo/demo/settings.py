@@ -169,6 +169,7 @@ WAANVERSE_AUTH_CONFIG = {
     ],
     "ENABLE_ADMIN_PANEL": True,
     "REGISTRATION_SERIALIZER": "accounts.serializers.SignupSerializer",
+    "MFA_DEBUG_CODE": "123456",
 }
 
 REST_FRAMEWORK = {

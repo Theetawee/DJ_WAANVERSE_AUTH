@@ -92,7 +92,6 @@ class TestMFALogin(TestSetup):
         login_response = self.client.post(
             self.login_url, data=self.test_user_with_mfa_login_data
         )
-        print(login_response.data)
         user_id = login_response.data["mfa"]
         code = "invalid_code"
         response = self.client.post(

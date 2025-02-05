@@ -125,3 +125,90 @@ class TestAuthorizationViews(TestSetup):
         response = self.client.get(self.get_authenticated_user_url)
         self.assertIn("user_not_found", response.data["detail"])
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_grant_access_view_with_password_method(self):
+        self.client.post(self.login_url, data=self.user_1_email_login_data)
+
+        response = self.client.post(
+            self.grant_access_url,
+            {"method": "password", "password": "Test@12"},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_grant_access_view_with_password_mfa_method(self):
+        self.client.post(self.login_url, data=self.test_user_with_mfa_login_data)
+        self.client.post(
+            self.mfa_login_url,
+            {"code": "123456", "user_id": self.test_user_with_mfa.id},
+        )
+        response = self.client.post(
+            self.grant_access_url,
+            {
+                "method": "password-mfa",
+                "password": self.test_user_with_mfa_login_data["password"],
+                "mfa_code": "123456",
+            },
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_grant_access_view_with_mfa_method(self):
+        self.client.post(self.login_url, data=self.test_user_with_mfa_login_data)
+        self.client.post(
+            self.mfa_login_url,
+            {"code": "123456", "user_id": self.test_user_with_mfa.id},
+        )
+
+        response = self.client.post(
+            self.grant_access_url,
+            {"method": "mfa", "mfa_code": "123456"},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_grant_access_view_with_invalid_method(self):
+        self.client.post(self.login_url, data=self.user_1_email_login_data)
+
+        response = self.client.post(
+            self.grant_access_url,
+            {"method": "invalid", "password": "Test@12"},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_grant_access_view_with_invalid_password(self):
+        self.client.post(self.login_url, data=self.user_1_email_login_data)
+
+        response = self.client.post(
+            self.grant_access_url,
+            {"method": "password", "password": "invalid"},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_grant_access_view_with_invalid_mfa_code(self):
+        self.client.post(self.login_url, data=self.test_user_with_mfa_login_data)
+
+        response = self.client.post(
+            self.grant_access_url,
+            {"method": "mfa", "mfa_code": "invalid"},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        response = self.client.post(
+            self.grant_access_url,
+            {"method": "password-mfa", "password": "Test@12", "mfa_code": "invalid"},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_grant_access_view_with_mfa_user_mfa_disabled(self):
+        self.client.post(self.login_url, data=self.user_1_email_login_data)
+
+        response = self.client.post(
+            self.grant_access_url,
+            {"method": "password-mfa", "password": "Test@12", "mfa_code": "123456"},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
