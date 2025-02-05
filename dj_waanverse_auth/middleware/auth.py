@@ -38,7 +38,6 @@ class IPBlockerMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
 
-        # Load settings with defaults
         self.blocked_ips: List[str] = getattr(settings, "BLOCKED_IPS", [])
         self.allowed_ips: List[str] = getattr(settings, "ALLOWED_IPS", [])
         self.custom_message: str = getattr(
