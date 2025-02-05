@@ -47,6 +47,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "dj_waanverse_auth.middleware.auth.IPBlockerMiddleware",
     "dj_waanverse_auth.middleware.client_hints.ClientHintsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",

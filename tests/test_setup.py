@@ -24,7 +24,6 @@ class TestSetup(TestCase):
         self.initiate_email_verification_url = reverse(
             "dj_waanverse_auth_initiate_email_verification"
         )
-        self.home_page_url = reverse("dj_waanverse_auth_home_page")
         self.verify_email_url = reverse("dj_waanverse_auth_verify_email")
         self.get_mfa_secret_view_url = reverse("dj_waanverse_auth_get_mfa_secret")
         self.activate_mfa_url = reverse("dj_waanverse_auth_activate_mfa")
@@ -68,5 +67,6 @@ class TestSetup(TestCase):
             "login_field": "axeman",
             "password": "testUserP",
         }
+        self.device_info_url = reverse("dj_waanverse_auth_get_device_info")
         mail.outbox = []
         return super().setUp()

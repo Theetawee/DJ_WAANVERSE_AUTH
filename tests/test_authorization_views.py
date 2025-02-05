@@ -7,6 +7,9 @@ from .test_setup import TestSetup
 
 
 class TestAuthorizationViews(TestSetup):
+    def test_get_device_info(self):
+        response = self.client.get(self.device_info_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_refresh_access_token_use_cookie(self):
         self.client.post(self.login_url, data=self.user_1_email_login_data)
@@ -125,6 +128,34 @@ class TestAuthorizationViews(TestSetup):
         response = self.client.get(self.get_authenticated_user_url)
         self.assertIn("user_not_found", response.data["detail"])
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_invalid_jwt_claims(self):
+        response = self.client.post(self.login_url, data=self.user_1_email_login_data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        access_token = response.data.get("access_token")
+        self.assertIsNotNone(access_token)
+
+        payload = decode_token(access_token)
+        payload.pop("sid", None)  # Remove "sid" claim
+        tampered_token = encode_token(payload)
+
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {tampered_token}")
+        new_response = self.client.get(self.get_authenticated_user_url)
+        self.assertEqual(new_response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertIn("Invalid token structure", new_response.data["detail"])
+
+    def test_tampered_token_signature(self):
+        response = self.client.post(self.login_url, data=self.user_1_email_login_data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        access_token = response.data.get("access_token")
+        self.assertIsNotNone(access_token)
+
+        tampered_token = access_token[:-1] + ("a" if access_token[-1] != "a" else "b")
+
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {tampered_token}")
+        new_response = self.client.get(self.get_authenticated_user_url)
+        self.assertEqual(new_response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertIn("Invalid token structure", new_response.data["detail"])
 
     def test_grant_access_view_with_password_method(self):
         self.client.post(self.login_url, data=self.user_1_email_login_data)
