@@ -7,9 +7,9 @@ from dj_waanverse_auth.views.signup_views import (
 
 urlpatterns = [
     path(
-        "email/verify/",
+        "email/add/",
         send_email_verification_link,
-        name="dj_waanverse_auth_initiate_email_verification",
+        name="dj_waanverse_auth_add_email",
     ),
     path("", signup_view, name="dj_waanverse_auth_signup"),
 ]

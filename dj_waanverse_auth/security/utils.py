@@ -15,6 +15,7 @@ from user_agents import parse
 from dj_waanverse_auth import settings
 
 from .constants import TRUSTED_PROXIES
+from .validators import ValidateData
 
 logger = logging.getLogger(__name__)
 
@@ -177,7 +178,6 @@ class EmailVerificationTokenGenerator(PasswordResetTokenGenerator):
         return (
             # User state that invalidates the token if changed
             six.text_type(user.pk)
-            + six.text_type(user.email)
             + six.text_type(user.email_verified)
             + six.text_type(login_timestamp)
             +
@@ -211,7 +211,9 @@ class EmailVerificationTokenGenerator(PasswordResetTokenGenerator):
 
 
 def generate_verify_email_url(
-    user, expiry_minutes=settings.verification_email_code_expiry_in_minutes
+    user,
+    email_address,
+    expiry_minutes=settings.verification_email_code_expiry_in_minutes,
 ):
     """
     Generate a unique URL for email verification that expires and is single-use.
@@ -223,6 +225,13 @@ def generate_verify_email_url(
     Returns:
         str: The verification URL
     """
+    validator = ValidateData()
+    cleaned_data = validator.validate_email(email_address, check_uniqueness=True)
+    print(cleaned_data)
+    if cleaned_data.get("is_valid") is False:
+        raise ValueError(cleaned_data.get("errors")[0])
+    else:
+        email_address = cleaned_data.get("value")
     # Generate token using our custom generator
     generator = EmailVerificationTokenGenerator()
     token = generator.make_token(user)
@@ -232,7 +241,7 @@ def generate_verify_email_url(
     payload = {
         "uid": uid,
         "token": token,
-        "email": user.email_address,
+        "email": email_address,
         "exp": timezone.now().timestamp() + (expiry_minutes * 60),
     }
 

@@ -55,5 +55,27 @@
             "groups": [],
             "user_permissions": []
         }
+    },
+    {
+        "model": "accounts.account",
+        "pk": 3,
+        "fields": {
+            "password": "pbkdf2_sha256$36000$kv9RYdbYWqfn$dAcLLtgCNR41AOJlQlNcSK9ZwbQopZZaXqsO9gZQJYA=",
+            "is_superuser": true,
+            "username": "test_user2",
+            "email_address": null,
+            "phone_number": null,
+            "date_joined": "2025-01-03T00:27:54.993Z",
+            "last_login": "2025-01-10T10:22:54.228Z",
+            "is_active": true,
+            "is_staff": false,
+            "password_last_updated": "2025-01-11T07:55:16.041Z",
+            "email_verified": false,
+            "phone_number_verified": false,
+            "name": "Test User2",
+            "date_of_birth": null,
+            "groups": [],
+            "user_permissions": []
+        }
     }
 ]
