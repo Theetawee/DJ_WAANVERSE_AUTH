@@ -171,6 +171,8 @@ WAANVERSE_AUTH_CONFIG = {
     "ENABLE_ADMIN_PANEL": True,
     "REGISTRATION_SERIALIZER": "accounts.serializers.SignupSerializer",
     "MFA_DEBUG_CODE": "123456",
+    "PLATFORM_NAME": "Demo Platform",
+    "VERIFY_EMAIL_URL": "http://localhost:8000/accounts/verify-email/",
 }
 
 REST_FRAMEWORK = {

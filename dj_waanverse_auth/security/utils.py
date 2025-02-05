@@ -3,10 +3,16 @@ from ipaddress import ip_address, ip_network
 from typing import Optional
 
 import requests
+import six
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.core import signing
+from django.utils import timezone
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 from django.utils.translation import gettext_lazy as _
 from user_agents import parse
 
-from dj_waanverse_auth.config.settings import auth_config
+from dj_waanverse_auth import settings
 
 from .constants import TRUSTED_PROXIES
 
@@ -132,7 +138,7 @@ def validate_turnstile_token(token):
         bool: True if the token is valid, False otherwise.
     """
     # Get your Turnstile secret key from the settings
-    secret_key = auth_config.cloudflare_turnstile_secret
+    secret_key = settings.cloudflare_turnstile_secret
 
     if not secret_key:
         raise ValueError(_("Turnstile secret key is not configured."))
@@ -150,3 +156,128 @@ def validate_turnstile_token(token):
         return True
 
     return False
+
+
+class EmailVerificationTokenGenerator(PasswordResetTokenGenerator):
+    """
+    Generate unique tokens for email verification that expire and are single-use
+    by incorporating timestamp and verification status in the hash.
+    """
+
+    def _make_hash_value(self, user, timestamp):
+        """
+        Create a unique hash incorporating user state and email verification status.
+        This ensures the token becomes invalid once used (since email_verified changes).
+        """
+        login_timestamp = (
+            ""
+            if not user.last_login
+            else user.last_login.replace(microsecond=0, tzinfo=None)
+        )
+        return (
+            # User state that invalidates the token if changed
+            six.text_type(user.pk)
+            + six.text_type(user.email)
+            + six.text_type(user.email_verified)
+            + six.text_type(login_timestamp)
+            +
+            # Timestamp for expiration
+            six.text_type(timestamp)
+        )
+
+    def check_token(
+        self,
+        user,
+        token,
+        max_age_minutes=settings.verification_email_code_expiry_in_minutes,
+    ):
+        """
+        Check if the token is valid and not expired.
+
+        Args:
+            user: The user object
+            token: The token to verify
+            max_age_minutes: Maximum age of token in minutes
+        """
+        try:
+            timestamp_b36 = token.split("-")[0]
+            ts = int(timestamp_b36, 36)
+            now = self._now()
+            if (now - ts) > (max_age_minutes * 60):
+                return False
+            return super().check_token(user, token)
+        except Exception:
+            return False
+
+
+def generate_verify_email_url(
+    user, expiry_minutes=settings.verification_email_code_expiry_in_minutes
+):
+    """
+    Generate a unique URL for email verification that expires and is single-use.
+
+    Args:
+        user (Account): The user object
+        expiry_minutes (int): Number of minutes until URL expires
+
+    Returns:
+        str: The verification URL
+    """
+    # Generate token using our custom generator
+    generator = EmailVerificationTokenGenerator()
+    token = generator.make_token(user)
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+    # Create a signed payload that includes necessary verification data
+    payload = {
+        "uid": uid,
+        "token": token,
+        "email": user.email_address,
+        "exp": timezone.now().timestamp() + (expiry_minutes * 60),
+    }
+
+    signed_value = signing.dumps(payload, salt="email-verification", compress=True)
+
+    verification_url = f"{settings.verify_email_url}?token={signed_value}"
+
+    return verification_url
+
+
+def verify_email_token(signed_token, user):
+    """
+    Verify the email verification token.
+
+    Args:
+        signed_token (str): The signed token from the URL
+        user (Account): The user object
+
+    Returns:
+        bool: True if token is valid, False otherwise
+    """
+    try:
+        # First verify and decode the signed payload
+        payload = signing.loads(
+            signed_token,
+            salt="email-verification",
+            max_age=1800,
+        )
+
+        # Check if token has expired
+        if payload["exp"] < timezone.now().timestamp():
+            return False
+
+        if payload["email"] != user.email:
+            return False
+
+        # Verify the actual token
+        generator = EmailVerificationTokenGenerator()
+        is_valid = generator.check_token(
+            user,
+            payload["token"],
+            max_age_minutes=settings.verification_email_code_expiry_in_minutes,
+        )
+
+        return is_valid
+
+    except (signing.BadSignature, signing.SignatureExpired, KeyError):
+        return False

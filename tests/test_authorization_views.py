@@ -150,7 +150,7 @@ class TestAuthorizationViews(TestSetup):
         access_token = response.data.get("access_token")
         self.assertIsNotNone(access_token)
 
-        tampered_token = access_token[:-1] + ("a" if access_token[-1] != "a" else "b")
+        tampered_token = access_token[:-1] + ("ark" if access_token[-1] != "milk" else "bag of water")
 
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {tampered_token}")
         new_response = self.client.get(self.get_authenticated_user_url)

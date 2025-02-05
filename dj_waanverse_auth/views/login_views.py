@@ -52,7 +52,10 @@ def login_view(request):
                 tokens = response_data["tokens"]
                 response.data["access_token"] = tokens["access_token"]
                 response.data["refresh_token"] = tokens["refresh_token"]
-                if auth_config.email_security_notifications_enabled:
+                if (
+                    auth_config.email_security_notifications_enabled
+                    and user.can_receive_emails
+                ):
                     email_manager = email_service.EmailService(request=request)
                     email_manager.send_login_alert(user)
 

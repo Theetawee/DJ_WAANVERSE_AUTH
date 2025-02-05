@@ -116,6 +116,7 @@ class AuthConfig:
         self.email_retry_delay = config_dict.get("EMAIL_RETRY_DELAY", 5)
         self.email_max_recipients = config_dict.get("EMAIL_MAX_RECIPIENTS", 50)
         self.email_thread_pool_size = config_dict.get("EMAIL_THREAD_POOL_SIZE", 5)
+        self.verify_email_url = config_dict.get("VERIFY_EMAIL_URL", None)
         self.verification_email_subject = config_dict.get(
             "VERIFICATION_EMAIL_SUBJECT", "Verify your email address"
         )

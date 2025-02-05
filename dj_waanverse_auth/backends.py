@@ -9,18 +9,18 @@ User = get_user_model()
 
 class AuthenticationBackend(BaseBackend):
     """
-    Custom authentication backend that allows users to log in using
-    email, phone number, or username. Stores the login method in the
-    request object instead of returning it directly.
+    Custom authentication backend that allows users to log in using:
+    - Verified email
+    - Verified phone number
+    - Username
     """
 
     def _determine_login_method(self, login_field, matched_user):
         """
-        Helper method to determine which login method was used based on the
-        login field and matched user.
+        Determines the login method used.
 
         Returns:
-            str: One of 'email', 'phone', or 'username'
+            str: 'email', 'phone', or 'username'
         """
         try:
             validate_email(login_field)
@@ -36,8 +36,10 @@ class AuthenticationBackend(BaseBackend):
 
     def authenticate(self, request, login_field=None, password=None, **kwargs):
         """
-        Authenticate a user using email, phone number, or username.
-        Stores the login method in the request object.
+        Authenticate a user using only:
+        - Verified email
+        - Verified phone number
+        - Username
 
         Args:
             request: The request object
@@ -53,9 +55,11 @@ class AuthenticationBackend(BaseBackend):
 
         try:
             validate_email(login_field)
-            query = Q(email_address=login_field)
+            query = Q(email_address=login_field, email_verified=True)
         except ValidationError:
-            query = Q(username=login_field) | Q(phone_number=login_field)
+            query = Q(phone_number=login_field, phone_number_verified=True) | Q(
+                username=login_field
+            )
 
         try:
             user = User.objects.get(query)

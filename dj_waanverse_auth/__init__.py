@@ -28,7 +28,9 @@ import sys
 from datetime import datetime
 from logging.handlers import RotatingFileHandler
 from typing import Final
+
 from dj_waanverse_auth.config.settings import auth_config as settings
+
 logger = logging.getLogger(__name__)
 from .version import __version__
 
@@ -87,7 +89,35 @@ def check_dependencies():
         raise ImportError(f"Required dependency not found: {e}")
 
 
+def check_settings():
+    """
+    Check the required settings for the package.
+    """
+    try:
+        from django.conf import settings
+
+        if not hasattr(settings, "WAANVERSE_AUTH_CONFIG"):
+            logger.error("WAANVERSE_AUTH_CONFIG is not set.")
+            raise AttributeError("WAANVERSE_AUTH_CONFIG is not set.")
+        logger.debug("WAANVERSE_AUTH_CONFIG is set.")
+        waanverse_config = getattr(settings, "WAANVERSE_AUTH_CONFIG", None)
+        required_keys = [
+            "PUBLIC_KEY_PATH",
+            "PRIVATE_KEY_PATH",
+            "PLATFORM_NAME",
+            "VERIFY_EMAIL_URL",
+        ]
+        for key in required_keys:
+            if key not in waanverse_config:
+                logger.error(f"{key} is missing in WAANVERSE_AUTH_CONFIG")
+                raise AttributeError(f"{key} is missing in WAANVERSE_AUTH_CONFIG")
+    except AttributeError as e:
+        logger.error(f"Missing required setting: {e}")
+        raise AttributeError(f"Required setting not found: {e}")
+
+
 check_dependencies()
+check_settings()
 
 # Package banner
 if sys.stdout.isatty():

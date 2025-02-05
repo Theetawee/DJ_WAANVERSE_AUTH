@@ -33,6 +33,7 @@ class Command(BaseCommand):
         - 'PUBLIC_KEY_PATH'
         - 'PRIVATE_KEY_PATH'
         - 'PLATFORM_NAME'
+        - 'VERIFY_EMAIL_URL'
 
         are present in the `WAANVERSE_AUTH_CONFIG` dictionary in Django settings.
         """
@@ -40,6 +41,7 @@ class Command(BaseCommand):
             "PUBLIC_KEY_PATH",
             "PRIVATE_KEY_PATH",
             "PLATFORM_NAME",
+            "VERIFY_EMAIL_URL",
         ]
 
         try:

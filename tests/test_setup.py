@@ -21,10 +21,6 @@ class TestSetup(TestCase):
         self.login_url = reverse("dj_waanverse_auth_login")
         self.signup_url = reverse("dj_waanverse_auth_signup")
 
-        self.initiate_email_verification_url = reverse(
-            "dj_waanverse_auth_initiate_email_verification"
-        )
-        self.verify_email_url = reverse("dj_waanverse_auth_verify_email")
         self.get_mfa_secret_view_url = reverse("dj_waanverse_auth_get_mfa_secret")
         self.activate_mfa_url = reverse("dj_waanverse_auth_activate_mfa")
         self.mfa_login_url = reverse("dj_waanverse_auth_mfa_login")

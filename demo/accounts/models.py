@@ -1,7 +1,6 @@
 """
 Custom user model     """
 
-
 from django.db import models
 
 from dj_waanverse_auth.base_account import AbstractBaseAccount
@@ -12,9 +11,6 @@ class Account(AbstractBaseAccount):
     date_of_birth = models.DateField(
         verbose_name="Date of Birth", blank=True, null=True
     )
-
-    def __str__(self):
-        return self.email_address
 
     def get_full_name(self):
         return self.name
