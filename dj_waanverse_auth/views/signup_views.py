@@ -47,7 +47,7 @@ signup_view = SignupView.as_view()
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 @throttle_classes([EmailVerificationThrottle])
-def send_email_verification_link(request):
+def add_email_view(request):
     """
     Function-based view to initiate email verification with a
     """

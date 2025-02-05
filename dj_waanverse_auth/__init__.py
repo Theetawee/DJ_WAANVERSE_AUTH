@@ -105,7 +105,6 @@ def check_settings():
             "PUBLIC_KEY_PATH",
             "PRIVATE_KEY_PATH",
             "PLATFORM_NAME",
-            "VERIFY_EMAIL_URL",
         ]
         for key in required_keys:
             if key not in waanverse_config:
