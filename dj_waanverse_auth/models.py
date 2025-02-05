@@ -27,7 +27,6 @@ class MultiFactorAuth(models.Model):
 
 class VerificationCode(models.Model):
     email_address = models.EmailField(
-        unique=True,
         blank=True,
         null=True,
         db_index=True,
@@ -35,20 +34,15 @@ class VerificationCode(models.Model):
     )
     phone_number = models.CharField(
         max_length=15,
-        unique=True,
         blank=True,
         null=True,
         db_index=True,
         verbose_name=_("Phone Number"),
     )
-    is_verified = models.BooleanField(default=False, verbose_name=_("Is Verified"))
     code = models.CharField(
         max_length=255, unique=True, verbose_name=_("Verification Code")
     )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created At"))
-    verified_at = models.DateTimeField(
-        null=True, blank=True, verbose_name=_("Verified At")
-    )
 
     def is_expired(self):
         """
@@ -60,7 +54,7 @@ class VerificationCode(models.Model):
         return timezone.now() > expiration_time
 
     def __str__(self):
-        return f"Code: {self.code}, Verified: {self.is_verified}"
+        return f"Code: {self.code}"
 
     class Meta:
         verbose_name = _("Verification Code")

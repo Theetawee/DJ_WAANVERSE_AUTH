@@ -311,12 +311,12 @@ class EmailService:
             )
             return False
 
-    def send_verification_email(self, email: str, confirmation_link: str) -> bool:
+    def send_verification_email(self, email: str, code: str) -> bool:
         """Send email verification code."""
         with transaction.atomic():
             context = {
                 "expiry_time": self.config.VERIFICATION_EMAIL_EXPIRATION_TIME,
-                "confirmation_link": confirmation_link,
+                "code": code,
             }
             return self.send_email(
                 subject=self.config.VERIFICATION_EMAIL_SUBJECT,

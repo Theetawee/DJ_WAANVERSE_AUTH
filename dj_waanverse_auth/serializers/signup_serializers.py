@@ -2,13 +2,12 @@ import logging
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
-from rest_framework.validators import UniqueValidator
 
+from dj_waanverse_auth import settings
 from dj_waanverse_auth.models import VerificationCode
-from dj_waanverse_auth.security.utils import validate_turnstile_token
+from dj_waanverse_auth.security.utils import generate_code
 from dj_waanverse_auth.security.validators import ValidateData
 from dj_waanverse_auth.services.email_service import EmailService
 
@@ -93,53 +92,49 @@ class SignupSerializer(serializers.Serializer):
         pass
 
 
-class InitiateEmailVerificationSerializer(serializers.Serializer):
+class EmailVerificationSerializer(serializers.Serializer):
     email_address = serializers.EmailField(
         required=True,
-        error_messages={
-            "required": _("Email is required."),
-        },
-        validators=[
-            UniqueValidator(
-                queryset=Account.objects.all(),
-                message=_("email_exists"),
-            )
-        ],
     )
-    turnstile_token = serializers.CharField(required=False)
 
     def __init__(self, instance=None, data=None, **kwargs):
         self.email_service = EmailService()
+        self.validator = ValidateData()
         super().__init__(instance=instance, data=data, **kwargs)
 
     def validate_email_address(self, email_address):
         """
         Validate email with comprehensive checks and sanitization.
         """
-        email_validation = self.email_service.validate_email(email_address)
-        if email_validation.get("error"):
-            raise serializers.ValidationError(email_validation["error"])
+        email_validation = self.validator.validate_email(
+            email_address, check_uniqueness=True
+        )
+        if email_validation.get("is_valid") is False:
+            raise serializers.ValidationError(email_validation["errors"])
 
         return email_address
 
     def validate(self, attrs):
-        turnstile_token = attrs.get("turnstile_token")
-
-        # Validate Turnstile captcha token if provided
-        if turnstile_token:
-            if not validate_turnstile_token(turnstile_token):
-                raise serializers.ValidationError(
-                    {"turnstile_token": [_("Invalid Turnstile token.")]},
-                    code="captcha_invalid",
-                )
-
         return attrs
 
     def create(self, validated_data):
         try:
             with transaction.atomic():
                 email_address = validated_data["email_address"]
-                self.email_service.send_verification_email(email_address)
+                verification_code = VerificationCode.objects.filter(
+                    email_address=email_address
+                )
+                if verification_code.exists():
+                    verification_code.delete()
+                code = generate_code(
+                    length=settings.email_verification_code_length,
+                    is_alphanumeric=settings.email_verification_code_is_alphanumeric,
+                )
+                new_verification = VerificationCode.objects.create(
+                    email_address=email_address, code=code
+                )
+                new_verification.save()
+                self.email_service.send_verification_email(email_address, code=code)
                 return email_address
         except Exception as e:
             logger.error(f"Email verification failed: {str(e)}")
@@ -148,7 +143,7 @@ class InitiateEmailVerificationSerializer(serializers.Serializer):
             )
 
 
-class VerifyEmailSerializer(serializers.Serializer):
+class ActivateEmailSerializer(serializers.Serializer):
     email_address = serializers.EmailField(required=True)
     code = serializers.CharField(required=True)
 
@@ -161,13 +156,13 @@ class VerifyEmailSerializer(serializers.Serializer):
 
         try:
             verification = VerificationCode.objects.get(
-                email_address=email_address, code=code, is_verified=False
+                email_address=email_address, code=code
             )
 
             if verification.is_expired():
                 verification.delete()
                 raise serializers.ValidationError({"code": "code_expired"})
-
+            data["verification"] = verification
             return data
 
         except VerificationCode.DoesNotExist:
@@ -177,14 +172,13 @@ class VerifyEmailSerializer(serializers.Serializer):
         """
         Mark the verification code as used and verified.
         """
-        email_address = validated_data["email_address"]
-        code = validated_data["code"]
+        with transaction.atomic():
+            user = self.context.get("request").user
+            email_address = validated_data["email_address"]
+            verification = validated_data["verification"]
+            verification.delete()
+            user.email_address = email_address
+            user.email_verified = True
+            user.save()
 
-        verification = VerificationCode.objects.get(
-            email_address=email_address, code=code, is_verified=False
-        )
-        verification.is_verified = True
-        verification.verified_at = timezone.now()
-        verification.save()
-
-        return {"email_address": email_address, "verified": True}
+        return True
