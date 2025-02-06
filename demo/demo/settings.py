@@ -170,6 +170,7 @@ WAANVERSE_AUTH_CONFIG = {
     ],
     "ENABLE_ADMIN_PANEL": True,
     "REGISTRATION_SERIALIZER": "accounts.serializers.SignupSerializer",
+    "PHONE_NUMBER_VERIFICATION_SERIALIZER": "accounts.serializers.PhoneSerializer",
     "MFA_DEBUG_CODE": "123456",
     "PLATFORM_NAME": "Demo Platform",
     "EMAIL_THREADING_ENABLED": False,

@@ -5,9 +5,10 @@ from ipaddress import ip_address, ip_network
 from typing import Optional
 
 import requests
-from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from user_agents import parse
+
+from dj_waanverse_auth import settings as auth_settings
 
 from .constants import TRUSTED_PROXIES
 
@@ -133,7 +134,7 @@ def validate_turnstile_token(token):
         bool: True if the token is valid, False otherwise.
     """
     # Get your Turnstile secret key from the settings
-    secret_key = settings.cloudflare_turnstile_secret
+    secret_key = auth_settings.cloudflare_turnstile_secret
 
     if not secret_key:
         raise ValueError(_("Turnstile secret key is not configured."))

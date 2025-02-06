@@ -10,6 +10,7 @@ from rest_framework.views import APIView
 from dj_waanverse_auth import settings
 from dj_waanverse_auth.serializers.signup_serializers import (
     ActivateEmailSerializer,
+    ActivatePhoneSerializer,
     EmailVerificationSerializer,
 )
 from dj_waanverse_auth.services.utils import get_serializer_class
@@ -57,7 +58,7 @@ def add_email_view(request):
             serializer.save()
             return Response(
                 {
-                    "message": "Email verification link sent successfully.",
+                    "message": "Email verification code sent successfully.",
                     "expires_in": f"{settings.verification_email_code_expiry_in_minutes} minutes",
                 },
                 status=status.HTTP_200_OK,
@@ -85,6 +86,60 @@ def activate_email_address(request):
             serializer.save()
             return Response(
                 {"message": "Email address activated successfully."},
+                status=status.HTTP_200_OK,
+            )
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response(
+            {"error": str(e)},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+@throttle_classes([EmailVerificationThrottle])
+def add_phone_number_view(request):
+    """
+    Function-based view to initiate phone_number verification with a
+    """
+    try:
+        serializer = get_serializer_class(
+            settings.phone_number_verification_serializer
+        )(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {
+                    "message": "Verification code sent successfully.",
+                    "expires_in": f"{settings.verification_email_code_expiry_in_minutes} minutes",
+                },
+                status=status.HTTP_200_OK,
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    except Exception as e:
+        return Response(
+            {"error": str(e)},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def activate_phone_number(request):
+    """
+    Function-based view to activate an phone_number for a user.
+    """
+    try:
+        serializer = ActivatePhoneSerializer(
+            data=request.data, context={"request": request}
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {"message": "PhoneNumber activated successfully."},
                 status=status.HTTP_200_OK,
             )
         else:

@@ -138,3 +138,27 @@ class TestActivateEmail(TestSetup):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertFalse(self.user2.email_address, "test@gmail.com")
+
+
+class TestAddPhone(TestSetup):
+    def test_add_phone_unauthenticated(self):
+        data = {
+            "phone_number": "+256779736255",
+        }
+
+        response = self.client.post(self.add_phone_url, data)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_add_phone_authenticated(self):
+        self.client.force_authenticate(user=self.user2)
+        data = {"phone_number": "+256779736255"}
+
+        response = self.client.post(self.add_phone_url, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_add_existing_phone(self):
+        self.client.force_authenticate(user=self.user2)
+        data = {"phone_number": "+256779020674"}
+
+        response = self.client.post(self.add_phone_url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

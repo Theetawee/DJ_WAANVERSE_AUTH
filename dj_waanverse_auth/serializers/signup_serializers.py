@@ -1,6 +1,7 @@
 import logging
 
 from django.contrib.auth import get_user_model
+from django.core.validators import RegexValidator
 from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
@@ -179,6 +180,105 @@ class ActivateEmailSerializer(serializers.Serializer):
             verification.delete()
             user.email_address = email_address
             user.email_verified = True
+            user.save()
+
+        return True
+
+
+class PhoneNumberVerificationSerializer(serializers.Serializer):
+    phone_number = serializers.CharField(
+        max_length=15,
+        validators=[
+            RegexValidator(
+                regex=r"^\+?[1-9]\d{1,14}$",
+                message="Enter a valid phone number in E.164 format (e.g., +1234567890).",
+            )
+        ],
+    )
+
+    def validate_phone_number(self, value):
+        """
+        Ensure the phone number is unique and not already used for verification.
+        """
+        if Account.objects.filter(phone_number=value).exists():
+            raise serializers.ValidationError(_("This phone number is already in use."))
+        return value
+
+    def create(self, validated_data):
+        """
+        Create and send a verification code for the provided phone number.
+        """
+        try:
+            with transaction.atomic():
+                phone_number = validated_data["phone_number"]
+
+                VerificationCode.objects.filter(phone_number=phone_number).delete()
+
+                code = generate_code(
+                    length=settings.email_verification_code_length,
+                    is_alphanumeric=settings.email_verification_code_is_alphanumeric,
+                )
+
+                new_verification = VerificationCode.objects.create(
+                    phone_number=phone_number, code=code
+                )
+                new_verification.save()
+
+                self._send_code(phone_number, code)
+
+                return {
+                    "phone_number": phone_number,
+                    "message": _("Verification code sent."),
+                }
+        except Exception as e:
+            logger.error(f"Phone number verification failed: {str(e)}")
+            raise serializers.ValidationError(
+                _("Failed to initiate phone verification.")
+            )
+
+    def _send_code(self, phone_number, code):
+        """
+        Implement the logic to send the verification code via SMS or other means.
+        """
+        logger.info(f"Sending verification code {code} to {phone_number}")
+
+
+class ActivatePhoneSerializer(serializers.Serializer):
+    phone_number = serializers.CharField(required=True)
+    code = serializers.CharField(required=True)
+
+    def validate(self, data):
+        """
+        Validate the phone_number and code combination.
+        """
+        phone_number = data["phone_number"]
+        code = data["code"]
+
+        try:
+            verification = VerificationCode.objects.get(
+                phone_number=phone_number, code=code
+            )
+
+            if verification.is_expired():
+                verification.delete()
+                raise serializers.ValidationError({"code": "code_expired"})
+            data["verification"] = verification
+            return data
+
+        except VerificationCode.DoesNotExist:
+            raise serializers.ValidationError({"code": "invalid_code"})
+
+    def create(self, validated_data):
+        """
+        Mark the verification code as used and verified.
+        """
+        with transaction.atomic():
+            user = self.context.get("request").user
+            phone_number = validated_data["phone_number"]
+            verification = validated_data["verification"]
+            verification.delete()
+            user.phone_number = phone_number
+            user.phone_number_verified = True
             user.save()
 
         return True

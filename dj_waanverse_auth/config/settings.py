@@ -122,6 +122,10 @@ class AuthConfig:
         self.verification_email_code_expiry_in_minutes = config_dict.get(
             "VERIFICATION_EMAIL_CODE_EXPIRATION_TIME_MINUTES", 15
         )
+        self.phone_number_verification_serializer = config_dict.get(
+            "PHONE_NUMBER_VERIFICATION_SERIALIZER",
+            "dj_waanverse_auth.serializers.signup_serializers.PhoneNumberVerificationSerializer",
+        )
         self.login_alert_email_subject = config_dict.get(
             "LOGIN_ALERT_EMAIL_SUBJECT", "New login alert"
         )

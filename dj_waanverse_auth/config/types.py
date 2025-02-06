@@ -48,7 +48,7 @@ class AuthConfigSchema(TypedDict, total=False):
     EMAIL_THREAD_POOL_SIZE: int
     VERIFICATION_EMAIL_SUBJECT: str
     VERIFICATION_EMAIL_CODE_EXPIRATION_TIME_MINUTES: int  # in minutes
-
+    PHONE_NUMBER_VERIFICATION_SERIALIZER: str
     # Password Reset
     PASSWORD_RESET_CODE_EXPIRY_IN_MINUTES: int  # in minutes
     PASSWORD_RESET_EMAIL_SUBJECT: str

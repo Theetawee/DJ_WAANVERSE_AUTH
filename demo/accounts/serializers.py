@@ -1,5 +1,8 @@
 from rest_framework import serializers
 
+from dj_waanverse_auth.serializers.signup_serializers import (
+    PhoneNumberVerificationSerializer,
+)
 from dj_waanverse_auth.serializers.signup_serializers import SignupSerializer as Base
 
 from .models import Account
@@ -40,3 +43,8 @@ class SignupSerializer(Base):
     def perform_post_creation_tasks(self, user):
         print("yes")
         return super().perform_post_creation_tasks(user)
+
+
+class PhoneSerializer(PhoneNumberVerificationSerializer):
+    def _send_code(self, phone_number, code):
+        print(f"This code is sent to user code:{code} on {phone_number}")

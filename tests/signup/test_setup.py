@@ -17,6 +17,11 @@ class TestSetup(TestCase):
         self.signup_url = reverse("dj_waanverse_auth_signup")
         self.add_email_url = reverse("dj_waanverse_auth_add_email")
         self.activate_email_url = reverse("dj_waanverse_auth_activate_email")
+        self.add_phone_url = reverse(
+            "dj_waanverse_auth_add_phone"
+        )
+        self.activate_phone_url = reverse("dj_waanverse_auth_activate_phone")
+
         self.user2 = Account.objects.get(id=3)
         self.user2_data = {
             "username": "test_user",
