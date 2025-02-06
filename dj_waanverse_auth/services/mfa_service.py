@@ -64,7 +64,10 @@ class MFAHandler:
                 self.mfa.save()
 
                 self.set_recovery_codes()
-                if auth_config.email_security_notifications_enabled:
+                if (
+                    auth_config.email_security_notifications_enabled
+                    and self.user.can_receive_emails
+                ):
                     email_manager = EmailService()
                     email_manager.send_mfa_change_notification(
                         self.user.email_address, "enable"
@@ -126,7 +129,10 @@ class MFAHandler:
                 self.mfa.secret_key = None
                 self.mfa.recovery_codes = None
                 self.mfa.save()
-                if auth_config.email_security_notifications_enabled:
+                if (
+                    auth_config.email_security_notifications_enabled
+                    and self.user.can_receive_emails
+                ):
                     email_manager = EmailService()
                     email_manager.send_mfa_change_notification(
                         self.user.email_address, "disable"
