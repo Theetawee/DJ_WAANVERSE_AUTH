@@ -47,11 +47,14 @@ class MFAHandler:
 
     def generate_secret(self):
         """Generate and save a new MFA secret for the user."""
-        raw_secret = pyotp.random_base32()
-        encoded_secret = self.fernet.encrypt(raw_secret.encode()).decode()
+        if self.mfa.secret_key:
+            raw_secret = self.get_decoded_secret()
 
-        self.mfa.secret_key = encoded_secret
-        self.mfa.save()
+        else:
+            raw_secret = pyotp.random_base32()
+            encoded_secret = self.fernet.encrypt(raw_secret.encode()).decode()
+            self.mfa.secret_key = encoded_secret
+            self.mfa.save()
 
         return raw_secret
 
