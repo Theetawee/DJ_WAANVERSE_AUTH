@@ -9,3 +9,13 @@ class EmailVerificationThrottle(SimpleRateThrottle):
         if email:
             return f"rate_limit_{email}"
         return None
+
+
+class PhoneVerificationThrottle(SimpleRateThrottle):
+    rate = "1/min"
+
+    def get_cache_key(self, request, view):
+        phone = request.data.get("phone_number")
+        if phone:
+            return f"rate_limit_{phone}"
+        return None

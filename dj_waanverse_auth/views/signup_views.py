@@ -14,7 +14,10 @@ from dj_waanverse_auth.serializers.signup_serializers import (
     EmailVerificationSerializer,
 )
 from dj_waanverse_auth.services.utils import get_serializer_class
-from dj_waanverse_auth.throttles import EmailVerificationThrottle
+from dj_waanverse_auth.throttles import (
+    EmailVerificationThrottle,
+    PhoneVerificationThrottle,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +102,7 @@ def activate_email_address(request):
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
-@throttle_classes([EmailVerificationThrottle])
+@throttle_classes([PhoneVerificationThrottle])
 def add_phone_number_view(request):
     """
     Function-based view to initiate phone_number verification with a

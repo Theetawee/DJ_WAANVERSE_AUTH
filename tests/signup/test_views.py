@@ -7,7 +7,10 @@ from rest_framework import status
 
 from dj_waanverse_auth import settings
 from dj_waanverse_auth.models import VerificationCode
-from dj_waanverse_auth.throttles import EmailVerificationThrottle
+from dj_waanverse_auth.throttles import (
+    EmailVerificationThrottle,
+    PhoneVerificationThrottle,
+)
 
 from .test_setup import TestSetup
 
@@ -146,7 +149,8 @@ class TestActivateEmail(TestSetup):
 
 
 class TestAddPhone(TestSetup):
-    def test_add_phone_unauthenticated(self):
+    @patch.object(PhoneVerificationThrottle, "allow_request", return_value=True)
+    def test_add_phone_unauthenticated(self, mock_allow_request):
         data = {
             "phone_number": "+256779736255",
         }
@@ -154,14 +158,16 @@ class TestAddPhone(TestSetup):
         response = self.client.post(self.add_phone_url, data)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_add_phone_authenticated(self):
+    @patch.object(PhoneVerificationThrottle, "allow_request", return_value=True)
+    def test_add_phone_authenticated(self, mock_allow_request):
         self.client.force_authenticate(user=self.user2)
         data = {"phone_number": "+256779736255"}
 
         response = self.client.post(self.add_phone_url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    def test_add_existing_phone(self):
+    @patch.object(PhoneVerificationThrottle, "allow_request", return_value=True)
+    def test_add_existing_phone(self, mock_allow_request):
         self.client.force_authenticate(user=self.user2)
         data = {"phone_number": "+256779020674"}
 
