@@ -1,5 +1,4 @@
 import logging
-from functools import cached_property
 
 from django.utils.timezone import now
 
@@ -60,7 +59,6 @@ class RefreshToken:
             logger.error(f"Failed to create refresh token: {str(e)}")
             raise TokenError("Could not generate refresh token")
 
-    @cached_property
     def payload(self):
         """Cached access to decoded payload"""
         return self._payload
