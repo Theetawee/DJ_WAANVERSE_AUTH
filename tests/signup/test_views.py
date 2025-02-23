@@ -1,4 +1,5 @@
 from datetime import timedelta
+from unittest.mock import patch
 
 from django.core import mail
 from django.utils import timezone
@@ -6,6 +7,7 @@ from rest_framework import status
 
 from dj_waanverse_auth import settings
 from dj_waanverse_auth.models import VerificationCode
+from dj_waanverse_auth.throttles import EmailVerificationThrottle
 
 from .test_setup import TestSetup
 
@@ -58,7 +60,8 @@ class TestAddEmail(TestSetup):
         response = self.client.post(self.add_email_url, data)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_add_email_authenticated(self):
+    @patch.object(EmailVerificationThrottle, "allow_request", return_value=True)
+    def test_add_email_authenticated(self, mock_allow_request):
         self.client.force_authenticate(user=self.user2)
         data = {"email_address": "test@gmail.com"}
 
@@ -103,7 +106,8 @@ class TestActivateEmail(TestSetup):
         )
         self.assertTrue(self.user2.email_verified)
 
-    def test_activate_invalid_code(self):
+    @patch.object(EmailVerificationThrottle, "allow_request", return_value=True)
+    def test_activate_invalid_code(self, mock_allow_request):
         data = {"email_address": "test@gmail.com"}
         self.client.post(self.add_email_url, data)
 
@@ -118,7 +122,8 @@ class TestActivateEmail(TestSetup):
             VerificationCode.objects.filter(email_address="test@gmail.com").count(), 1
         )
 
-    def test_activate_expired_code(self):
+    @patch.object(EmailVerificationThrottle, "allow_request", return_value=True)
+    def test_activate_expired_code(self, mock_allow_request):
         data = {"email_address": "test@gmail.com"}
         self.client.post(self.add_email_url, data)
 
