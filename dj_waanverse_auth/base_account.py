@@ -57,7 +57,7 @@ class AccountManager(BaseUserManager):
 
 class AbstractBaseAccount(AbstractBaseUser, PermissionsMixin):
     username = models.CharField(
-        max_length=10,
+        max_length=35,
         unique=True,
         db_index=True,
         help_text="Required. 10 characters or fewer.",
