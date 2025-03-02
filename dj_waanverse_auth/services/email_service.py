@@ -86,12 +86,13 @@ class EmailValidationError(ValidationError):
 class EmailService:
     """Production-ready email service handling all email-related functionality."""
 
-    def __init__(self, request=None):
+    def __init__(self, request=None,use_default_folder: bool = True):
         """Initialize email service with configuration."""
         self.config = EmailConfig()
         self.email_validator = EmailValidator()
         self._connection = None
         self.request = request
+        self.use_default_folder = use_default_folder
 
     @property
     def connection(self):
@@ -200,11 +201,13 @@ class EmailService:
         Returns:
             Prepared email message
         """
-        if isinstance(template_name, EmailTemplate):
-            template_name = template_name.value
+        if self.use_default_folder:
+            if isinstance(template_name, EmailTemplate):
+                template_name = template_name.value
 
-        template_path = f"emails/{template_name}.html"
-
+            template_path = f"emails/{template_name}.html"
+        else:
+            template_path = template_name
         context.update(
             {
                 "site_name": auth_config.platform_name,
