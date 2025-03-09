@@ -2,8 +2,8 @@ import logging
 
 from rest_framework.response import Response
 
+from dj_waanverse_auth import settings
 from dj_waanverse_auth.services.session_utils import create_session
-from dj_waanverse_auth.config.settings import auth_config
 
 from .token_classes import RefreshToken, TokenError
 
@@ -14,19 +14,19 @@ class CookieSettings:
     """Configuration for cookie settings with enhanced security features."""
 
     def __init__(self):
-        self.HTTPONLY = auth_config.cookie_httponly
-        self.SECURE = auth_config.cookie_secure
-        self.SAME_SITE = auth_config.cookie_samesite
-        self.ACCESS_COOKIE_NAME = auth_config.access_token_cookie
-        self.REFRESH_COOKIE_NAME = auth_config.refresh_token_cookie
+        self.HTTPONLY = settings.cookie_httponly
+        self.SECURE = settings.cookie_secure
+        self.SAME_SITE = settings.cookie_samesite
+        self.ACCESS_COOKIE_NAME = settings.access_token_cookie
+        self.REFRESH_COOKIE_NAME = settings.refresh_token_cookie
         self.ACCESS_COOKIE_MAX_AGE = int(
-            (auth_config.access_token_cookie_max_age).total_seconds()
+            (settings.access_token_cookie_max_age).total_seconds()
         )
         self.REFRESH_COOKIE_MAX_AGE = int(
-            (auth_config.refresh_token_cookie_max_age).total_seconds()
+            (settings.refresh_token_cookie_max_age).total_seconds()
         )
-        self.DOMAIN = auth_config.cookie_domain
-        self.PATH = auth_config.cookie_path
+        self.DOMAIN = settings.cookie_domain
+        self.PATH = settings.cookie_path
 
     def get_cookie_params(self):
         """Returns common cookie parameters as a dictionary."""

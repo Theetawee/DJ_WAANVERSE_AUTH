@@ -13,6 +13,7 @@ from dj_waanverse_auth.serializers.signup_serializers import (
     ActivatePhoneSerializer,
     EmailVerificationSerializer,
 )
+from dj_waanverse_auth.services.token_service import TokenService
 from dj_waanverse_auth.services.utils import get_serializer_class
 from dj_waanverse_auth.throttles import (
     EmailVerificationThrottle,
@@ -33,16 +34,20 @@ class SignupView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
-        print(request.data, "Data")
         signup_serializer = get_serializer_class(settings.registration_serializer)
         serializer = signup_serializer(data=request.data, context={"request": request})
         if serializer.is_valid():
-            serializer.save()
+            user = serializer.save()
+            token_manager = TokenService(user=user, request=request)
 
-            return Response(
-                data={"msg": "Account created successfully."},
-                status=status.HTTP_201_CREATED,
-            )
+            response = Response(status=status.HTTP_201_CREATED, data={})
+            res = token_manager.setup_login_cookies(response)
+            tokens = res["tokens"]
+            response = res["response"]
+            response.data["status"] = "success"
+            response.data["access_token"] = tokens["access_token"]
+            response.data["refresh_token"] = tokens["refresh_token"]
+            return response
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

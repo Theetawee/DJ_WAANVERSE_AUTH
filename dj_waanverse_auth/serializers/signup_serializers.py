@@ -41,7 +41,6 @@ class SignupSerializer(serializers.Serializer):
         """
         Validate data.
         """
-        print(attrs, "attrs")
         username = attrs.get("username", None)
 
         email = attrs.get("email_address", None)
@@ -74,7 +73,6 @@ class SignupSerializer(serializers.Serializer):
 
         user_data = {
             "password": validated_data["password"],
-            "is_active": False,
             **additional_fields,
         }
         if validated_data.get("username"):

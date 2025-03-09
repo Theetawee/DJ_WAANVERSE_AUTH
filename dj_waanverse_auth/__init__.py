@@ -26,7 +26,6 @@ https://github.com/waanverse/dj_waanverse_auth
 import logging
 import sys
 from datetime import datetime
-from logging.handlers import RotatingFileHandler
 from typing import Final
 
 from dj_waanverse_auth.config.settings import auth_config as settings
