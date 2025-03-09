@@ -9,8 +9,13 @@ from rest_framework import serializers
 from dj_waanverse_auth import settings
 from dj_waanverse_auth.models import VerificationCode
 from dj_waanverse_auth.security.utils import generate_code
-from dj_waanverse_auth.security.validators import ValidateData
 from dj_waanverse_auth.services.email_service import EmailService
+from dj_waanverse_auth.validators import (
+    EmailValidator,
+    PasswordValidator,
+    PhoneNumberValidator,
+    UsernameValidator,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -22,42 +27,43 @@ class SignupSerializer(serializers.Serializer):
     Serializer for user registration with comprehensive validation.
     """
 
-    username = serializers.CharField(required=True)
+    username = serializers.CharField(required=False)
+
+    email_address = serializers.EmailField(required=False)
+
+    phone_number = serializers.CharField(required=False)
 
     password = serializers.CharField(required=True)
 
     confirm_password = serializers.CharField(required=True)
 
-    def __init__(self, *args, **kwargs):
-        self.email_service = EmailService()
-        self.validator = ValidateData()
-        super().__init__(*args, **kwargs)
-
-    def validate_username(self, username):
-        """
-        Validate username with comprehensive checks and sanitization.
-        """
-        username_validation = self.validator.validate_username(
-            username, check_uniqueness=True
-        )
-        if username_validation.get("is_valid") is False:
-            raise serializers.ValidationError(username_validation["errors"])
-
-        return username
-
     def validate(self, attrs):
         """
-        Validate password with comprehensive checks.
+        Validate data.
         """
-        password = attrs.get("password")
-        confirm_password = attrs.get("confirm_password")
-        username = attrs.get("username")
-        password_validation = self.validator.validate_password(
-            password, username=username, confirmation_password=confirm_password
-        )
-        if password_validation.get("is_valid") is False:
-            raise serializers.ValidationError(password_validation["errors"])
+        print(attrs, "attrs")
+        username = attrs.get("username", None)
 
+        email = attrs.get("email_address", None)
+        phone_number = attrs.get("phone_number", None)
+        password = attrs.get("password", None)
+        confirm_password = attrs.get("confirm_password", None)
+        if username is None and email is None and phone_number is None:
+            raise serializers.ValidationError(
+                {
+                    "non_field_errors": [
+                        _("Please provide a username, email, or phone number.")
+                    ]
+                }
+            )
+        if username:
+            username = self._validate_username(username)
+        if email:
+            email = self._validate_email(email)
+        if phone_number:
+            phone_number = self._validate_phone_number(phone_number)
+
+        password = self._validate_password(password, confirm_password)
         return attrs
 
     def create(self, validated_data):
@@ -67,10 +73,16 @@ class SignupSerializer(serializers.Serializer):
         additional_fields = self.get_additional_fields(validated_data)
 
         user_data = {
-            "username": validated_data["username"],
             "password": validated_data["password"],
+            "is_active": False,
             **additional_fields,
         }
+        if validated_data.get("username"):
+            user_data["username"] = validated_data["username"]
+        if validated_data.get("email_address"):
+            user_data["email_address"] = validated_data["email_address"]
+        if validated_data.get("phone_number"):
+            user_data["phone_number"] = validated_data["phone_number"]
         try:
             with transaction.atomic():
                 user = Account.objects.create_user(**user_data)
@@ -92,6 +104,54 @@ class SignupSerializer(serializers.Serializer):
         """
         pass
 
+    def _validate_email(self, email):
+        """
+        Validate email with comprehensive checks and sanitization.
+        """
+        email_validation = EmailValidator(
+            email_address=email, check_uniqueness=True
+        ).validate()
+        if email_validation.get("is_valid") is False:
+            raise serializers.ValidationError(email_validation["error"])
+
+        return email
+
+    def _validate_password(self, password, confirm_password):
+        """
+        Validate password with comprehensive checks and sanitization.
+        """
+        password_validation = PasswordValidator(
+            password=password, confirm_password=confirm_password
+        ).validate()
+        if password_validation.get("is_valid") is False:
+            raise serializers.ValidationError(password_validation["error"])
+
+        return password
+
+    def _validate_phone_number(self, phone_number):
+        """
+        Validate phone number with comprehensive checks and sanitization.
+        """
+        phone_number_validation = PhoneNumberValidator(
+            phone_number=phone_number, check_uniqueness=True
+        ).validate()
+        if phone_number_validation.get("is_valid") is False:
+            raise serializers.ValidationError(phone_number_validation["error"])
+
+        return phone_number
+
+    def _validate_username(self, username):
+        """
+        Validate username with comprehensive checks and sanitization.
+        """
+        username_validation = UsernameValidator(
+            username=username, check_uniqueness=True
+        ).validate()
+        if username_validation.get("is_valid") is False:
+            raise serializers.ValidationError(username_validation["error"])
+
+        return username
+
 
 class EmailVerificationSerializer(serializers.Serializer):
     email_address = serializers.EmailField(
@@ -100,7 +160,7 @@ class EmailVerificationSerializer(serializers.Serializer):
 
     def __init__(self, instance=None, data=None, **kwargs):
         self.email_service = EmailService()
-        self.validator = ValidateData()
+        self.validator = EmailValidator()
         super().__init__(instance=instance, data=data, **kwargs)
 
     def validate_email_address(self, email_address):

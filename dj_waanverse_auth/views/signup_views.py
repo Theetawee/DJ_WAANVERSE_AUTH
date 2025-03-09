@@ -33,6 +33,7 @@ class SignupView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
+        print(request.data, "Data")
         signup_serializer = get_serializer_class(settings.registration_serializer)
         serializer = signup_serializer(data=request.data, context={"request": request})
         if serializer.is_valid():

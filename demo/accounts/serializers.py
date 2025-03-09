@@ -27,21 +27,9 @@ class AccountSerializer(serializers.ModelSerializer):
 
 
 class SignupSerializer(Base):
-    name = serializers.CharField(
-        required=True,
-        max_length=50,
-        error_messages={
-            "required": ("First name is required."),
-            "max_length": ("First name cannot exceed 50 characters."),
-        },
-    )
-
-    def get_additional_fields(self, validated_data):
-
-        return {"name": validated_data["name"]}
 
     def perform_post_creation_tasks(self, user):
-        print("yes")
+
         return super().perform_post_creation_tasks(user)
 
 

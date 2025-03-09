@@ -1,8 +1,3 @@
-"""
-    Abstract base user model that supports both email and phone authentication.
-
-    Includes core user management functionality and flexible contact methods."""
-
 from typing import Optional
 
 from django.contrib.auth.models import (
@@ -18,15 +13,24 @@ from django.utils import timezone
 class AccountManager(BaseUserManager):
     def create_user(
         self,
-        username: str,
+        username: Optional[str] = None,
         email_address: Optional[str] = None,
+        phone_number: Optional[str] = None,
         password: Optional[str] = None,
         **extra_fields
     ):
-        if not username:
-            raise ValueError("Username is required")
+        if not username and not email_address and not phone_number:
+            raise ValueError(
+                "At least one of username, email address, or phone number is required"
+            )
 
-        user = self.model(username=username, **extra_fields)
+        user = self.model(
+            username=username,
+            email_address=email_address,
+            phone_number=phone_number,
+            **extra_fields
+        )
+
         if email_address:
             user.email_address = self.normalize_email(email_address)
         if password:
@@ -39,7 +43,12 @@ class AccountManager(BaseUserManager):
         return user
 
     def create_superuser(
-        self, username: str, email_address: str, password: str, **extra_fields
+        self,
+        username: Optional[str] = None,
+        email_address: Optional[str] = None,
+        phone_number: Optional[str] = None,
+        password: str = None,
+        **extra_fields
     ):
         if not email_address:
             raise ValueError("Superusers must have an email address")
@@ -47,6 +56,7 @@ class AccountManager(BaseUserManager):
         return self.create_user(
             username=username,
             email_address=email_address,
+            phone_number=phone_number,
             password=password,
             is_staff=True,
             is_superuser=True,
@@ -60,7 +70,9 @@ class AbstractBaseAccount(AbstractBaseUser, PermissionsMixin):
         max_length=35,
         unique=True,
         db_index=True,
-        help_text="Required. 10 characters or fewer.",
+        blank=True,
+        null=True,
+        help_text="Optional. 35 characters or fewer.",
     )
     email_address = models.EmailField(
         max_length=255,
@@ -87,11 +99,17 @@ class AbstractBaseAccount(AbstractBaseUser, PermissionsMixin):
     objects = AccountManager()
 
     USERNAME_FIELD = "username"
-    REQUIRED_FIELDS = ["email_address"]
+    REQUIRED_FIELDS = []
 
     class Meta:
         abstract = True
         constraints = [
+            models.CheckConstraint(
+                check=Q(username__isnull=False)
+                | Q(email_address__isnull=False)
+                | Q(phone_number__isnull=False),
+                name="%(app_label)s_%(class)s_must_have_contact",
+            ),
             models.UniqueConstraint(
                 fields=["phone_number"],
                 name="%(app_label)s_%(class)s_unique_phone",
@@ -116,36 +134,24 @@ class AbstractBaseAccount(AbstractBaseUser, PermissionsMixin):
         ]
 
     def __str__(self) -> str:
-        return self.get_primary_contact or self.username
+        return self.get_primary_contact or "Unknown User"
 
     @property
     def get_primary_contact(self) -> Optional[str]:
         return self.email_address or self.phone_number or self.username
 
     def get_full_name(self) -> str:
-        """
-        Return the full name of the user, which is the username in this case.
-        """
-        return self.username
+        return self.get_primary_contact or "Unknown"
 
     def get_short_name(self) -> str:
-        """
-        Return the short name of the user, which is the username in this case.
-        """
-        return self.username
+        return self.get_primary_contact or "Unknown"
 
     def has_perm(self, perm: str, obj: Optional[object] = None) -> bool:
-        """
-        Check if the user has the specified permission. Only staff members have permissions.
-        """
         return self.is_staff
 
     def has_module_perms(self, app_label: str) -> bool:
-        """
-        Check if the user has permission to access the given app label.
-        """
         return True
 
     @property
     def can_receive_emails(self) -> bool:
-        return self.email_address and self.email_verified
+        return bool(self.email_address and self.email_verified)

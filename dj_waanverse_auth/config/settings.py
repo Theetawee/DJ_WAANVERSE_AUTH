@@ -110,6 +110,9 @@ class AuthConfig:
         )
         self.email_threading_enabled = config_dict.get("EMAIL_THREADING_ENABLED", True)
         self.blacklisted_emails = config_dict.get("BLACKLISTED_EMAILS", [])
+        self.blacklisted_phone_numbers = config_dict.get(
+            "BLACKLISTED_PHONE_NUMBERS", []
+        )
         self.disposable_email_domains = config_dict.get("DISPOSABLE_EMAIL_DOMAINS", [])
         self.email_batch_size = config_dict.get("EMAIL_BATCH_SIZE", 50)
         self.email_retry_attempts = config_dict.get("EMAIL_RETRY_ATTEMPTS", 3)
