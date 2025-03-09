@@ -9,7 +9,8 @@ from rest_framework import serializers
 from dj_waanverse_auth import settings
 from dj_waanverse_auth.models import VerificationCode
 from dj_waanverse_auth.security.utils import generate_code
-from dj_waanverse_auth.services.email_service import EmailService
+from dj_waanverse_auth.services.email_service import EmailPriority, EmailService
+from dj_waanverse_auth.services.utils import generate_verification_code
 from dj_waanverse_auth.validators import (
     EmailValidator,
     PasswordValidator,
@@ -70,20 +71,28 @@ class SignupSerializer(serializers.Serializer):
         Create a new user with transaction handling.
         """
         additional_fields = self.get_additional_fields(validated_data)
-
+        used_field = None
         user_data = {
             "password": validated_data["password"],
             **additional_fields,
         }
         if validated_data.get("username"):
             user_data["username"] = validated_data["username"]
+            used_field = "username"
         if validated_data.get("email_address"):
             user_data["email_address"] = validated_data["email_address"]
+            used_field = "email_address"
         if validated_data.get("phone_number"):
             user_data["phone_number"] = validated_data["phone_number"]
+            used_field = "phone_number"
         try:
             with transaction.atomic():
                 user = Account.objects.create_user(**user_data)
+                if used_field:
+                    if used_field == "email_address":
+                        self._verify_email_address(user.email_address)
+                    if used_field == "phone_number":
+                        self._verify_phone_number(user.phone_number)
                 self.perform_post_creation_tasks(user)
             return user
         except Exception as e:
@@ -149,6 +158,23 @@ class SignupSerializer(serializers.Serializer):
             raise serializers.ValidationError(username_validation["error"])
 
         return username
+
+    def _verify_email_address(self, email_address):
+        code = generate_verification_code()
+        email_manager = EmailService()
+        template_name = "emails/verify_email.html"
+        with transaction.atomic():
+            VerificationCode.objects.create(email_address=email_address, code=code)
+            email_manager.send_email(
+                subject=settings.verification_email_subject,
+                template_name=template_name,
+                recipient=email_address,
+                context={"code": code},
+                priority=EmailPriority.HIGH,
+            )
+
+    def _verify_phone_number(self, phone_number):
+        pass
 
 
 class EmailVerificationSerializer(serializers.Serializer):

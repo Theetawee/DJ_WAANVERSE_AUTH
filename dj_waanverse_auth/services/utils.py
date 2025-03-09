@@ -1,4 +1,6 @@
 import logging
+import random
+import string
 from functools import lru_cache
 from typing import Any, Dict
 
@@ -8,7 +10,7 @@ from cryptography.hazmat.primitives import serialization
 from django.utils.module_loading import import_string
 from rest_framework import exceptions
 
-from dj_waanverse_auth.config.settings import auth_config
+from dj_waanverse_auth import settings
 
 logger = logging.getLogger(__name__)
 
@@ -23,8 +25,8 @@ def get_key(key_type):
     Load and cache cryptographic keys with LRU caching
     """
     key_paths = {
-        "public": auth_config.public_key_path,
-        "private": auth_config.private_key_path,
+        "public": settings.public_key_path,
+        "private": settings.private_key_path,
     }
 
     if key_type not in key_paths:
@@ -80,11 +82,11 @@ def decode_token(token: str) -> Dict[str, Any]:
     Example:
         >>> try:
         ...     payload = decode_token("eyJ0eXAiOiJKV1QiLC...")
-        ...     user_id = payload[auth_config.user_id_claim]
+        ...     user_id = payload[settings.user_id_claim]
         ... except exceptions.AuthenticationFailed as e:
         ...     print(f"Authentication failed: {str(e)}")
     """
-    user_claim = auth_config.user_id_claim
+    user_claim = settings.user_id_claim
     if not token:
         raise exceptions.AuthenticationFailed("No token provided")
 
@@ -134,7 +136,7 @@ def encode_token(payload) -> str:
     """
     Encode payload into JWT token with error handling and logging
     """
-    user_claim = auth_config.user_id_claim
+    user_claim = settings.user_id_claim
 
     if not isinstance(payload, dict):
         raise ValueError("Payload must be a dictionary")
@@ -171,3 +173,27 @@ def get_serializer_class(class_path: str):
         return import_string(class_path)
     except ImportError as e:
         raise ImportError(f"Could not import serializer class '{class_path}': {e}")
+
+
+def generate_verification_code(
+    length: int = settings.email_verification_code_length,
+    alphanumeric: bool = settings.email_verification_code_is_alphanumeric,
+) -> str:
+    """
+    Generate a random verification code.
+
+    Args:
+        length (int): The length of the verification code. Default is 6.
+        alphanumeric (bool): If True, includes both letters and numbers. Default is False.
+
+    Returns:
+        str: Generated verification code.
+    """
+    if length <= 0:
+        raise ValueError("Length must be greater than 0.")
+
+    characters = string.digits
+    if alphanumeric:
+        characters += string.ascii_letters
+
+    return "".join(random.choices(characters, k=length))

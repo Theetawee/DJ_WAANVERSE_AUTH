@@ -1,3 +1,4 @@
+from django.core import mail
 from rest_framework import status
 
 from dj_waanverse_auth import settings
@@ -40,3 +41,14 @@ class TestSignupView(Setup):
 
             for field in expected_response_data:
                 self.assertIn(field, response.data)
+            if key == "phone_number":
+                self.assertEqual(response.data["next"], "verify_phone")
+            if key == "email":
+                self.assertEqual(response.data["next"], "verify_email")
+                self.assertEqual(len(mail.outbox), 1)
+                self.assertEqual(
+                    mail.outbox[0].subject, settings.verification_email_subject
+                )
+
+            if key == "username":
+                self.assertEqual(response.data["next"], None)

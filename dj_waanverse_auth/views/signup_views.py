@@ -47,6 +47,12 @@ class SignupView(APIView):
             response.data["status"] = "success"
             response.data["access_token"] = tokens["access_token"]
             response.data["refresh_token"] = tokens["refresh_token"]
+            if user.phone_number:
+                response.data["next"] = "verify_phone"
+            if user.email_address:
+                response.data["next"] = "verify_email"
+            if user.username:
+                response.data["next"] = None
             return response
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
