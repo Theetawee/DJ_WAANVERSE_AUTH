@@ -89,8 +89,6 @@ class JWTAuthentication(authentication.BaseAuthentication):
 
         # If token is not in the Authorization header, check cookies
         if not token and self.COOKIE_NAME in request.COOKIES:
-            if not request.is_secure():
-                logger.warning("Cookie token accessed over non-HTTPS connection")
             token = request.COOKIES.get(self.COOKIE_NAME)
 
         # Sanitize the token if it was found

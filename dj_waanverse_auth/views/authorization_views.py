@@ -1,18 +1,24 @@
 import logging
 
+from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.generics import UpdateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from dj_waanverse_auth.config.settings import auth_config
 from dj_waanverse_auth.models import UserSession
-from dj_waanverse_auth.serializers.authorization_serializer import SessionSerializer
+from dj_waanverse_auth.serializers.authorization_serializer import (
+    SessionSerializer,
+    UpdateAccountSerializer,
+)
 from dj_waanverse_auth.serializers.client_hints_serializers import ClientInfoSerializer
 from dj_waanverse_auth.services.mfa_service import MFAHandler
 from dj_waanverse_auth.services.token_service import TokenService
 from dj_waanverse_auth.services.utils import get_serializer_class
 
+User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
@@ -166,3 +172,24 @@ def grant_access_view(request):
             )
 
     return Response({"msg": "Access granted"}, status=status.HTTP_200_OK)
+
+
+class UserProfileUpdateView(UpdateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UpdateAccountSerializer
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, *args, **kwargs):
+        """
+        Handle PATCH request to update remaining fields.
+        """
+        user_profile = self.get_object()
+        serializer = self.get_serializer(
+            user_profile, data=request.data, partial=True
+        )
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
