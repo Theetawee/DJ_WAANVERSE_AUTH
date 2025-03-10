@@ -1,6 +1,7 @@
 import logging
 
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
@@ -71,6 +72,8 @@ def login_view(request):
                     },
                     status=status.HTTP_200_OK,
                 )
+                user.last_login = timezone.now()
+                user.save()
                 response_data = token_manager.setup_login_cookies(response=response)
                 response = response_data["response"]
                 tokens = response_data["tokens"]

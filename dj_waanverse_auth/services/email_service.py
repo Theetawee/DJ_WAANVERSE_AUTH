@@ -51,10 +51,10 @@ class EmailService:
         """Simple thread for sending a single email."""
 
         def __init__(self, email_message, callback=None):
+            super().__init__()  # Initialize the thread properly first
             self.email_message = email_message
             self.callback = callback
-            self.daemon = True
-            super().__init__()
+            self.daemon = True  # Set daemon mode after initialization
 
         def run(self):
             """Send a single email in a thread."""

@@ -72,8 +72,11 @@ class MFAHandler:
                     and self.user.can_receive_emails
                 ):
                     email_manager = EmailService()
-                    email_manager.send_mfa_change_notification(
-                        self.user.email_address, "enable"
+                    email_manager.send_email(
+                        subject="Account MFA Activated",
+                        template_name="emails/mfa_enabled.html",
+                        recipient=self.user.email_address,
+                        context={"user": self.user},
                     )
         except Exception as e:
             logger.error(f"Error activating MFA: {str(e)}")

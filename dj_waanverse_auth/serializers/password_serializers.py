@@ -47,7 +47,12 @@ class InitiatePasswordResetSerializer(serializers.Serializer):
             with transaction.atomic():
                 account = validated_data["account"]
                 token = ResetPasswordToken.create_for_user(account)
-                self.email_service.send_password_reset_email(account, token.code)
+                self.email_service.send_email(
+                    subject="Password Reset Request",
+                    template_name="emails/password_reset.html",
+                    recipient=account.email_address,
+                    context={"token": token.code},
+                )
                 return account
         except Exception as e:
             logger.error(f"Password reset initiation failed: {str(e)}", exc_info=True)
