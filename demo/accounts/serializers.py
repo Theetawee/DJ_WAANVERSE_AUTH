@@ -27,6 +27,9 @@ class AccountSerializer(serializers.ModelSerializer):
 
 
 class SignupSerializer(Base):
+    def _send_phone_code(self, phone_number, code):
+        print(f"This code is sent to user code:{code} on {phone_number}")
+        return super()._send_phone_code(phone_number, code)
 
     def perform_post_creation_tasks(self, user):
 

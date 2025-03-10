@@ -6,13 +6,37 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
-from dj_waanverse_auth.config.settings import auth_config
+from dj_waanverse_auth import settings as auth_config
+from dj_waanverse_auth.security.utils import (
+    get_device,
+    get_ip_address,
+    get_location_from_ip,
+)
 from dj_waanverse_auth.serializers.login_serializers import LoginSerializer
-from dj_waanverse_auth.services import email_service, token_service
+from dj_waanverse_auth.services import token_service
+from dj_waanverse_auth.services.email_service import EmailPriority, EmailService
 from dj_waanverse_auth.services.mfa_service import MFAHandler
 from dj_waanverse_auth.services.utils import get_serializer_class
 
 logger = logging.getLogger(__name__)
+
+
+def send_login_email(request, user):
+    email_manager = EmailService(request=request)
+    template_name = "emails/login_alert.html"
+    ip_address = get_ip_address(request)
+    context = {
+        "ip_address": ip_address,
+        "location": get_location_from_ip(ip_address),
+        "device": get_device(request),
+    }
+    email_manager.send_email(
+        subject=auth_config.login_alert_email_subject,
+        template_name=template_name,
+        priority=EmailPriority.HIGH,
+        recipient=user.email_address,
+        context=context,
+    )
 
 
 @api_view(["POST"])
@@ -56,9 +80,7 @@ def login_view(request):
                     auth_config.email_security_notifications_enabled
                     and user.can_receive_emails
                 ):
-                    email_manager = email_service.EmailService(request=request)
-                    email_manager.send_login_alert(user)
-
+                    send_login_email(request, user)
                 return response
         else:
             token_manager = token_service.TokenService(request=request)
@@ -129,8 +151,7 @@ def mfa_login_view(request):
         response.data["access_token"] = tokens["access_token"]
         response.data["refresh_token"] = tokens["refresh_token"]
         if auth_config.email_security_notifications_enabled and user.can_receive_emails:
-            email_manager = email_service.EmailService(request=request)
-            email_manager.send_login_alert(user)
+            send_login_email(request, user)
 
         return response
     else:

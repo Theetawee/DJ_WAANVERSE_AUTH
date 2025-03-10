@@ -8,7 +8,6 @@ from rest_framework import serializers
 
 from dj_waanverse_auth import settings
 from dj_waanverse_auth.models import VerificationCode
-from dj_waanverse_auth.security.utils import generate_code
 from dj_waanverse_auth.services.email_service import EmailPriority, EmailService
 from dj_waanverse_auth.services.utils import generate_verification_code
 from dj_waanverse_auth.validators import (
@@ -21,6 +20,21 @@ from dj_waanverse_auth.validators import (
 logger = logging.getLogger(__name__)
 
 Account = get_user_model()
+
+
+def verify_email_address(email_address):
+    code = generate_verification_code()
+    email_manager = EmailService()
+    template_name = "emails/verify_email.html"
+    with transaction.atomic():
+        VerificationCode.objects.create(email_address=email_address, code=code)
+        email_manager.send_email(
+            subject=settings.verification_email_subject,
+            template_name=template_name,
+            recipient=email_address,
+            context={"code": code},
+            priority=EmailPriority.HIGH,
+        )
 
 
 class SignupSerializer(serializers.Serializer):
@@ -62,6 +76,7 @@ class SignupSerializer(serializers.Serializer):
             email = self._validate_email(email)
         if phone_number:
             phone_number = self._validate_phone_number(phone_number)
+            attrs["phone_number"] = phone_number
 
         password = self._validate_password(password, confirm_password)
         return attrs
@@ -90,7 +105,7 @@ class SignupSerializer(serializers.Serializer):
                 user = Account.objects.create_user(**user_data)
                 if used_field:
                     if used_field == "email_address":
-                        self._verify_email_address(user.email_address)
+                        verify_email_address(user.email_address)
                     if used_field == "phone_number":
                         self._verify_phone_number(user.phone_number)
                 self.perform_post_creation_tasks(user)
@@ -144,7 +159,7 @@ class SignupSerializer(serializers.Serializer):
         ).validate()
         if phone_number_validation.get("is_valid") is False:
             raise serializers.ValidationError(phone_number_validation["error"])
-
+        phone_number = phone_number_validation["phone_number"]
         return phone_number
 
     def _validate_username(self, username):
@@ -159,21 +174,17 @@ class SignupSerializer(serializers.Serializer):
 
         return username
 
-    def _verify_email_address(self, email_address):
-        code = generate_verification_code()
-        email_manager = EmailService()
-        template_name = "emails/verify_email.html"
-        with transaction.atomic():
-            VerificationCode.objects.create(email_address=email_address, code=code)
-            email_manager.send_email(
-                subject=settings.verification_email_subject,
-                template_name=template_name,
-                recipient=email_address,
-                context={"code": code},
-                priority=EmailPriority.HIGH,
-            )
-
     def _verify_phone_number(self, phone_number):
+        code = generate_verification_code()
+        existing_verification = VerificationCode.objects.filter(
+            phone_number=phone_number
+        )
+        if existing_verification.exists():
+            existing_verification.delete()
+        VerificationCode.objects.create(phone_number=phone_number, code=code)
+        self._send_phone_code(phone_number, code)
+
+    def _send_phone_code(self, phone_number, code):
         pass
 
 
@@ -182,20 +193,15 @@ class EmailVerificationSerializer(serializers.Serializer):
         required=True,
     )
 
-    def __init__(self, instance=None, data=None, **kwargs):
-        self.email_service = EmailService()
-        self.validator = EmailValidator()
-        super().__init__(instance=instance, data=data, **kwargs)
-
     def validate_email_address(self, email_address):
         """
         Validate email with comprehensive checks and sanitization.
         """
-        email_validation = self.validator.validate_email(
-            email_address, check_uniqueness=True
-        )
+        email_validation = EmailValidator(
+            email_address=email_address, check_uniqueness=True
+        ).validate()
         if email_validation.get("is_valid") is False:
-            raise serializers.ValidationError(email_validation["errors"])
+            raise serializers.ValidationError(email_validation["error"])
 
         return email_address
 
@@ -205,21 +211,17 @@ class EmailVerificationSerializer(serializers.Serializer):
     def create(self, validated_data):
         try:
             with transaction.atomic():
+                user = self.context.get("user")
                 email_address = validated_data["email_address"]
                 verification_code = VerificationCode.objects.filter(
                     email_address=email_address
                 )
                 if verification_code.exists():
                     verification_code.delete()
-                code = generate_code(
-                    length=settings.email_verification_code_length,
-                    is_alphanumeric=settings.email_verification_code_is_alphanumeric,
-                )
-                new_verification = VerificationCode.objects.create(
-                    email_address=email_address, code=code
-                )
-                new_verification.save()
-                self.email_service.send_verification_email(email_address, code=code)
+                verify_email_address(email_address)
+                user.email_address = email_address
+                user.email_verified = False
+                user.save()
                 return email_address
         except Exception as e:
             logger.error(f"Email verification failed: {str(e)}")
@@ -298,10 +300,7 @@ class PhoneNumberVerificationSerializer(serializers.Serializer):
 
                 VerificationCode.objects.filter(phone_number=phone_number).delete()
 
-                code = generate_code(
-                    length=settings.email_verification_code_length,
-                    is_alphanumeric=settings.email_verification_code_is_alphanumeric,
-                )
+                code = generate_verification_code()
 
                 new_verification = VerificationCode.objects.create(
                     phone_number=phone_number, code=code

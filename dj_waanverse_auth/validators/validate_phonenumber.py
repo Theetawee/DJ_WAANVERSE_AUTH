@@ -10,6 +10,7 @@ User = get_user_model()
 
 class PhoneNumberValidator:
     def __init__(self, phone_number: str, check_uniqueness: bool = False):
+        phone_number = phone_number.strip().replace(" ", "").replace("-", "")
         self.phone_number = phone_number
         self.check_uniqueness = check_uniqueness
         self.result = {"phone_number": phone_number, "error": None, "is_valid": True}
