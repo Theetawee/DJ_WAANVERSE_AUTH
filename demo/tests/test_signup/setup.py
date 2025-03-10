@@ -14,3 +14,4 @@ class Setup(Base):
         self.update_account_status_url = reverse(
             "dj_waanverse_auth_update_account_status"
         )
+        self.update_account_url = reverse("dj_waanverse_auth_update_account")

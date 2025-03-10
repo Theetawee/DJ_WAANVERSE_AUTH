@@ -67,3 +67,4 @@ class AuthConfigSchema(TypedDict, total=False):
     # Serializer Classes
     BASIC_ACCOUNT_SERIALIZER: str
     REGISTRATION_SERIALIZER: str
+    UPDATE_ACCOUNT_SERIALIZER: str

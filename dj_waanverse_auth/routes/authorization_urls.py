@@ -7,6 +7,7 @@ from dj_waanverse_auth.views.authorization_views import (
     grant_access_view,
     logout_view,
     refresh_access_token,
+    update_account,
 )
 
 urlpatterns = [
@@ -22,4 +23,5 @@ urlpatterns = [
         name="dj_waanverse_auth_grant_access",
     ),
     path("device-info/", get_device_info, name="dj_waanverse_auth_get_device_info"),
+    path("update-account/", update_account, name="dj_waanverse_auth_update_account"),
 ]

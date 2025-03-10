@@ -174,6 +174,7 @@ WAANVERSE_AUTH_CONFIG = {
     "MFA_DEBUG_CODE": "123456",
     "PLATFORM_NAME": "Demo Platform",
     "EMAIL_THREADING_ENABLED": False,
+    "UPDATE_ACCOUNT_SERIALIZER": "accounts.serializers.UpdateAccountSerializer",
 }
 
 REST_FRAMEWORK = {

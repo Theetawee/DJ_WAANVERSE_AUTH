@@ -48,7 +48,6 @@ class UpdateAccountSerializer(serializers.ModelSerializer):
             and validated_data["phone_number"] != instance.phone_number
         ):
             validated_data["phone_number_verified"] = False
-
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
 

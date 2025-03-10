@@ -94,6 +94,10 @@ class AuthConfig:
             "REGISTRATION_SERIALIZER",
             "dj_waanverse_auth.serializers.signup_serializers.SignupSerializer",
         )
+        self.update_account_serializer = config_dict.get(
+            "UPDATE_ACCOUNT_SERIALIZER",
+            "dj_waanverse_auth.serializers.authorization_serializer.UpdateAccountSerializer",
+        )
 
         # Email Settings
         self.email_verification_code_length = self._validate_range(

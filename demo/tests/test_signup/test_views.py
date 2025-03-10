@@ -241,3 +241,26 @@ class TestVerifications(Setup):
         self.assertFalse(
             Account.objects.get(email_address="test@example.com").is_account_completed
         )
+
+    def test_update_account(self):
+        response = self.client.patch(
+            self.update_account_url,
+            data={
+                "name": "test",
+                "email_address": "test1@example.com",
+                "phone_number": "1294567890",
+            },
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(Account.objects.get(username="test_user").name, "test")
+
+        self.assertFalse(Account.objects.get(username="test_user").email_verified)
+        self.assertFalse(
+            Account.objects.get(username="test_user").phone_number_verified
+        )
+        self.assertEqual(
+            Account.objects.get(username="test_user").email_address, "test1@example.com"
+        )
+        self.assertEqual(
+            Account.objects.get(username="test_user").phone_number, "1294567890"
+        )
