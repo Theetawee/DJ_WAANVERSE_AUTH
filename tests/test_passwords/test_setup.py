@@ -38,3 +38,6 @@ class Setup(Base):
             "dj_waanverse_auth_initiate_password_reset"
         )
         self.reset_new_password_url = reverse("dj_waanverse_auth_reset_password")
+        self.get_authenticated_user_url = reverse(
+            "dj_waanverse_auth_authenticated_user"
+        )

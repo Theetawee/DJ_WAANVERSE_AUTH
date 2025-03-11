@@ -163,3 +163,20 @@ class ResetPasswordTokenTests(Setup):
             },
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_access_after_change(self):
+        response = self.client.post(self.login_url, data=self.user_1_email_login_data)
+
+        response = self.client.post(
+            self.reset_new_password_url,
+            {
+                "email_address": self.test_user_1.email_address,
+                "code": self.token.code,
+                "new_password": "NewPassword123!",
+                "confirm_password": "NewPassword123!",
+            },
+        )
+
+        response = self.client.get(self.get_authenticated_user_url)
+        self.assertIn("Password has been changed", response.data["detail"])
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
