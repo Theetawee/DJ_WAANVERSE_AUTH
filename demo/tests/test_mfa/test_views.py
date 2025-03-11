@@ -1,14 +1,17 @@
+from django.contrib.auth import get_user_model
 from pyotp import TOTP
 from rest_framework import status
 
+from dj_waanverse_auth.config.settings import auth_config
 from dj_waanverse_auth.models import MultiFactorAuth
 from dj_waanverse_auth.services.mfa_service import MFAHandler
-from dj_waanverse_auth.config.settings import auth_config
 
-from .test_setup import TestSetup
+from .test_setup import Setup
+
+Account = get_user_model()
 
 
-class TestMFALogin(TestSetup):
+class TestMFALogin(Setup):
     def test_get_mfa_secret_view_success(self):
         self.client.post(self.login_url, data=self.user_1_email_login_data)
         response = self.client.post(
@@ -76,13 +79,15 @@ class TestMFALogin(TestSetup):
         login_response = self.client.post(
             self.login_url, data=self.test_user_with_mfa_login_data
         )
+        last_login = self.test_user_with_mfa.last_login
         user_id = login_response.data["mfa"]
         secret = MFAHandler(user=self.test_user_with_mfa).get_decoded_secret()
 
         response = self.client.post(
             self.mfa_login_url, {"code": TOTP(secret).now(), "user_id": user_id}
         )
-
+        account = Account.objects.get(id=self.test_user_with_mfa.id)
+        self.assertNotEqual(account.last_login, last_login)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("access_token", response.data)
         self.assertIn("refresh_token", response.data)

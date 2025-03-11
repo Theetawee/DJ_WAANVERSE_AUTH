@@ -119,8 +119,6 @@ class MFAHandler:
         if not is_valid:
             is_valid = self._verify_recovery_code(token)
         if auth_config.mfa_debug_code is not None:
-            if settings.DEBUG is False:
-                logger.error("MFA debug code is set, but DEBUG is False")
             if token == auth_config.mfa_debug_code:
                 is_valid = True
 

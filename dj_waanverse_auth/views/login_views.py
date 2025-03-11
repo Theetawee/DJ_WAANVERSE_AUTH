@@ -147,6 +147,8 @@ def mfa_login_view(request):
             },
             status=status.HTTP_200_OK,
         )
+        user.last_login = timezone.now()
+        user.save()
 
         response_data = token_manager.setup_login_cookies(response=response)
         response = response_data["response"]
