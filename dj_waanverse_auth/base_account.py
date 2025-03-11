@@ -7,7 +7,6 @@ from django.contrib.auth.models import (
 )
 from django.db import models
 from django.db.models import Q
-from django.utils import timezone
 
 
 class AccountManager(BaseUserManager):
@@ -92,7 +91,7 @@ class AbstractBaseAccount(AbstractBaseUser, PermissionsMixin):
     last_login = models.DateTimeField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
-    password_last_updated = models.DateTimeField(default=timezone.now)
+    password_last_updated = models.DateTimeField(null=True, blank=True)
     email_verified = models.BooleanField(default=False)
     phone_number_verified = models.BooleanField(default=False)
     is_account_completed = models.BooleanField(default=False)
