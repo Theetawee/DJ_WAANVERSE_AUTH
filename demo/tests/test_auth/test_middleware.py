@@ -1,10 +1,10 @@
 from django.test import modify_settings
 from rest_framework import status
 
-from .test_setup import TestSetup
+from .test_setup import Setup
 
 
-class TestMiddleware(TestSetup):
+class TestMiddleware(Setup):
     """
     Tests for the DeviceAuthMiddleware to ensure it behaves correctly
     based on device authentication requirements.
@@ -28,7 +28,7 @@ class TestMiddleware(TestSetup):
         "append": ["8.8.8.8"],
     },
 )
-class TestIPBlockMiddleware(TestSetup):
+class TestIPBlockMiddleware(Setup):
     """
     Tests for the IPBlockerMiddleware to ensure it behaves correctly
     based on IP blocking requirements.

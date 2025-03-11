@@ -1,15 +1,97 @@
+from django.contrib.auth import get_user_model
 from rest_framework import status
 
 from dj_waanverse_auth.config.settings import auth_config
 from dj_waanverse_auth.services.utils import decode_token, encode_token
 
-from .test_setup import TestSetup
+from .test_setup import Setup
+
+Account = get_user_model()
 
 
-class TestAuthorizationViews(TestSetup):
+class TestAuthorizationViews(Setup):
+    def setUp(self):
+        super().setUp()
+        self.client.force_authenticate(user=Account.objects.get(username="axeman"))
+
     def test_get_device_info(self):
         response = self.client.get(self.device_info_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_logout(self):
+
+        response = self.client.post(self.logout_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        for cookie_name in response.cookies:
+            self.assertEqual(
+                response.cookies[cookie_name].value,
+                "",
+                f"Cookie {cookie_name} was not removed",
+            )
+
+    def test_get_authenticated_user(self):
+        response = self.client.get(self.get_authenticated_user_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["username"], "axeman")
+
+    def test_grant_access_view_with_password_mfa_method(self):
+        response = self.client.post(
+            self.grant_access_url,
+            {
+                "method": "password-mfa",
+                "password": "testUserP",
+                "mfa_code": "123456",
+            },
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_grant_access_view_with_mfa_method(self):
+        response = self.client.post(
+            self.grant_access_url,
+            {"method": "mfa", "mfa_code": "123456"},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_grant_access_view_with_invalid_method(self):
+
+        response = self.client.post(
+            self.grant_access_url,
+            {"method": "invalid", "password": "Test@12"},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_grant_access_view_with_invalid_password(self):
+
+        response = self.client.post(
+            self.grant_access_url,
+            {"method": "password", "password": "invalid"},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_grant_access_view_with_invalid_mfa_code(self):
+
+        response = self.client.post(
+            self.grant_access_url,
+            {"method": "mfa", "mfa_code": "invalid"},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        response = self.client.post(
+            self.grant_access_url,
+            {"method": "password-mfa", "password": "Test@12", "mfa_code": "invalid"},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class TestAuthViews(Setup):
 
     def test_refresh_access_token_use_cookie(self):
         self.client.post(self.login_url, data=self.user_1_email_login_data)
@@ -53,28 +135,6 @@ class TestAuthorizationViews(TestSetup):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_logout(self):
-        self.client.post(self.login_url, data=self.user_1_email_login_data)
-
-        response = self.client.post(self.logout_url)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        for cookie_name in response.cookies:
-            self.assertEqual(
-                response.cookies[cookie_name].value,
-                "",
-                f"Cookie {cookie_name} was not removed",
-            )
-
-    def test_get_authenticated_user(self):
-        self.client.post(self.login_url, data=self.user_1_email_login_data)
-
-        response = self.client.get(self.get_authenticated_user_url)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["username"], self.test_user_1.username)
 
     def test_get_authenticated_user_with_bearer_token(self):
         login_response = self.client.post(
@@ -150,7 +210,9 @@ class TestAuthorizationViews(TestSetup):
         access_token = response.data.get("access_token")
         self.assertIsNotNone(access_token)
 
-        tampered_token = access_token[:-1] + ("ark" if access_token[-1] != "milk" else "bag of water")
+        tampered_token = access_token[:-1] + (
+            "ark" if access_token[-1] != "milk" else "bag of water"
+        )
 
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {tampered_token}")
         new_response = self.client.get(self.get_authenticated_user_url)
@@ -166,73 +228,6 @@ class TestAuthorizationViews(TestSetup):
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-    def test_grant_access_view_with_password_mfa_method(self):
-        self.client.post(self.login_url, data=self.test_user_with_mfa_login_data)
-        self.client.post(
-            self.mfa_login_url,
-            {"code": "123456", "user_id": self.test_user_with_mfa.id},
-        )
-        response = self.client.post(
-            self.grant_access_url,
-            {
-                "method": "password-mfa",
-                "password": self.test_user_with_mfa_login_data["password"],
-                "mfa_code": "123456",
-            },
-        )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-    def test_grant_access_view_with_mfa_method(self):
-        self.client.post(self.login_url, data=self.test_user_with_mfa_login_data)
-        self.client.post(
-            self.mfa_login_url,
-            {"code": "123456", "user_id": self.test_user_with_mfa.id},
-        )
-
-        response = self.client.post(
-            self.grant_access_url,
-            {"method": "mfa", "mfa_code": "123456"},
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-    def test_grant_access_view_with_invalid_method(self):
-        self.client.post(self.login_url, data=self.user_1_email_login_data)
-
-        response = self.client.post(
-            self.grant_access_url,
-            {"method": "invalid", "password": "Test@12"},
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_grant_access_view_with_invalid_password(self):
-        self.client.post(self.login_url, data=self.user_1_email_login_data)
-
-        response = self.client.post(
-            self.grant_access_url,
-            {"method": "password", "password": "invalid"},
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-
-    def test_grant_access_view_with_invalid_mfa_code(self):
-        self.client.post(self.login_url, data=self.test_user_with_mfa_login_data)
-
-        response = self.client.post(
-            self.grant_access_url,
-            {"method": "mfa", "mfa_code": "invalid"},
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-
-        response = self.client.post(
-            self.grant_access_url,
-            {"method": "password-mfa", "password": "Test@12", "mfa_code": "invalid"},
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_grant_access_view_with_mfa_user_mfa_disabled(self):
         self.client.post(self.login_url, data=self.user_1_email_login_data)

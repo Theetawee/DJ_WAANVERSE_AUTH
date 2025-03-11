@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
+from dj_waanverse_auth import settings
 from dj_waanverse_auth.models import ResetPasswordToken
 from dj_waanverse_auth.services.email_service import EmailService
 
@@ -48,7 +49,7 @@ class InitiatePasswordResetSerializer(serializers.Serializer):
                 account = validated_data["account"]
                 token = ResetPasswordToken.create_for_user(account)
                 self.email_service.send_email(
-                    subject="Password Reset Request",
+                    subject=settings.password_reset_email_subject,
                     template_name="emails/password_reset.html",
                     recipient=account.email_address,
                     context={"token": token.code},

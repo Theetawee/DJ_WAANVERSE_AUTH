@@ -5,15 +5,15 @@ from django.core import mail
 from django.utils import timezone
 from rest_framework import status
 
-from dj_waanverse_auth.models import ResetPasswordToken
 from dj_waanverse_auth.config.settings import auth_config
+from dj_waanverse_auth.models import ResetPasswordToken
 
-from .test_setup import TestSetup
+from .test_setup import Setup
 
 Account = get_user_model()
 
 
-class ResetPasswordTokenTests(TestSetup):
+class ResetPasswordTokenTests(Setup):
     def setUp(self):
         super().setUp()
 
