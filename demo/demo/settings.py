@@ -139,12 +139,6 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 
-SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=110),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
-}
-
-
 # Email settings
 # EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 # use console backend
