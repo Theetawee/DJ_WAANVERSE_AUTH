@@ -18,7 +18,11 @@ class AccountManager(BaseUserManager):
         password: Optional[str] = None,
         **extra_fields
     ):
-        if not username and not email_address and not phone_number:
+        from dj_waanverse_auth.validators.validate_username import generate_username
+
+        if not username:
+            username = generate_username()
+        if not email_address and not phone_number:
             raise ValueError(
                 "At least one of username, email address, or phone number is required"
             )
@@ -69,9 +73,6 @@ class AbstractBaseAccount(AbstractBaseUser, PermissionsMixin):
         max_length=35,
         unique=True,
         db_index=True,
-        blank=True,
-        null=True,
-        help_text="Optional. 35 characters or fewer.",
     )
     email_address = models.EmailField(
         max_length=255,
@@ -105,9 +106,7 @@ class AbstractBaseAccount(AbstractBaseUser, PermissionsMixin):
         abstract = True
         constraints = [
             models.CheckConstraint(
-                check=Q(username__isnull=False)
-                | Q(email_address__isnull=False)
-                | Q(phone_number__isnull=False),
+                check=Q(email_address__isnull=False) | Q(phone_number__isnull=False),
                 name="%(app_label)s_%(class)s_must_have_contact",
             ),
             models.UniqueConstraint(

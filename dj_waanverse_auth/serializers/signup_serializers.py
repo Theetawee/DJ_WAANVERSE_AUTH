@@ -52,6 +52,21 @@ class SignupSerializer(serializers.Serializer):
 
     confirm_password = serializers.CharField(required=True)
 
+    def validate_email_address(self, email_address):
+        if email_address is None:
+            return None
+        return self._validate_email(email_address)
+
+    def validate_username(self, username):
+        if username is None:
+            return None
+        return self._validate_username(username)
+
+    def validate_phone_number(self, phone_number):
+        if phone_number is None:
+            return None
+        return self._validate_phone_number(phone_number)
+
     def validate(self, attrs):
         """
         Validate data.
@@ -70,14 +85,6 @@ class SignupSerializer(serializers.Serializer):
                     ]
                 }
             )
-        if username:
-            username = self._validate_username(username)
-        if email:
-            email = self._validate_email(email)
-        if phone_number:
-            phone_number = self._validate_phone_number(phone_number)
-            attrs["phone_number"] = phone_number
-
         password = self._validate_password(password, confirm_password)
         return attrs
 

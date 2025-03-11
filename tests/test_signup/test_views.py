@@ -22,6 +22,7 @@ class TestSignupView(Setup):
                 "username": "test_user",
                 "password": "Test@1220",
                 "confirm_password": "Test@1220",
+                "phone_number": "1234567870",
             },
             "email": {
                 "email_address": "9Vz2K@example.com",
@@ -43,7 +44,7 @@ class TestSignupView(Setup):
                 settings.access_token_cookie,
                 settings.refresh_token_cookie,
             ]
-            expected_response_data = ["status", "access_token", "refresh_token"]
+            expected_response_data = ["status", "access_token", "refresh_token", "user"]
             for cookie_name in expected_cookies:
                 self.assertIn(cookie_name, response.cookies)
 
@@ -63,8 +64,9 @@ class TestSignupView(Setup):
                     VerificationCode.objects.filter(
                         phone_number=user.phone_number
                     ).count(),
-                    1,
+                    2,
                 )
+                self.assertIsNotNone(user.username)
             if key == "email":
                 user = Account.objects.get(email_address=value["email_address"])
                 self.assertEqual(user.email_verified, False)
@@ -73,12 +75,14 @@ class TestSignupView(Setup):
                 self.assertEqual(
                     mail.outbox[0].subject, settings.verification_email_subject
                 )
-                self.assertEqual(VerificationCode.objects.count(), 1)
+                self.assertEqual(VerificationCode.objects.count(), 2)
+                self.assertIsNotNone(user.username)
             if key == "username":
                 user = Account.objects.get(username=value["username"])
                 self.assertEqual(user.email_verified, False)
                 self.assertEqual(user.phone_number_verified, False)
-                self.assertEqual(response.data["next"], None)
+                self.assertEqual(response.data["next"], "verify_phone")
+                self.assertEqual(user.username, value["username"])
 
     def test_signup_blacklisted_email(self):
         data = {
@@ -89,7 +93,7 @@ class TestSignupView(Setup):
         response = self.client.post(self.signup_url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
-            response.data["non_field_errors"][0],
+            response.data["email_address"][0],
             "This email address is not allowed.",
         )
 
@@ -102,7 +106,7 @@ class TestSignupView(Setup):
         response = self.client.post(self.signup_url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
-            response.data["non_field_errors"][0],
+            response.data["email_address"][0],
             "Disposable email addresses are not allowed.",
         )
 

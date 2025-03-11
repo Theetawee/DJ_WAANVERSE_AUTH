@@ -39,8 +39,16 @@ class SignupView(APIView):
         if serializer.is_valid():
             user = serializer.save()
             token_manager = TokenService(user=user, request=request)
+            basic_serializer = get_serializer_class(
+                settings.basic_account_serializer_class
+            )
 
-            response = Response(status=status.HTTP_201_CREATED, data={})
+            response = Response(
+                status=status.HTTP_201_CREATED,
+                data={
+                    "user": basic_serializer(user).data,
+                },
+            )
             res = token_manager.setup_login_cookies(response)
             tokens = res["tokens"]
             response = res["response"]
@@ -51,8 +59,6 @@ class SignupView(APIView):
                 response.data["next"] = "verify_phone"
             if user.email_address:
                 response.data["next"] = "verify_email"
-            if user.username:
-                response.data["next"] = None
             return response
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
