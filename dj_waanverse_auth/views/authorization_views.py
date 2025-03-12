@@ -12,7 +12,7 @@ from dj_waanverse_auth.serializers.authorization_serializer import SessionSerial
 from dj_waanverse_auth.serializers.client_hints_serializers import ClientInfoSerializer
 from dj_waanverse_auth.services.mfa_service import MFAHandler
 from dj_waanverse_auth.services.token_service import TokenService
-from dj_waanverse_auth.services.utils import get_serializer_class
+from dj_waanverse_auth.services.utils import decode_token, get_serializer_class
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -102,13 +102,49 @@ def authenticated_user(request):
 
 
 @api_view(["POST"])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def logout_view(request):
+    access_token = request.COOKIES.get(auth_config.access_token_cookie)
+
+    if not access_token:
+        access_token = request.data.get("access_token")
+
+    if not access_token:
+        return Response(
+            {"error": "Access token required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    payload = decode_token(access_token)
+    session_id = payload.get("sid")
+
+    if not session_id:
+        return Response(
+            {"error": "Session ID missing from token"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        session = UserSession.objects.get(id=session_id)
+        session.is_active = False
+        session.save(update_fields=["is_active"])
+    except UserSession.DoesNotExist:
+        return Response(
+            {"error": "Session not found"},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+    except Exception as e:
+        return Response(
+            {"error": f"Failed to deactivate session: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
     token_manager = TokenService(request=request)
 
     return token_manager.clear_all_cookies(
-        Response(status=status.HTTP_200_OK, data={"status": "success"})
+        Response(
+            status=status.HTTP_200_OK,
+            data={"status": "success", "session_id": session_id},
+        )
     )
 
 
