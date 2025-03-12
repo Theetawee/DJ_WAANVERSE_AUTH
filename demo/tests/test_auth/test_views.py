@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import status
 
 from dj_waanverse_auth.config.settings import auth_config
+from dj_waanverse_auth.models import UserSession
 from dj_waanverse_auth.services.utils import decode_token, encode_token
 
 from .test_setup import Setup
@@ -17,19 +18,6 @@ class TestAuthorizationViews(Setup):
     def test_get_device_info(self):
         response = self.client.get(self.device_info_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-    def test_logout(self):
-
-        response = self.client.post(self.logout_url)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        for cookie_name in response.cookies:
-            self.assertEqual(
-                response.cookies[cookie_name].value,
-                "",
-                f"Cookie {cookie_name} was not removed",
-            )
 
     def test_get_authenticated_user(self):
         response = self.client.get(self.get_authenticated_user_url)
@@ -238,3 +226,25 @@ class TestAuthViews(Setup):
         )
 
         self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def test_logout(self):
+        login_response = self.client.post(
+            self.login_url, data=self.user_1_email_login_data
+        )
+        access_token = login_response.data["access_token"]
+        payload = decode_token(access_token)
+        print(payload, "payload")
+        session_id = payload["sid"]
+        self.assertTrue(UserSession.objects.filter(id=session_id).exists())
+        self.assertTrue(UserSession.objects.get(id=session_id).is_active)
+        response = self.client.post(self.logout_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        for cookie_name in response.cookies:
+            self.assertEqual(
+                response.cookies[cookie_name].value,
+                "",
+                f"Cookie {cookie_name} was not removed",
+            )
+
+        self.assertFalse(UserSession.objects.filter(id=session_id).first().is_active)

@@ -1,5 +1,3 @@
-import uuid
-
 from django.utils import timezone
 
 from dj_waanverse_auth.models import UserSession
@@ -17,20 +15,18 @@ def create_session(user, request, login_method) -> str:
     Returns:
         A string representing the newly created session ID.
     """
-    session_id = str(uuid.uuid4())
     user_agent = request.META.get("HTTP_USER_AGENT", "")
-    UserSession.objects.create(
+    session = UserSession.objects.create(
         account=user,
-        session_id=session_id,
         ip_address=get_ip_address(request),
         user_agent=user_agent,
         login_method=login_method,
     )
 
-    return session_id
+    return session.id
 
 
-def validate_session(session_id: str) -> bool:
+def validate_session(session_id: int) -> bool:
     """
     Validate a session by checking its existence and updating the last_used timestamp.
 
@@ -41,11 +37,11 @@ def validate_session(session_id: str) -> bool:
         True if the session is valid, False otherwise.
     """
     try:
-        session = UserSession.objects.get(session_id=session_id, is_active=True)
+        session = UserSession.objects.get(id=session_id, is_active=True)
         session.last_used = timezone.now()
         session.save(update_fields=["last_used"])
         return True
-    except UserSession.DoesNotExist:
+    except Exception:
         return False
 
 
@@ -56,7 +52,7 @@ def revoke_session(session_id: str) -> None:
     Args:
         session_id: The ID of the session to revoke.
     """
-    UserSession.objects.filter(session_id=session_id).update(is_active=False)
+    UserSession.objects.filter(id=session_id).update(is_active=False)
 
 
 def revoke_other_sessions(user, current_session_id: str) -> None:
@@ -68,5 +64,5 @@ def revoke_other_sessions(user, current_session_id: str) -> None:
         current_session_id: The ID of the current session to exclude.
     """
     UserSession.objects.filter(user=user, is_active=True).exclude(
-        session_id=current_session_id
+        id=current_session_id
     ).update(is_active=False)

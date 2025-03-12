@@ -44,7 +44,7 @@ class Command(BaseCommand):
                 )
                 for session in expired_sessions:
                     self.stdout.write(
-                        f"Would delete session {session.session_id} "
+                        f"Would delete session {session.id} "
                         f"(created: {session.created_at})"
                     )
             else:

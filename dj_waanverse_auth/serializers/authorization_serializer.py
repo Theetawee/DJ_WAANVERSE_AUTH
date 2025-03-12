@@ -12,7 +12,6 @@ class SessionSerializer(serializers.ModelSerializer):
         model = UserSession
         fields = [
             "id",
-            "session_id",
             "user_agent",
             "ip_address",
             "created_at",
