@@ -73,7 +73,8 @@ def login_view(request):
                     status=status.HTTP_200_OK,
                 )
                 user.last_login = timezone.now()
-                user.save()
+                user.save(update_fields=["last_login"])
+
                 response_data = token_manager.setup_login_cookies(response=response)
                 response = response_data["response"]
                 tokens = response_data["tokens"]
@@ -148,7 +149,7 @@ def mfa_login_view(request):
             status=status.HTTP_200_OK,
         )
         user.last_login = timezone.now()
-        user.save()
+        user.save(update_fields=["last_login"])
 
         response_data = token_manager.setup_login_cookies(response=response)
         response = response_data["response"]

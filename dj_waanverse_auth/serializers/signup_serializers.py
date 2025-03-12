@@ -1,7 +1,6 @@
 import logging
 
 from django.contrib.auth import get_user_model
-from django.core.validators import RegexValidator
 from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
@@ -205,7 +204,7 @@ class EmailVerificationSerializer(serializers.Serializer):
         Validate email with comprehensive checks and sanitization.
         """
         email_validation = EmailValidator(
-            email_address=email_address, check_uniqueness=True
+            email_address=email_address, check_uniqueness=False
         ).validate()
         if email_validation.get("is_valid") is False:
             raise serializers.ValidationError(email_validation["error"])
@@ -279,22 +278,16 @@ class ActivateEmailSerializer(serializers.Serializer):
 
 
 class PhoneNumberVerificationSerializer(serializers.Serializer):
-    phone_number = serializers.CharField(
-        max_length=15,
-        validators=[
-            RegexValidator(
-                regex=r"^\+?[1-9]\d{1,14}$",
-                message="Enter a valid phone number in E.164 format (e.g., +1234567890).",
-            )
-        ],
-    )
+    phone_number = serializers.CharField(required=True)
 
     def validate_phone_number(self, value):
         """
         Ensure the phone number is unique and not already used for verification.
         """
-        if Account.objects.filter(phone_number=value).exists():
-            raise serializers.ValidationError(_("This phone number is already in use."))
+        validation = PhoneNumberValidator(value).validate()
+        if validation.get("is_valid") is False:
+            raise serializers.ValidationError(validation["error"])
+
         return value
 
     def create(self, validated_data):

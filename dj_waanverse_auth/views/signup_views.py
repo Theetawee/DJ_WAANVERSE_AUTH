@@ -1,6 +1,7 @@
 import logging
 
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -50,6 +51,8 @@ class SignupView(APIView):
                 },
             )
             res = token_manager.setup_login_cookies(response)
+            user.last_login = timezone.now()
+            user.save(update_fields=["last_login"])
             tokens = res["tokens"]
             response = res["response"]
             response.data["status"] = "success"
