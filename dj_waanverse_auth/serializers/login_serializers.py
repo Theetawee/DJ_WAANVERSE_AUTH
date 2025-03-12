@@ -61,7 +61,6 @@ class LoginSerializer(serializers.Serializer):
 
         login_field = attrs.get("login_field")
         password = attrs.get("password")
-        request = self.context.get("request")
 
         user = authenticate(
             request=self.context.get("request"),
@@ -78,14 +77,12 @@ class LoginSerializer(serializers.Serializer):
             )
 
         self._validate_account_status(user)
-        login_method = request.login_method
         mfa_manager = MFAHandler(user)
         mfa_enabled = mfa_manager.is_mfa_enabled()
 
         attrs.update(
             {
                 "user": user,
-                "login_method": login_method,
                 "mfa": mfa_enabled,
             }
         )

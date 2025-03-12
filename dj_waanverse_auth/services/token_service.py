@@ -42,7 +42,7 @@ class CookieSettings:
 class TokenService:
     """Service for handling JWT token operations with enhanced security and functionality."""
 
-    def __init__(self, request, user=None, refresh_token=None, login_method=None):
+    def __init__(self, request, user=None, refresh_token=None):
         self.user = user
         self.refresh_token = refresh_token
         self.cookie_settings = CookieSettings()
@@ -50,7 +50,6 @@ class TokenService:
         self.request = request
         self.user_agent = request.headers.get("User-Agent", "")
         self.platform = request.headers.get("Sec-CH-UA-Platform", "Unknown").strip('"')
-        self.login_method = login_method
         self.is_refresh = bool(refresh_token)
 
     @property
@@ -78,9 +77,7 @@ class TokenService:
                 }
             else:
 
-                session_id = create_session(
-                    user=self.user, request=self.request, login_method=self.login_method
-                )
+                session_id = create_session(user=self.user, request=self.request)
                 refresh = RefreshToken.for_user(self.user, session_id=session_id)
                 return {
                     "refresh_token": str(refresh),

@@ -3,8 +3,9 @@ from pyotp import TOTP
 from rest_framework import status
 
 from dj_waanverse_auth.config.settings import auth_config
-from dj_waanverse_auth.models import MultiFactorAuth
+from dj_waanverse_auth.models import MultiFactorAuth, UserSession
 from dj_waanverse_auth.services.mfa_service import MFAHandler
+from dj_waanverse_auth.services.utils import decode_token
 
 from .test_setup import Setup
 
@@ -92,6 +93,11 @@ class TestMFALogin(Setup):
         self.assertIn("access_token", response.data)
         self.assertIn("refresh_token", response.data)
         self.assertIn("user", response.data)
+
+        access_token = response.data["access_token"]
+        payload = decode_token(access_token)
+        session_id = payload["sid"]
+        self.assertTrue(UserSession.objects.filter(id=session_id).exists())
 
     def test_login_mfa_verify_invalid_code(self):
         login_response = self.client.post(

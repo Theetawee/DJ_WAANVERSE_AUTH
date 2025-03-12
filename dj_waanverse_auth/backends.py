@@ -15,25 +15,6 @@ class AuthenticationBackend(BaseBackend):
     - Username
     """
 
-    def _determine_login_method(self, login_field, matched_user):
-        """
-        Determines the login method used.
-
-        Returns:
-            str: 'email', 'phone', or 'username'
-        """
-        try:
-            validate_email(login_field)
-            if login_field == matched_user.email_address:
-                return "email"
-        except ValidationError:
-            if login_field == matched_user.phone_number:
-                return "phone"
-            elif login_field == matched_user.username:
-                return "username"
-
-        return "unknown"
-
     def authenticate(self, request, login_field=None, password=None, **kwargs):
         """
         Authenticate a user using only:
@@ -67,8 +48,6 @@ class AuthenticationBackend(BaseBackend):
             return None
 
         if user.check_password(password):
-            if request:
-                request.login_method = self._determine_login_method(login_field, user)
             return user
 
         return None

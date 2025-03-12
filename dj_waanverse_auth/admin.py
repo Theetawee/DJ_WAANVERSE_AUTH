@@ -15,16 +15,13 @@ if auth_config.enable_admin:
         list_display = (
             "id",
             "account",
-            "user_agent",
-            "ip_address",
             "last_used",
             "is_active",
         )
-        list_filter = ("is_active", "login_method", "created_at")
+        list_filter = ("is_active", "created_at")
         search_fields = ("account__email", "user_agent", "ip_address")
         ordering = ("-last_used",)
 
     admin.site.register(MultiFactorAuth)
     admin.site.register(VerificationCode)
-    admin.site.register(UserSession)
     admin.site.register(ResetPasswordToken)

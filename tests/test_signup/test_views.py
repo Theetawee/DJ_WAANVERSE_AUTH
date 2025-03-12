@@ -3,7 +3,8 @@ from django.core import mail
 from rest_framework import status
 
 from dj_waanverse_auth import settings
-from dj_waanverse_auth.models import VerificationCode
+from dj_waanverse_auth.models import UserSession, VerificationCode
+from dj_waanverse_auth.services.utils import decode_token
 
 from .setup import Setup
 
@@ -38,7 +39,10 @@ class TestSignupView(Setup):
 
         for key, value in data.items():
             response = self.client.post(self.signup_url, value)
-
+            access_token = response.data["access_token"]
+            payload = decode_token(access_token)
+            session_id = payload["sid"]
+            self.assertTrue(UserSession.objects.filter(id=session_id).exists())
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
             expected_cookies = [
                 settings.access_token_cookie,
@@ -66,6 +70,7 @@ class TestSignupView(Setup):
                     ).count(),
                     2,
                 )
+
                 self.assertIsNotNone(user.username)
             if key == "email":
                 user = Account.objects.get(email_address=value["email_address"])
@@ -77,6 +82,7 @@ class TestSignupView(Setup):
                 )
                 self.assertEqual(VerificationCode.objects.count(), 2)
                 self.assertIsNotNone(user.username)
+
             if key == "username":
                 user = Account.objects.get(username=value["username"])
                 self.assertEqual(user.email_verified, False)

@@ -5,6 +5,8 @@ from django.core import mail
 from rest_framework import status
 
 from dj_waanverse_auth.config.settings import auth_config
+from dj_waanverse_auth.models import UserSession
+from dj_waanverse_auth.services.utils import decode_token
 
 from .test_setup import Setup
 
@@ -132,6 +134,10 @@ class TestLogin(Setup):
             subject=auth_config.login_alert_email_subject,
             recipient=self.test_user_1.email_address,
         )
+        access_token = response.data["access_token"]
+        payload = decode_token(access_token)
+        session_id = payload["sid"]
+        self.assertTrue(UserSession.objects.filter(id=session_id).exists())
 
     def test_login_with_email_disabled(self):
         """
@@ -183,6 +189,10 @@ class TestLogin(Setup):
         self.assert_cookies_match_response(response)
         user = Account.objects.get(email_address=self.test_user_1.email_address)
         self.assertNotEqual(last_login, user.last_login)
+        access_token = response.data["access_token"]
+        payload = decode_token(access_token)
+        session_id = payload["sid"]
+        self.assertTrue(UserSession.objects.filter(id=session_id).exists())
 
     def test_login_with_phone(self):
         """

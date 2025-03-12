@@ -49,10 +49,7 @@ def login_view(request):
         if serializer.is_valid():
             user = serializer.validated_data["user"]
             mfa = serializer.validated_data["mfa"]
-            login_method = serializer.validated_data["login_method"]
-            token_manager = token_service.TokenService(
-                user=user, request=request, login_method=login_method
-            )
+            token_manager = token_service.TokenService(user=user, request=request)
 
             if mfa:
                 response = Response(
