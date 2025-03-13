@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.contrib.auth import get_user_model
 from django.core import mail
 from rest_framework import status
@@ -5,6 +7,10 @@ from rest_framework import status
 from dj_waanverse_auth import settings
 from dj_waanverse_auth.models import UserSession, VerificationCode
 from dj_waanverse_auth.services.utils import decode_token
+from dj_waanverse_auth.throttles import (
+    EmailVerificationThrottle,
+    PhoneVerificationThrottle,
+)
 
 from .setup import Setup
 
@@ -89,6 +95,73 @@ class TestSignupView(Setup):
                 self.assertEqual(user.phone_number_verified, False)
                 self.assertEqual(response.data["next"], "verify_phone")
                 self.assertEqual(user.username, value["username"])
+
+    @patch.object(EmailVerificationThrottle, "allow_request", return_value=True)
+    def test_signup_confirm_send_email_already_exists(self, _):
+        data = {
+            "email_address": "9Vz2K@example.com",
+            "password": "Test@1220",
+            "confirm_password": "Test@1220",
+        }
+        self.client.post(self.signup_url, data)
+
+        # now resend verification code
+        response = self.client.post(
+            self.add_email_url, {"email_address": "9Vz2K@example.com"}
+        )
+        self.assertIn(
+            "Email address is already in use.", response.data["email_address"]
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @patch.object(EmailVerificationThrottle, "allow_request", return_value=True)
+    def test_signup_confirm_resend_email(self, _):
+        data = {
+            "email_address": "9Vz2K@example.com",
+            "password": "Test@1220",
+            "confirm_password": "Test@1220",
+        }
+        self.client.post(self.signup_url, data)
+
+        # now resend verification code
+        response = self.client.post(
+            self.add_email_url, {"email_address": "9Vz2K@example.com", "type": "resend"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    @patch.object(PhoneVerificationThrottle, "allow_request", return_value=True)
+    def test_signup_confirm_send_phone_already_exists(self, _):
+        data = {
+            "phone_number": "1234567890",
+            "password": "Test@1220",
+            "confirm_password": "Test@1220",
+        }
+        self.client.post(self.signup_url, data)
+
+        # now resend verification code
+        response = self.client.post(self.add_phone_url, {"phone_number": "1234567890"})
+        self.assertIn(
+            "This phone number is already in use. Please provide a different phone number.",
+            response.data["phone_number"],
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @patch.object(PhoneVerificationThrottle, "allow_request", return_value=True)
+    def test_signup_confirm_resend_phone(self, _):
+        data = {
+            "phone_number": "1234567890",
+            "password": "Test@1220",
+            "confirm_password": "Test@1220",
+        }
+        self.client.post(self.signup_url, data)
+
+        # now resend verification code
+        response = self.client.post(
+            self.add_phone_url, {"phone_number": "1234567890", "type": "resend"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_signup_blacklisted_email(self):
         data = {
@@ -218,7 +291,7 @@ class TestVerifications(Setup):
     def test_add_email(self):
         response = self.client.post(
             self.add_email_url,
-            data={"email_address": "9Vz2K@example.com", "password": "Test@1220"},
+            data={"email_address": "9Vz2K@example.com"},
         )
         print(response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -274,3 +347,15 @@ class TestVerifications(Setup):
         self.assertEqual(
             Account.objects.get(username="test_user").phone_number, "1294567890"
         )
+
+    def test_add_phone(self):
+        response = self.client.post(
+            self.add_phone_url,
+            data={"phone_number": "4448883363"},
+        )
+        print(response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            Account.objects.get(phone_number="4448883363").phone_number_verified, False
+        )
+        self.assertEqual(VerificationCode.objects.count(), 1)

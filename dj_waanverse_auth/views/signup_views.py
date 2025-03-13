@@ -76,9 +76,11 @@ def add_email_view(request):
     """
     Function-based view to initiate email verification with a
     """
+    request_type = request.data.get("type", None)
+    resend = request_type == "resend"
     try:
         serializer = EmailVerificationSerializer(
-            data=request.data, context={"user": request.user}
+            data=request.data, context={"user": request.user, "is_resend": resend}
         )
         if serializer.is_valid():
             serializer.save()
@@ -128,12 +130,19 @@ def activate_email_address(request):
 @throttle_classes([PhoneVerificationThrottle])
 def add_phone_number_view(request):
     """
-    Function-based view to initiate phone_number verification with a
+    Function-based view to initiate phone number verification.
     """
+    request_type = request.data.get("type")
+    resend = request_type == "resend"
+
     try:
-        serializer = get_serializer_class(
+        serializer_class = get_serializer_class(
             settings.phone_number_verification_serializer
-        )(data=request.data)
+        )
+        serializer = serializer_class(
+            data=request.data, context={"is_resend": resend, "user": request.user}
+        )
+
         if serializer.is_valid():
             serializer.save()
             return Response(
@@ -143,13 +152,11 @@ def add_phone_number_view(request):
                 },
                 status=status.HTTP_200_OK,
             )
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     except Exception as e:
-        return Response(
-            {"error": str(e)},
-            status=status.HTTP_404_NOT_FOUND,
-        )
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(["POST"])
