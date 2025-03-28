@@ -149,7 +149,6 @@ class TestAuthViews(Setup):
         login_response = self.client.post(
             self.login_url, data=self.user_1_email_login_data
         )
-
         access_token = login_response.data["access_token"]
         payload = decode_token(access_token)
         payload["sid"] = "invalid"

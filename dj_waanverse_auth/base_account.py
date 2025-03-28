@@ -1,10 +1,7 @@
 from typing import Optional
 
-from django.contrib.auth.models import (
-    AbstractBaseUser,
-    BaseUserManager,
-    PermissionsMixin,
-)
+from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
+                                        PermissionsMixin)
 from django.db import models
 from django.db.models import Q
 
@@ -18,7 +15,8 @@ class AccountManager(BaseUserManager):
         password: Optional[str] = None,
         **extra_fields
     ):
-        from dj_waanverse_auth.validators.validate_username import generate_username
+        from dj_waanverse_auth.validators.validate_username import \
+            generate_username
 
         if not username:
             username = generate_username()
@@ -100,7 +98,7 @@ class AbstractBaseAccount(AbstractBaseUser, PermissionsMixin):
     objects = AccountManager()
 
     USERNAME_FIELD = "username"
-    REQUIRED_FIELDS = []
+    REQUIRED_FIELDS = ["email_address"]
 
     class Meta:
         abstract = True

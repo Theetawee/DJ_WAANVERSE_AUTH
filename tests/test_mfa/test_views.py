@@ -191,6 +191,7 @@ class TestMFALogin(Setup):
                 "code": TOTP(secret).now(),
             },
         )
+        print(response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertFalse(
             MultiFactorAuth.objects.filter(

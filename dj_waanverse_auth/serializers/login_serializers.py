@@ -30,6 +30,13 @@ class LoginSerializer(serializers.Serializer):
             "min_length": _("Password must be at least 8 characters long."),
         },
     )
+    login_method = serializers.ChoiceField(
+        choices=[
+            ("email_address", _("email_address")),
+            ("phone_number", _("phone number")),
+            ("username", _("username")),
+        ]
+    )
 
     turnstile_token = serializers.CharField(required=False)
 
@@ -66,6 +73,7 @@ class LoginSerializer(serializers.Serializer):
             request=self.context.get("request"),
             login_field=login_field,
             password=password,
+            method=attrs.get("login_method"),
         )
 
         if not user:

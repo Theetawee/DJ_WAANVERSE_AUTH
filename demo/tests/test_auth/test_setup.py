@@ -49,9 +49,11 @@ class Setup(Base):
         self.user_1_email_login_data = {
             "login_field": "test_user1@gmail.com",
             "password": "Test@12",
+            "login_method": "email_address",
         }
         self.test_user_1 = Account.objects.get(username="test_user1")
         self.user_1_username_login_data = {
             "login_field": "test_user1",
             "password": "Test@12",
+            "login_method": "username",
         }

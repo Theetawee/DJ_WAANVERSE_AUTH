@@ -75,7 +75,9 @@ def deactivate_mfa_view(request):
     password = request.data.get("password")
     code = request.data.get("code")
 
-    if not password or not authenticate(username=user.username, password=password):
+    if not password or not authenticate(
+        login_field=user.username, password=password, method="username"
+    ):
         return Response(
             {"detail": "Invalid password."},
             status=status.HTTP_400_BAD_REQUEST,
