@@ -51,5 +51,5 @@ jobs:
               env:
                   DATABASE_URL: postgres://test_user:test_password@localhost:5432/test_db
               run: |
-                  coverage run --source='.' demo/manage.py test
+                  coverage run demo/manage.py test
                   coverage report
