@@ -26,7 +26,7 @@ class AuthenticationBackend(BaseBackend):
             raise ValidationError("No account found with this email.")
         if not user.email_verified:
             raise ValidationError(
-                "Email is not verified. Please verify your email before logging in."
+                "unverified_email"
             )
         return user
 
@@ -37,7 +37,7 @@ class AuthenticationBackend(BaseBackend):
             raise ValidationError("No account found with this phone number.")
         if not user.phone_number_verified:
             raise ValidationError(
-                "Phone number is not verified. Please verify your phone number before logging in."
+                "unverified_phone"
             )
         return user
 

@@ -227,3 +227,29 @@ class TestLogin(Setup):
 
         response = self.client.post(self.login_url, self.user_1_email_login_data)
         self.assert_response_structure(response, "test_user1")
+
+
+class TestUnVerifiedUserLogin(Setup):
+    def setUp(self):
+        super().setUp()
+        self.test_user_1.email_verified = False
+        self.test_user_1.phone_number_verified = False
+        self.test_user_1.save()
+
+    def test_login_unverified_email(self):
+        """
+        Test login with unverified email address.
+        """
+        response = self.client.post(self.login_url, self.user_1_email_login_data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        self.assertIn("unverified_email", response.data["non_field_errors"][0])
+
+    def test_login_unverified_phone(self):
+        """
+        Test login with unverified email address.
+        """
+        response = self.client.post(self.login_url, self.user_1_phone_login_data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        self.assertIn("unverified_phone", response.data["non_field_errors"][0])
