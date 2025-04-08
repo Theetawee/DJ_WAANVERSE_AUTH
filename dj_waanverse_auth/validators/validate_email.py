@@ -31,16 +31,16 @@ class EmailValidator:
     def _check_basic_format(self) -> bool:
         """Check basic email format requirements"""
         if not self.email_address:
-            return self._invalid_result("Email address is required.")
+            return self._invalid_result("email_required")
 
         try:
             django_validate_email(self.email_address)
         except ValidationError:
-            return self._invalid_result("Invalid email format.")
+            return self._invalid_result("invalid_format")
 
         if len(self.email_address) > 250:
             return self._invalid_result(
-                "Email address is too long (maximum 250 characters)."
+                "too_long_email"
             )
 
         return True
@@ -50,23 +50,23 @@ class EmailValidator:
         try:
             _, domain = self.email_address.split("@", 1)
         except ValueError:
-            return self._invalid_result("Invalid email format.")
+            return self._invalid_result("invalid_format")
 
         if domain in settings.disposable_email_domains:
-            return self._invalid_result("Disposable email addresses are not allowed.")
+            return self._invalid_result("disposable_email")
 
         return True
 
     def _check_blacklist_and_uniqueness(self) -> bool:
         """Check blacklist and uniqueness validations"""
         if self.email_address.lower() in settings.blacklisted_emails:
-            return self._invalid_result("This email address is not allowed.")
+            return self._invalid_result("email_not_allowed")
 
         if (
             self.check_uniqueness
             and User.objects.filter(email_address__iexact=self.email_address).exists()
         ):
-            return self._invalid_result("Email address is already in use.")
+            return self._invalid_result("email_in_use")
 
         return True
 

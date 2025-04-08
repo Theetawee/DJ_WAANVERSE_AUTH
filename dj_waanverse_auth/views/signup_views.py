@@ -72,15 +72,13 @@ signup_view = SignupView.as_view()
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 @throttle_classes([EmailVerificationThrottle])
-def add_email_view(request):
+def send_email_verification_code(request):
     """
     Function-based view to initiate email verification with a
     """
-    request_type = request.data.get("type", None)
-    resend = request_type == "resend"
     try:
         serializer = EmailVerificationSerializer(
-            data=request.data, context={"user": request.user, "is_resend": resend}
+            data=request.data, context={"user": request.user}
         )
         if serializer.is_valid():
             serializer.save()
@@ -128,20 +126,15 @@ def activate_email_address(request):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 @throttle_classes([PhoneVerificationThrottle])
-def add_phone_number_view(request):
+def send_phone_number_verification_code_view(request):
     """
     Function-based view to initiate phone number verification.
     """
-    request_type = request.data.get("type")
-    resend = request_type == "resend"
-
     try:
         serializer_class = get_serializer_class(
             settings.phone_number_verification_serializer
         )
-        serializer = serializer_class(
-            data=request.data, context={"is_resend": resend, "user": request.user}
-        )
+        serializer = serializer_class(data=request.data, context={"user": request.user})
 
         if serializer.is_valid():
             serializer.save()

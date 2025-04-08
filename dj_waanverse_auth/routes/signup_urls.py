@@ -3,17 +3,17 @@ from django.urls import path
 from dj_waanverse_auth.views.signup_views import (
     activate_email_address,
     activate_phone_number,
-    add_email_view,
-    add_phone_number_view,
+    send_email_verification_code,
+    send_phone_number_verification_code_view,
     signup_view,
     update_account_status,
 )
 
 urlpatterns = [
     path(
-        "email/add/",
-        add_email_view,
-        name="dj_waanverse_auth_add_email",
+        "email/send-code/",
+        send_email_verification_code,
+        name="dj_waanverse_auth_send_email_verification_code",
     ),
     path("", signup_view, name="dj_waanverse_auth_signup"),
     path(
@@ -21,7 +21,11 @@ urlpatterns = [
         activate_email_address,
         name="dj_waanverse_auth_activate_email",
     ),
-    path("phone/add/", add_phone_number_view, name="dj_waanverse_auth_add_phone"),
+    path(
+        "phone/send-code/",
+        send_phone_number_verification_code_view,
+        name="dj_waanverse_auth_send_phone_number_verification_code",
+    ),
     path(
         "phone/activate/",
         activate_phone_number,

@@ -9,8 +9,12 @@ class Setup(Base):
 
         self.signup_url = reverse("dj_waanverse_auth_signup")
         self.activate_email_url = reverse("dj_waanverse_auth_activate_email")
-        self.add_email_url = reverse("dj_waanverse_auth_add_email")
-        self.add_phone_url = reverse("dj_waanverse_auth_add_phone")
+        self.verify_email_address_url = reverse(
+            "dj_waanverse_auth_send_email_verification_code"
+        )
+        self.send_phone_verification_code_url = reverse(
+            "dj_waanverse_auth_send_phone_number_verification_code"
+        )
         self.activate_phone_url = reverse("dj_waanverse_auth_activate_phone")
         self.update_account_status_url = reverse(
             "dj_waanverse_auth_update_account_status"

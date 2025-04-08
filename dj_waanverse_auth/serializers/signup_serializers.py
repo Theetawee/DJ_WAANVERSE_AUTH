@@ -203,17 +203,9 @@ class EmailVerificationSerializer(serializers.Serializer):
         """
         Validate email with comprehensive checks and sanitization.
         """
-        check_uniqueness = True
-        is_resend = self.context.get("is_resend", False)
-        if is_resend:
-            check_uniqueness = False
-
-        email_validation = EmailValidator(
-            email_address=email_address, check_uniqueness=check_uniqueness
-        ).validate()
-        if email_validation.get("is_valid") is False:
-            raise serializers.ValidationError(email_validation["error"])
-
+        user = self.context.get("user")
+        if user.email_address != email_address:
+            raise serializers.ValidationError("mismatch")
         return email_address
 
     def validate(self, attrs):
@@ -222,7 +214,6 @@ class EmailVerificationSerializer(serializers.Serializer):
     def create(self, validated_data):
         try:
             with transaction.atomic():
-                user = self.context.get("user")
                 email_address = validated_data["email_address"]
                 verification_code = VerificationCode.objects.filter(
                     email_address=email_address
@@ -230,15 +221,10 @@ class EmailVerificationSerializer(serializers.Serializer):
                 if verification_code.exists():
                     verification_code.delete()
                 verify_email_address(email_address)
-                user.email_address = email_address
-                user.email_verified = False
-                user.save()
                 return email_address
         except Exception as e:
             logger.error(f"Email verification failed: {str(e)}")
-            raise serializers.ValidationError(
-                _("Failed to initiate email verification.")
-            )
+            raise serializers.ValidationError(f"failed {e}")
 
 
 class ActivateEmailSerializer(serializers.Serializer):
@@ -289,15 +275,9 @@ class PhoneNumberVerificationSerializer(serializers.Serializer):
         """
         Ensure the phone number is unique and not already used for verification.
         """
-        check_uniqueness = True
-        is_resend = self.context.get("is_resend", False)
-        if is_resend:
-            check_uniqueness = False
-        validation = PhoneNumberValidator(
-            value, check_uniqueness=check_uniqueness
-        ).validate()
-        if validation.get("is_valid") is False:
-            raise serializers.ValidationError(validation["error"])
+        user = self.context.get("user")
+        if user.phone_number != value:
+            raise serializers.ValidationError("mismatch")
 
         return value
 
@@ -317,10 +297,6 @@ class PhoneNumberVerificationSerializer(serializers.Serializer):
                     phone_number=phone_number, code=code
                 )
                 new_verification.save()
-                user = self.context.get("user")
-                user.phone_number = phone_number
-                user.phone_number_verified = False
-                user.save(update_fields=["phone_number", "phone_number_verified"])
 
                 self._send_code(phone_number, code)
 

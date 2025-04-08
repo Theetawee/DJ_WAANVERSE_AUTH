@@ -9,8 +9,11 @@ User = get_user_model()
 
 
 class PhoneNumberValidator:
+
     def __init__(self, phone_number: str, check_uniqueness: bool = False):
-        phone_number = phone_number.strip().replace(" ", "").replace("-", "")
+        phone_number = (
+            phone_number.strip().replace(" ", "").replace("-", "").replace("+", "")
+        )
         self.phone_number = phone_number
         self.check_uniqueness = check_uniqueness
         self.result = {"phone_number": phone_number, "error": None, "is_valid": True}
@@ -32,14 +35,14 @@ class PhoneNumberValidator:
         """Check if the phone number has a valid format"""
         if not self.phone_number:
             return self._invalid_result(
-                "Phone number is required. Please provide a valid phone number."
+                "phone_required"
             )
 
         # Using regex for phone number format (adjust according to your region's format)
         phone_regex = r"^\+?[1-9]\d{1,14}$"
         if not re.match(phone_regex, self.phone_number):
             return self._invalid_result(
-                "Invalid phone number format. Ensure it starts with a '+' followed by the country code and digits only."
+                "invalid_phone"
             )
 
         return True
@@ -47,7 +50,7 @@ class PhoneNumberValidator:
     def _check_length(self) -> bool:
         """Check if the phone number length is within allowed limits"""
         if len(self.phone_number) > 15:
-            return self._invalid_result("Phone number must not exceed 15 characters.")
+            return self._invalid_result("long_phone")
 
         return True
 
@@ -55,7 +58,7 @@ class PhoneNumberValidator:
         """Check if the phone number is blacklisted or already in use"""
         if self.phone_number in settings.blacklisted_phone_numbers:
             return self._invalid_result(
-                "This phone number is not allowed. Please use a different one."
+                "phone_not_allowed"
             )
 
         if (
@@ -63,7 +66,7 @@ class PhoneNumberValidator:
             and User.objects.filter(phone_number=self.phone_number).exists()
         ):
             return self._invalid_result(
-                "This phone number is already in use. Please provide a different phone number."
+                "phone_in_use"
             )
 
         return True
