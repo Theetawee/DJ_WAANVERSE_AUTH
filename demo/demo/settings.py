@@ -134,8 +134,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 AUTHENTICATION_BACKENDS = [
-    "dj_waanverse_auth.backends.AuthenticationBackend",
     "django.contrib.auth.backends.ModelBackend",
+    "dj_waanverse_auth.backends.AuthenticationBackend",
 ]
 
 
@@ -169,6 +169,9 @@ WAANVERSE_AUTH_CONFIG = {
     "PLATFORM_NAME": "Demo Platform",
     "EMAIL_THREADING_ENABLED": False,
     "UPDATE_ACCOUNT_SERIALIZER": "accounts.serializers.UpdateAccountSerializer",
+    "GOOGLE_CLIENT_ID": os.environ.get("GOOGLE_CLIENT_ID"),
+    "GOOGLE_CLIENT_SECRET": os.environ.get("GOOGLE_SECRET_ID"),
+    "GOOGLE_REDIRECT_URI": os.environ.get("GOOGLE_REDIRECT_URI"),
 }
 
 REST_FRAMEWORK = {

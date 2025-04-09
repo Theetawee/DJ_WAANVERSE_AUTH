@@ -123,3 +123,11 @@ class ResetPasswordToken(models.Model):
 
     def __str__(self):
         return f"Reset token for {self.account.email_address}"
+
+
+class GoogleStateToken(models.Model):
+    state = models.CharField(max_length=255)
+    code_verifier = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.state

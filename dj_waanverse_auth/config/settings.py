@@ -164,6 +164,9 @@ class AuthConfig:
         self.google_client_id = config_dict.get("GOOGLE_CLIENT_ID", None)
         self.google_client_secret = config_dict.get("GOOGLE_CLIENT_SECRET", None)
         self.google_redirect_uri = config_dict.get("GOOGLE_REDIRECT_URI", None)
+        self.google_auth_class = config_dict.get(
+            "GOOGLE_AUTH_CLASS", "dj_waanverse_auth.google_auth.GoogleOAuth"
+        )
 
         # Validate configuration
         self._validate_configuration()

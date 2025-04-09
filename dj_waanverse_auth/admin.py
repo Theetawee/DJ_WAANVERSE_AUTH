@@ -4,6 +4,7 @@ if auth_config.enable_admin:
     from django.contrib import admin
 
     from .models import (
+        GoogleStateToken,
         MultiFactorAuth,
         ResetPasswordToken,
         UserSession,
@@ -25,3 +26,4 @@ if auth_config.enable_admin:
     admin.site.register(MultiFactorAuth)
     admin.site.register(VerificationCode)
     admin.site.register(ResetPasswordToken)
+    admin.site.register(GoogleStateToken)

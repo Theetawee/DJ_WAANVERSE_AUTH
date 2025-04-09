@@ -24,10 +24,6 @@ class AuthenticationBackend(BaseBackend):
         user = User.objects.filter(email_address=login_field).first()
         if not user:
             raise ValidationError("No account found with this email.")
-        if not user.email_verified:
-            raise ValidationError(
-                "unverified_email"
-            )
         return user
 
     def _authenticate_phone(self, login_field):
@@ -35,10 +31,6 @@ class AuthenticationBackend(BaseBackend):
         user = User.objects.filter(phone_number=login_field).first()
         if not user:
             raise ValidationError("No account found with this phone number.")
-        if not user.phone_number_verified:
-            raise ValidationError(
-                "unverified_phone"
-            )
         return user
 
     def _authenticate_username(self, login_field):
@@ -49,7 +41,7 @@ class AuthenticationBackend(BaseBackend):
         return user
 
     def authenticate(
-        self, request, login_field=None, password=None, method=None, **kwargs
+        self, request, login_field=None, password=None, method="username", **kwargs
     ):
         """
         Authenticate a user using only:

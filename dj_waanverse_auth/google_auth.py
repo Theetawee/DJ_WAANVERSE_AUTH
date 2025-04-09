@@ -1,4 +1,3 @@
-# authentication/google_auth.py
 import base64
 import hashlib
 import secrets
@@ -8,6 +7,7 @@ import requests
 from django.contrib.auth import get_user_model
 
 from dj_waanverse_auth import settings as auth_config
+from dj_waanverse_auth.models import GoogleStateToken
 
 User = get_user_model()
 
@@ -48,10 +48,7 @@ class GoogleOAuth:
         code_verifier = secrets.token_urlsafe(64)
         code_challenge = self._generate_code_challenge(code_verifier)
 
-        # Store code_verifier in session for later verification
-        if self.request:
-            self.request.session["google_oauth_code_verifier"] = code_verifier
-            self.request.session["google_oauth_state"] = state
+        GoogleStateToken.objects.create(state=state, code_verifier=code_verifier)
 
         # Build authorization parameters
         params = {
@@ -62,7 +59,7 @@ class GoogleOAuth:
             "state": state,
             "code_challenge": code_challenge,
             "code_challenge_method": "S256",
-            "access_type": "offline",  # For refresh token
+            "access_type": "offline",
         }
 
         if prompt:
@@ -72,7 +69,8 @@ class GoogleOAuth:
         auth_url = f"{self.AUTHORIZATION_URL}?{urlencode(params)}"
         return auth_url, state, code_verifier
 
-    def exchange_code_for_token(self, code, code_verifier=None):
+    def exchange_code_for_token(self, code, code_verifier):
+        print(code_verifier, "code_verifier")
         """
         Exchange authorization code for access and refresh tokens.
 
@@ -83,11 +81,7 @@ class GoogleOAuth:
         Returns:
             dict: The token response containing access_token, refresh_token, etc.
         """
-        # If code_verifier not provided, try to get from session
-        if not code_verifier and self.request:
-            code_verifier = self.request.session.get("google_oauth_code_verifier")
 
-        # Token request data
         token_data = {
             "client_id": self.client_id,
             "client_secret": self.client_secret,
@@ -102,11 +96,13 @@ class GoogleOAuth:
 
         # Make the token request
         response = requests.post(self.TOKEN_URL, data=token_data)
+        print(response.json(), "response")
 
         # Raise exception if request failed
         response.raise_for_status()
 
         # Return token response
+
         return response.json()
 
     def get_user_info(self, access_token):
@@ -145,29 +141,8 @@ class GoogleOAuth:
         response.raise_for_status()
         return response.json()
 
-    def validate_state(self, state):
-        """
-        Validate the state parameter to prevent CSRF attacks.
-
-        Args:
-            state (str): The state parameter from the callback
-
-        Returns:
-            bool: True if state is valid, False otherwise
-        """
-        if not self.request:
-            return False
-
-        saved_state = self.request.session.get("google_oauth_state")
-        if not saved_state:
-            return False
-
-        # Clear the stored state
-        del self.request.session["google_oauth_state"]
-
-        return state == saved_state
-
     def authenticate_or_create_user(self, user_info):
+        print(user_info)
         """
         Authenticate an existing user or create a new one based on Google user info.
 
@@ -183,7 +158,10 @@ class GoogleOAuth:
 
         # Check if the user exists
         try:
-            user = User.objects.get(email=email_address)
+            user = User.objects.get(email_address=email_address)
+            if user.email_verified is False:
+                user.email_verified = user_info.get("email_verified", False)
+                user.save()
             created = False
         except User.DoesNotExist:
             # Create a new user
