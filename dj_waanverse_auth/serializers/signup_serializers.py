@@ -218,7 +218,7 @@ class EmailVerificationSerializer(serializers.Serializer):
                 )
                 if verification_code.exists():
                     verification_code.delete()
-                verify_email_address(email_address)
+                verify_email_address(self.context.get("user"))
                 return email_address
         except Exception as e:
             logger.error(f"Email verification failed: {str(e)}")
