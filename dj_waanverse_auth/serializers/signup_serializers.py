@@ -1,10 +1,5 @@
 import logging
 
-from django.contrib.auth import get_user_model
-from django.db import transaction
-from django.utils.translation import gettext_lazy as _
-from rest_framework import serializers
-
 from dj_waanverse_auth import settings
 from dj_waanverse_auth.models import VerificationCode
 from dj_waanverse_auth.services.email_service import EmailService
@@ -15,23 +10,27 @@ from dj_waanverse_auth.validators import (
     PhoneNumberValidator,
     UsernameValidator,
 )
+from django.contrib.auth import get_user_model
+from django.db import transaction
+from django.utils.translation import gettext_lazy as _
+from rest_framework import serializers
 
 logger = logging.getLogger(__name__)
 
 Account = get_user_model()
 
 
-def verify_email_address(email_address):
+def verify_email_address(user):
     code = generate_code()
     email_manager = EmailService()
     template_name = "emails/verify_email.html"
     with transaction.atomic():
-        VerificationCode.objects.create(email_address=email_address, code=code)
+        VerificationCode.objects.create(email_address=user.email_address, code=code)
         email_manager.send_email(
             subject=settings.verification_email_subject,
             template_name=template_name,
-            recipient=email_address,
-            context={"code": code},
+            recipient=user.email_address,
+            context={"code": code, "user": user},
         )
 
 
@@ -110,7 +109,7 @@ class SignupSerializer(serializers.Serializer):
                 user = Account.objects.create_user(**user_data)
                 if used_field:
                     if used_field == "email_address":
-                        verify_email_address(user.email_address)
+                        verify_email_address(user)
                     if used_field == "phone_number":
                         self._verify_phone_number(user.phone_number)
                 self.perform_post_creation_tasks(user)

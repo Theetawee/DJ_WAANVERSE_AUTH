@@ -16,6 +16,7 @@ def send_login_email(request, user):
             "ip_address": ip_address,
             "location": get_location_from_ip(ip_address),
             "device": get_device(request),
+            "user": user,
         }
         email_manager.send_email(
             subject=auth_config.login_alert_email_subject,
