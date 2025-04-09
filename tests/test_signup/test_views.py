@@ -6,7 +6,7 @@ from rest_framework import status
 
 from dj_waanverse_auth import settings
 from dj_waanverse_auth.models import UserSession, VerificationCode
-from dj_waanverse_auth.services.utils import decode_token
+from dj_waanverse_auth.utils.token_utils import decode_token
 from dj_waanverse_auth.throttles import (
     EmailVerificationThrottle,
     PhoneVerificationThrottle,

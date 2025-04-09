@@ -5,7 +5,7 @@ from rest_framework import status
 from dj_waanverse_auth.config.settings import auth_config
 from dj_waanverse_auth.models import MultiFactorAuth, UserSession
 from dj_waanverse_auth.services.mfa_service import MFAHandler
-from dj_waanverse_auth.services.utils import decode_token
+from dj_waanverse_auth.utils.token_utils import decode_token
 
 from .test_setup import Setup
 

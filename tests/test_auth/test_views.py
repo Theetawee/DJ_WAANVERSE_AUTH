@@ -3,7 +3,7 @@ from rest_framework import status
 
 from dj_waanverse_auth.config.settings import auth_config
 from dj_waanverse_auth.models import UserSession
-from dj_waanverse_auth.services.utils import decode_token, encode_token
+from dj_waanverse_auth.utils.token_utils import decode_token, encode_token
 
 from .test_setup import Setup
 
