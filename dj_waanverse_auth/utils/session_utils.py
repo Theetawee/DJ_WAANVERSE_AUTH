@@ -1,7 +1,7 @@
 from django.utils import timezone
 
 from dj_waanverse_auth.models import UserSession
-from dj_waanverse_auth.security.utils import get_ip_address
+from dj_waanverse_auth.utils.security_utils import get_ip_address
 
 
 def create_session(user, request) -> str:

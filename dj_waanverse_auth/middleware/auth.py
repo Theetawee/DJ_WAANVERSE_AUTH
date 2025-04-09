@@ -1,11 +1,13 @@
 import ipaddress
 import logging
 from typing import List
-from rest_framework import status
+
 from django.conf import settings
+from rest_framework import status
 from rest_framework.response import Response
+
 from dj_waanverse_auth.authentication import JWTAuthentication
-from dj_waanverse_auth.security.utils import get_ip_address
+from dj_waanverse_auth.utils.security_utils import get_ip_address
 
 logger = logging.getLogger(__name__)
 
@@ -96,6 +98,8 @@ class IPBlockerMiddleware:
 
         if self.is_blocked(client_ip):
             logger.info(f"Blocked request from IP: {client_ip}")
-            return Response({"detail": self.custom_message}, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {"detail": self.custom_message}, status=status.HTTP_403_FORBIDDEN
+            )
 
         return self.get_response(request)

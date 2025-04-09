@@ -7,8 +7,8 @@ from rest_framework import serializers
 
 from dj_waanverse_auth import settings
 from dj_waanverse_auth.models import VerificationCode
-from dj_waanverse_auth.services.email_service import EmailPriority, EmailService
-from dj_waanverse_auth.services.utils import generate_verification_code
+from dj_waanverse_auth.services.email_service import EmailService
+from dj_waanverse_auth.utils.generators import generate_code
 from dj_waanverse_auth.validators import (
     EmailValidator,
     PasswordValidator,
@@ -22,7 +22,7 @@ Account = get_user_model()
 
 
 def verify_email_address(email_address):
-    code = generate_verification_code()
+    code = generate_code()
     email_manager = EmailService()
     template_name = "emails/verify_email.html"
     with transaction.atomic():
@@ -32,7 +32,6 @@ def verify_email_address(email_address):
             template_name=template_name,
             recipient=email_address,
             context={"code": code},
-            priority=EmailPriority.HIGH,
         )
 
 
@@ -181,7 +180,7 @@ class SignupSerializer(serializers.Serializer):
         return username
 
     def _verify_phone_number(self, phone_number):
-        code = generate_verification_code()
+        code = generate_code()
         existing_verification = VerificationCode.objects.filter(
             phone_number=phone_number
         )
@@ -291,7 +290,7 @@ class PhoneNumberVerificationSerializer(serializers.Serializer):
 
                 VerificationCode.objects.filter(phone_number=phone_number).delete()
 
-                code = generate_verification_code()
+                code = generate_code()
 
                 new_verification = VerificationCode.objects.create(
                     phone_number=phone_number, code=code

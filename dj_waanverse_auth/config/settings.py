@@ -160,6 +160,11 @@ class AuthConfig:
             "PLATFORM_CONTACT_EMAIL", "support@waanverse.com"
         )
 
+        # google
+        self.google_client_id = config_dict.get("GOOGLE_CLIENT_ID", None)
+        self.google_client_secret = config_dict.get("GOOGLE_CLIENT_SECRET", None)
+        self.google_redirect_uri = config_dict.get("GOOGLE_REDIRECT_URI", None)
+
         # Validate configuration
         self._validate_configuration()
 

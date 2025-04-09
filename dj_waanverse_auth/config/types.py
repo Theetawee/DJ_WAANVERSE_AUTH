@@ -68,3 +68,7 @@ class AuthConfigSchema(TypedDict, total=False):
     BASIC_ACCOUNT_SERIALIZER: str
     REGISTRATION_SERIALIZER: str
     UPDATE_ACCOUNT_SERIALIZER: str
+
+    GOOGLE_CLIENT_ID: str
+    GOOGLE_CLIENT_SECRET: str
+    GOOGLE_REDIRECT_URI: str

@@ -64,6 +64,8 @@ def get_ip_address(request) -> Optional[str]:
 
 def get_location_from_ip(ip_address: str) -> str:
     """Gets location details from an IP address and returns a formatted location string."""
+    if ip_address == "127.0.0.1":
+        return "Unknown"
     try:
         response = requests.get(f"https://ipinfo.io/{ip_address}")
         response.raise_for_status()

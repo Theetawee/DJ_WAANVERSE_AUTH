@@ -2,8 +2,8 @@ from django.contrib.auth import authenticate
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
-from dj_waanverse_auth.security.utils import validate_turnstile_token
 from dj_waanverse_auth.services.mfa_service import MFAHandler
+from dj_waanverse_auth.utils.security_utils import validate_turnstile_token
 
 
 class LoginSerializer(serializers.Serializer):

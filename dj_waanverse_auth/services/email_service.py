@@ -1,6 +1,5 @@
 import logging
 import threading
-from enum import Enum
 from typing import Callable, List, Optional, Union
 
 from django.conf import settings as django_settings
@@ -14,14 +13,6 @@ from dj_waanverse_auth import settings
 logger = logging.getLogger(__name__)
 
 Account = get_user_model()
-
-
-class EmailPriority(Enum):
-    """Email priority levels for handling different types of emails."""
-
-    HIGH = "high"
-    MEDIUM = "medium"
-    LOW = "low"
 
 
 class EmailService:
@@ -136,7 +127,6 @@ class EmailService:
         template_name: str,
         context: dict,
         recipients: List[str],
-        priority: EmailPriority,
         attachment: Optional[str] = None,
     ) -> EmailMultiAlternatives:
         """Prepare the email message with all necessary configurations."""
@@ -148,8 +138,7 @@ class EmailService:
         if attachment:
             email.attach_file(attachment)
 
-        if priority == EmailPriority.HIGH:
-            email.extra_headers["X-Priority"] = "1"
+        email.extra_headers["X-Priority"] = "1"
 
         return email
 
@@ -186,7 +175,6 @@ class EmailService:
         template_name: str,
         context: dict,
         recipient: Union[str, List[str]],
-        priority: EmailPriority = EmailPriority.MEDIUM,
         attachment: Optional[str] = None,
         async_send: bool = True,
         callback: Optional[Callable] = None,
@@ -198,7 +186,7 @@ class EmailService:
                 return False
 
             email = self._prepare_email(
-                subject, template_name, context, recipients, priority, attachment
+                subject, template_name, context, recipients, attachment
             )
 
             if async_send and settings.email_threading_enabled:

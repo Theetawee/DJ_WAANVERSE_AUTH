@@ -1,13 +1,10 @@
 import logging
-import random
-import string
 from functools import lru_cache
 from typing import Any, Dict
 
 import jwt
 from cryptography.exceptions import InvalidKey
 from cryptography.hazmat.primitives import serialization
-from django.utils.module_loading import import_string
 from rest_framework import exceptions
 
 from dj_waanverse_auth import settings
@@ -153,47 +150,3 @@ def encode_token(payload) -> str:
     except Exception as e:
         logger.error(f"Token encoding failed: {str(e)}")
         raise exceptions.AuthenticationFailed("Could not generate token")
-
-
-def get_serializer_class(class_path: str):
-    """
-    Retrieve a serializer class given its string path.
-
-    Args:
-        class_path (str): Full dotted path to the serializer class.
-                          Example: 'dj_waanverse_auth.serializers.Basic_Serializer'
-
-    Returns:
-        class: The serializer class.
-
-    Raises:
-        ImportError: If the class cannot be imported.
-    """
-    try:
-        return import_string(class_path)
-    except ImportError as e:
-        raise ImportError(f"Could not import serializer class '{class_path}': {e}")
-
-
-def generate_verification_code(
-    length: int = settings.email_verification_code_length,
-    alphanumeric: bool = settings.email_verification_code_is_alphanumeric,
-) -> str:
-    """
-    Generate a random verification code.
-
-    Args:
-        length (int): The length of the verification code. Default is 6.
-        alphanumeric (bool): If True, includes both letters and numbers. Default is False.
-
-    Returns:
-        str: Generated verification code.
-    """
-    if length <= 0:
-        raise ValueError("Length must be greater than 0.")
-
-    characters = string.digits
-    if alphanumeric:
-        characters += string.ascii_letters
-
-    return "".join(random.choices(characters, k=length))

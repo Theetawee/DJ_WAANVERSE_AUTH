@@ -3,8 +3,7 @@ import logging
 from django.utils.timezone import now
 
 from dj_waanverse_auth.config.settings import auth_config
-
-from .utils import decode_token, encode_token
+from dj_waanverse_auth.utils.token_utils import decode_token, encode_token
 
 logger = logging.getLogger(__name__)
 

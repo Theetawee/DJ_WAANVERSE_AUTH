@@ -11,9 +11,10 @@ from dj_waanverse_auth.models import UserSession
 from dj_waanverse_auth.serializers.authorization_serializer import SessionSerializer
 from dj_waanverse_auth.serializers.client_hints_serializers import ClientInfoSerializer
 from dj_waanverse_auth.services.mfa_service import MFAHandler
-from dj_waanverse_auth.services.session_utils import revoke_session
 from dj_waanverse_auth.services.token_service import TokenService
-from dj_waanverse_auth.services.utils import decode_token, get_serializer_class
+from dj_waanverse_auth.utils.serializer_utils import get_serializer_class
+from dj_waanverse_auth.utils.session_utils import revoke_session
+from dj_waanverse_auth.utils.token_utils import decode_token
 
 User = get_user_model()
 logger = logging.getLogger(__name__)

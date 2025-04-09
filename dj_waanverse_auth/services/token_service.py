@@ -3,7 +3,7 @@ import logging
 from rest_framework.response import Response
 
 from dj_waanverse_auth import settings
-from dj_waanverse_auth.services.session_utils import create_session
+from dj_waanverse_auth.utils.session_utils import create_session
 
 from .token_classes import RefreshToken, TokenError
 
