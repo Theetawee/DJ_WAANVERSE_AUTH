@@ -70,7 +70,6 @@ class GoogleOAuth:
         return auth_url, state, code_verifier
 
     def exchange_code_for_token(self, code, code_verifier):
-        print(code_verifier, "code_verifier")
         """
         Exchange authorization code for access and refresh tokens.
 
@@ -96,7 +95,6 @@ class GoogleOAuth:
 
         # Make the token request
         response = requests.post(self.TOKEN_URL, data=token_data)
-        print(response.json(), "response")
 
         # Raise exception if request failed
         response.raise_for_status()
@@ -142,7 +140,6 @@ class GoogleOAuth:
         return response.json()
 
     def authenticate_or_create_user(self, user_info):
-        print(user_info)
         """
         Authenticate an existing user or create a new one based on Google user info.
 
@@ -164,10 +161,9 @@ class GoogleOAuth:
                 user.save()
             created = False
         except User.DoesNotExist:
-            # Create a new user
 
             user = User.objects.create_user(
-                email=email_address,
+                email_address=email_address,
                 email_verified=True,
             )
             user.is_active = True

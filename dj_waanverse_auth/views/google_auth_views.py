@@ -26,11 +26,11 @@ def google_login(request):
     return Response({"url": auth_url}, status=status.HTTP_200_OK)
 
 
-@api_view(["GET"])
+@api_view(["POST"])
 @permission_classes([AllowAny])
 def google_callback(request):
-    code = request.GET.get("code")
-    state = request.GET.get("state")
+    code = request.data.get("code")
+    state = request.data.get("state")
     GoogleOAuth = get_serializer_class(settings.google_auth_class)
     saved_state = GoogleStateToken.objects.filter(state=state).first()
 
