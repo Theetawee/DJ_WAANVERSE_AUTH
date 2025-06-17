@@ -30,5 +30,4 @@ urlpatterns = [
         activate_phone_number,
         name="dj_waanverse_auth_activate_phone",
     ),
-    
 ]

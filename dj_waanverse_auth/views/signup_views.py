@@ -15,11 +15,11 @@ from dj_waanverse_auth.serializers.signup_serializers import (
     EmailVerificationSerializer,
 )
 from dj_waanverse_auth.services.token_service import TokenService
-from dj_waanverse_auth.utils.serializer_utils import get_serializer_class
 from dj_waanverse_auth.throttles import (
     EmailVerificationThrottle,
     PhoneVerificationThrottle,
 )
+from dj_waanverse_auth.utils.serializer_utils import get_serializer_class
 
 logger = logging.getLogger(__name__)
 
@@ -175,4 +175,3 @@ def activate_phone_number(request):
             {"error": str(e)},
             status=status.HTTP_404_NOT_FOUND,
         )
-
