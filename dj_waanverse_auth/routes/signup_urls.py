@@ -6,7 +6,6 @@ from dj_waanverse_auth.views.signup_views import (
     send_email_verification_code,
     send_phone_number_verification_code_view,
     signup_view,
-    update_account_status,
 )
 
 urlpatterns = [
@@ -31,9 +30,5 @@ urlpatterns = [
         activate_phone_number,
         name="dj_waanverse_auth_activate_phone",
     ),
-    path(
-        "update-account-status/",
-        update_account_status,
-        name="dj_waanverse_auth_update_account_status",
-    ),
+    
 ]

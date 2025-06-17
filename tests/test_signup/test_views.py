@@ -267,31 +267,6 @@ class TestVerifications(Setup):
         self.account = account
         self.client.force_authenticate(user=account)
 
-    def test_mark_account_status(self):
-        response = self.client.post(
-            self.update_account_status_url, data={"status": "completed"}
-        )
-        print(response.data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue(
-            Account.objects.get(email_address="test@example.com").is_account_completed
-        )
-        response = self.client.post(
-            self.update_account_status_url, data={"status": "incomplete"}
-        )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertFalse(
-            Account.objects.get(email_address="test@example.com").is_account_completed
-        )
-
-        response = self.client.post(
-            self.update_account_status_url, data={"status": "invalid"}
-        )
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertFalse(
-            Account.objects.get(email_address="test@example.com").is_account_completed
-        )
-
     def test_update_account(self):
         response = self.client.patch(
             self.update_account_url,

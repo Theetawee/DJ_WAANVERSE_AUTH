@@ -176,24 +176,3 @@ def activate_phone_number(request):
             status=status.HTTP_404_NOT_FOUND,
         )
 
-
-@api_view(["POST"])
-@permission_classes([IsAuthenticated])
-def update_account_status(request):
-    user = request.user
-    account_status = request.data.get("status", None)
-    if account_status not in ["completed", "incomplete"]:
-        return Response(
-            {"error": "Invalid status provided"},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-    if account_status == "completed":
-        user.is_account_completed = True
-    elif account_status == "incomplete":
-        user.is_account_completed = False
-    user.save()
-
-    return Response(
-        {"message": "Account completed successfully."},
-        status=status.HTTP_200_OK,
-    )

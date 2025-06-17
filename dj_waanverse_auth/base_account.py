@@ -95,7 +95,6 @@ class AbstractBaseAccount(AbstractBaseUser, PermissionsMixin):
     password_last_updated = models.DateTimeField(null=True, blank=True)
     email_verified = models.BooleanField(default=False)
     phone_number_verified = models.BooleanField(default=False)
-    is_account_completed = models.BooleanField(default=False)
 
     objects = AccountManager()
 
