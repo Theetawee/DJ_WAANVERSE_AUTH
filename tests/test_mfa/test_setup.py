@@ -34,14 +34,12 @@ class Setup(Base):
         self.user_1_email_login_data = {
             "login_field": "test_user1@gmail.com",
             "password": "Test@12",
-            "login_method": "email_address",
         }
         self.test_user_1 = Account.objects.get(username="test_user1")
         self.test_user_with_mfa = Account.objects.get(username="axeman")
         self.test_user_with_mfa_login_data = {
             "login_field": "axeman",
             "password": "testUserP",
-            "login_method": "username",
         }
 
         self.get_mfa_secret_view_url = reverse("dj_waanverse_auth_get_mfa_secret")

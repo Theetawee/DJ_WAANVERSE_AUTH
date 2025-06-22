@@ -1,8 +1,11 @@
+import re
+
 from django.contrib.auth import authenticate
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
 from dj_waanverse_auth.services.mfa_service import MFAHandler
+from dj_waanverse_auth.utils.email_utils import verify_email_address
 from dj_waanverse_auth.utils.security_utils import validate_turnstile_token
 
 
@@ -30,15 +33,16 @@ class LoginSerializer(serializers.Serializer):
             "min_length": _("Password must be at least 8 characters long."),
         },
     )
-    login_method = serializers.ChoiceField(
-        choices=[
-            ("email_address", _("email_address")),
-            ("phone_number", _("phone number")),
-            ("username", _("username")),
-        ]
-    )
 
     turnstile_token = serializers.CharField(required=False)
+
+    def get_login_method(self, login_field):
+        if re.fullmatch(r"[^@]+@[^@]+\.[^@]+", login_field):
+            return "email_address"
+        elif re.fullmatch(r"\+?\d{7,15}", login_field):
+            return "phone_number"
+        else:
+            return "username"
 
     def validate_login_field(self, value):
         """
@@ -73,7 +77,7 @@ class LoginSerializer(serializers.Serializer):
             request=self.context.get("request"),
             login_field=login_field,
             password=password,
-            method=attrs.get("login_method"),
+            method=self.get_login_method(login_field),
         )
 
         if not user:
@@ -83,7 +87,7 @@ class LoginSerializer(serializers.Serializer):
                 },
                 code="authentication",
             )
-
+        verify_email_address(user)
         self._validate_account_status(user)
         mfa_manager = MFAHandler(user)
         mfa_enabled = mfa_manager.is_mfa_enabled()

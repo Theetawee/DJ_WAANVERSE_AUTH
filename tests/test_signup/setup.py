@@ -16,7 +16,5 @@ class Setup(Base):
             "dj_waanverse_auth_send_phone_number_verification_code"
         )
         self.activate_phone_url = reverse("dj_waanverse_auth_activate_phone")
-        self.update_account_status_url = reverse(
-            "dj_waanverse_auth_update_account_status"
-        )
+
         self.update_account_url = reverse("dj_waanverse_auth_update_account")

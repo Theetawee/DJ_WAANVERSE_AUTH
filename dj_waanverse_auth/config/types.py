@@ -27,8 +27,6 @@ class AuthConfigSchema(TypedDict, total=False):
     MFA_ISSUER_NAME: str
     MFA_CODE_LENGTH: int
     MFA_DEBUG_CODE: str  # Optional debug code for development mode
-    SECURITY_EMAIL_SUBJECT: str
-    EMAIL_SECURITY_NOTIFICATIONS_ENABLED: bool
 
     # User Configuration
     USERNAME_MIN_LENGTH: int

@@ -4,9 +4,10 @@ from django.contrib.auth import get_user_model
 from django.core import mail
 from rest_framework import status
 
+from dj_waanverse_auth import settings
 from dj_waanverse_auth.config.settings import auth_config
 from dj_waanverse_auth.models import UserSession
-from dj_waanverse_auth.services.utils import decode_token
+from dj_waanverse_auth.utils.token_utils import decode_token
 
 from .test_setup import Setup
 
@@ -139,19 +140,6 @@ class TestLogin(Setup):
         session_id = payload["sid"]
         self.assertTrue(UserSession.objects.filter(id=session_id).exists())
 
-    def test_login_with_email_disabled(self):
-        """
-        Test successful login with email notifications disabled.
-        """
-        auth_config.email_threading_enabled = False
-        auth_config.email_security_notifications_enabled = False
-
-        response = self.client.post(self.login_url, self.user_1_email_login_data)
-
-        self.assert_response_structure(response, "test_user1")
-        self.assert_cookies_match_response(response)
-        self.assertEqual(len(mail.outbox), 0)
-
     def test_login_missing_fields(self):
         """
         Test login with missing required fields.
@@ -220,7 +208,7 @@ class TestLogin(Setup):
         self.test_user_1.save()
 
         response = self.client.post(self.login_url, self.user_1_email_login_data)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         self.test_user_1.email_verified = True
         self.test_user_1.save()
@@ -232,6 +220,7 @@ class TestLogin(Setup):
 class TestUnVerifiedUserLogin(Setup):
     def setUp(self):
         super().setUp()
+        mail.outbox = []
         self.test_user_1.email_verified = False
         self.test_user_1.phone_number_verified = False
         self.test_user_1.save()
@@ -241,15 +230,17 @@ class TestUnVerifiedUserLogin(Setup):
         Test login with unverified email address.
         """
         response = self.client.post(self.login_url, self.user_1_email_login_data)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-        self.assertIn("unverified_email", response.data["non_field_errors"][0])
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(
+            any(
+                settings.verification_email_subject in mail.subject
+                for mail in mail.outbox
+            )
+        )
 
     def test_login_unverified_phone(self):
         """
         Test login with unverified email address.
         """
         response = self.client.post(self.login_url, self.user_1_phone_login_data)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-        self.assertIn("unverified_phone", response.data["non_field_errors"][0])
+        self.assertEqual(response.status_code, status.HTTP_200_OK)

@@ -61,9 +61,7 @@ class AuthConfig:
             min_value=6,
             max_value=8,
         )
-        self.security_email_subject = config_dict.get(
-            "SECURITY_EMAIL_SUBJECT", "Account security alert"
-        )
+
         self.mfa_debug_code = config_dict.get("MFA_DEBUG_CODE", None)
 
         # User Settings
@@ -109,9 +107,7 @@ class AuthConfig:
         self.email_verification_code_is_alphanumeric = config_dict.get(
             "EMAIL_VERIFICATION_CODE_IS_ALPHANUMERIC", False
         )
-        self.email_security_notifications_enabled = config_dict.get(
-            "EMAIL_SECURITY_NOTIFICATIONS_ENABLED", True
-        )
+
         self.email_threading_enabled = config_dict.get("EMAIL_THREADING_ENABLED", True)
         self.blacklisted_emails = config_dict.get("BLACKLISTED_EMAILS", [])
         self.blacklisted_phone_numbers = config_dict.get(

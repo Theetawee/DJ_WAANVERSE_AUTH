@@ -24,17 +24,14 @@ class Setup(Base):
         self.user_1_email_login_data = {
             "login_field": "test_user1@gmail.com",
             "password": "Test@12",
-            "login_method": "email_address",
         }
         self.user_1_username_login_data = {
             "login_field": "test_user1",
             "password": "Test@12",
-            "login_method": "username",
         }
         self.user_1_phone_login_data = {
             "login_field": "+256779020674",
             "password": "Test@12",
-            "login_method": "phone_number",
         }
         self.test_user_1 = Account.objects.get(username="test_user1")
         self.initiate_password_reset_url = reverse(

@@ -1,8 +1,12 @@
 import logging
 
-from dj_waanverse_auth import settings
+from django.contrib.auth import get_user_model
+from django.db import transaction
+from django.utils.translation import gettext_lazy as _
+from rest_framework import serializers
+
 from dj_waanverse_auth.models import VerificationCode
-from dj_waanverse_auth.services.email_service import EmailService
+from dj_waanverse_auth.utils.email_utils import verify_email_address
 from dj_waanverse_auth.utils.generators import generate_code
 from dj_waanverse_auth.validators import (
     EmailValidator,
@@ -10,28 +14,10 @@ from dj_waanverse_auth.validators import (
     PhoneNumberValidator,
     UsernameValidator,
 )
-from django.contrib.auth import get_user_model
-from django.db import transaction
-from django.utils.translation import gettext_lazy as _
-from rest_framework import serializers
 
 logger = logging.getLogger(__name__)
 
 Account = get_user_model()
-
-
-def verify_email_address(user):
-    code = generate_code()
-    email_manager = EmailService()
-    template_name = "emails/verify_email.html"
-    with transaction.atomic():
-        VerificationCode.objects.create(email_address=user.email_address, code=code)
-        email_manager.send_email(
-            subject=settings.verification_email_subject,
-            template_name=template_name,
-            recipient=user.email_address,
-            context={"code": code, "user": user},
-        )
 
 
 class SignupSerializer(serializers.Serializer):
@@ -211,15 +197,9 @@ class EmailVerificationSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         try:
-            with transaction.atomic():
-                email_address = validated_data["email_address"]
-                verification_code = VerificationCode.objects.filter(
-                    email_address=email_address
-                )
-                if verification_code.exists():
-                    verification_code.delete()
-                verify_email_address(self.context.get("user"))
-                return email_address
+            email_address = validated_data["email_address"]
+            verify_email_address(self.context.get("user"))
+            return email_address
         except Exception as e:
             logger.error(f"Email verification failed: {str(e)}")
             raise serializers.ValidationError(f"failed {e}")
