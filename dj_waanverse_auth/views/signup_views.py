@@ -74,7 +74,7 @@ signup_view = SignupView.as_view()
 @throttle_classes([EmailVerificationThrottle])
 def send_email_verification_code(request):
     """
-    Function-based view to initiate email verification with a
+    Function-based view to initiate email verification.
     """
     try:
         serializer = EmailVerificationSerializer(
