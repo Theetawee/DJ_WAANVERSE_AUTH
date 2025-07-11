@@ -17,6 +17,7 @@ class TestMiddleware(Setup):
         """
         self.client.post(self.login_url, self.user_1_username_login_data)
         response = self.client.get(self.get_authenticated_user_url)
+        print(response.data, "response data")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 

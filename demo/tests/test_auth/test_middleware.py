@@ -1,6 +1,6 @@
 from django.test import modify_settings
 from rest_framework import status
-
+from django.urls import reverse
 from .test_setup import Setup
 
 
@@ -10,13 +10,19 @@ class TestMiddleware(Setup):
     based on device authentication requirements.
     """
 
+    def setUp(self):
+        super().setUp()
+        self.url = reverse("dj_waanverse_auth_get_device_info")
+
     def test_clint_hints_middleware(self):
         """
         Test the ClientHintsMiddleware to ensure it adds the correct headers
         to the response.
         """
         self.client.post(self.login_url, self.user_1_username_login_data)
-        response = self.client.get(self.get_authenticated_user_url)
+        response = self.client.get(self.url)
+        print(response.data, "response data")
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
