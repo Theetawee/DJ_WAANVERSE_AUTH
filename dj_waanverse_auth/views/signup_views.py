@@ -35,6 +35,11 @@ class SignupView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
+        if settings.disable_signup:
+            return Response(
+                {"error": "Something went wrong"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         signup_serializer = get_serializer_class(settings.registration_serializer)
         serializer = signup_serializer(data=request.data, context={"request": request})
         if serializer.is_valid():

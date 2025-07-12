@@ -16,6 +16,7 @@ logger = getLogger(__name__)
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def google_login(request):
+
     GoogleOAuth = get_serializer_class(settings.google_auth_class)
     google_oauth = GoogleOAuth(request)
 

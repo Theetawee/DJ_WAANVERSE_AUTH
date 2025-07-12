@@ -71,3 +71,5 @@ class AuthConfigSchema(TypedDict, total=False):
     GOOGLE_CLIENT_SECRET: str
     GOOGLE_REDIRECT_URI: str
     GOOGLE_AUTH_CLASS: str
+
+    DISABLE_SIGNUP: bool

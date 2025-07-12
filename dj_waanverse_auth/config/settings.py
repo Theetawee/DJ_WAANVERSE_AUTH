@@ -164,6 +164,8 @@ class AuthConfig:
             "GOOGLE_AUTH_CLASS", "dj_waanverse_auth.google_auth.GoogleOAuth"
         )
 
+        self.disable_signup = config_dict.get("DISABLE_SIGNUP", False)
+
         # Validate configuration
         self._validate_configuration()
 

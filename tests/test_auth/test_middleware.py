@@ -1,6 +1,6 @@
-from django.test import modify_settings
+from django.test import override_settings
 from rest_framework import status
-
+from django.urls import reverse
 from .test_setup import Setup
 
 
@@ -10,30 +10,34 @@ class TestMiddleware(Setup):
     based on device authentication requirements.
     """
 
+    def setUp(self):
+        super().setUp()
+        self.url = reverse("dj_waanverse_auth_get_device_info")
+
     def test_clint_hints_middleware(self):
         """
         Test the ClientHintsMiddleware to ensure it adds the correct headers
         to the response.
         """
         self.client.post(self.login_url, self.user_1_username_login_data)
-        response = self.client.get(self.get_authenticated_user_url)
-        print(response.data, "response data")
+        response = self.client.get(self.url)
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
-@modify_settings(
-    BLOCKED_IPS={
-        "append": ["192.168.1.100"],
-    },
-    ALLOWED_IPS={
-        "append": ["8.8.8.8"],
-    },
+@override_settings(
+    BLOCKED_IPS=["192.168.1.100"],
+    ALLOWED_IPS=["8.8.8.8"],
 )
 class TestIPBlockMiddleware(Setup):
     """
     Tests for the IPBlockerMiddleware to ensure it behaves correctly
     based on IP blocking requirements.
     """
+
+    def setUp(self):
+        super().setUp()
+        self.url = reverse("dj_waanverse_auth_signup")
 
     def test_ip_block_middleware(self):
         """

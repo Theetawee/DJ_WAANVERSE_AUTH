@@ -17,11 +17,35 @@ from .setup import Setup
 Account = get_user_model()
 
 
+class TestDisableSignUp(Setup):
+
+    def setUp(self):
+        super().setUp()
+        settings.blacklisted_emails = ["user@example.com"]
+        settings.disposable_email_domains = ["test.com"]
+        settings.disable_signup = True
+
+    def test_disable_signup(self):
+        """
+        Test the IPBlockerMiddleware to ensure it blocks the correct IP addresses
+        and allows the correct IP addresses.
+        """
+        data = {
+            "username": "test_user",
+            "password": "Test@1220",
+            "confirm_password": "Test@1220",
+            "phone_number": "1234567870",
+        }
+        response = self.client.post(self.signup_url, data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+
 class TestSignupView(Setup):
     def setUp(self):
         super().setUp()
         settings.blacklisted_emails = ["user@example.com"]
         settings.disposable_email_domains = ["test.com"]
+        settings.disable_signup = False
 
     def test_signup_view(self):
         data = {
