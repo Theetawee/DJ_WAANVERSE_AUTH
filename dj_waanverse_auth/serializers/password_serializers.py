@@ -52,7 +52,7 @@ class InitiatePasswordResetSerializer(serializers.Serializer):
                     subject=settings.password_reset_email_subject,
                     template_name="emails/password_reset.html",
                     recipient=account.email_address,
-                    context={"token": token.code},
+                    context={"code": token.code},
                 )
                 return account
         except Exception as e:

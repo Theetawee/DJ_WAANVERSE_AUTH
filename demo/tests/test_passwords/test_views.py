@@ -45,16 +45,23 @@ class ResetPasswordTokenTests(Setup):
         self.assertTrue(token.is_expired())
 
     def test_successful_reset_initiation(self):
+        ResetPasswordToken.objects.all().delete()
         response = self.client.post(
             self.initiate_password_reset_url,
             {"email_address": self.test_user_1.email_address},
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        code = ResetPasswordToken.objects.first().code
+
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to, [self.test_user_1.email_address])
         self.assertEqual(
             mail.outbox[0].subject, auth_config.password_reset_email_subject
         )
+        email = mail.outbox[0]
+
+        html_body = email.alternatives[0][0]  # (content, mimetype)
+        self.assertIn(code, html_body)
         self.assertTrue(
             ResetPasswordToken.objects.filter(account=self.test_user_1).exists()
         )
