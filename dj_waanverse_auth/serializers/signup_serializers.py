@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
-
+from dj_waanverse_auth.utils.phone_utils import get_send_code_function
 from dj_waanverse_auth.models import VerificationCode
 from dj_waanverse_auth.utils.email_utils import verify_email_address
 from dj_waanverse_auth.utils.generators import generate_code
@@ -175,7 +175,11 @@ class SignupSerializer(serializers.Serializer):
         self._send_phone_code(phone_number, code)
 
     def _send_phone_code(self, phone_number, code):
-        pass
+        """
+        Implement the logic to send the verification code via SMS or other means.
+        """
+        send_func = get_send_code_function()
+        send_func(phone_number, code)
 
 
 class EmailVerificationSerializer(serializers.Serializer):
@@ -292,7 +296,8 @@ class PhoneNumberVerificationSerializer(serializers.Serializer):
         """
         Implement the logic to send the verification code via SMS or other means.
         """
-        logger.info(f"Sending verification code {code} to {phone_number}")
+        send_func = get_send_code_function()
+        send_func(phone_number, code)
 
 
 class ActivatePhoneSerializer(serializers.Serializer):

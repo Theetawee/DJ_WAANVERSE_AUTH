@@ -13,6 +13,7 @@ from dj_waanverse_auth.serializers.signup_serializers import (
     ActivateEmailSerializer,
     ActivatePhoneSerializer,
     EmailVerificationSerializer,
+    PhoneNumberVerificationSerializer,
 )
 from dj_waanverse_auth.services.token_service import TokenService
 from dj_waanverse_auth.throttles import (
@@ -136,10 +137,10 @@ def send_phone_number_verification_code_view(request):
     Function-based view to initiate phone number verification.
     """
     try:
-        serializer_class = get_serializer_class(
-            settings.phone_number_verification_serializer
+
+        serializer = PhoneNumberVerificationSerializer(
+            data=request.data, context={"user": request.user}
         )
-        serializer = serializer_class(data=request.data, context={"user": request.user})
 
         if serializer.is_valid():
             serializer.save()

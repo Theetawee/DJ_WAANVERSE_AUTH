@@ -1,0 +1,7 @@
+# Required
+1. Public key
+2. Private key
+
+
+#Config
+1. SEND_PHONE_VERIFICATION_CODE_FUNC

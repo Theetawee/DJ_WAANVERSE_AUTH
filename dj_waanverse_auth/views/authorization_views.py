@@ -204,16 +204,3 @@ def grant_access_view(request):
             )
 
     return Response({"msg": "Access granted"}, status=status.HTTP_200_OK)
-
-
-@api_view(["PATCH"])
-@permission_classes([IsAuthenticated])
-def update_account(request):
-    user = request.user
-    serializer_class = get_serializer_class(auth_config.update_account_serializer)
-    serializer = serializer_class(user, data=request.data, partial=True)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(data={"msg": "updated"}, status=status.HTTP_200_OK)
-
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

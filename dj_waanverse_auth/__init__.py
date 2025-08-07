@@ -1,25 +1,5 @@
 # flake8: noqa
-# Copyright 2024 Waanverse Labs Inc. All rights reserved.
 """
-Dj Waanverse Auth
-~~~~~~~~~~~~~~~~
-
-A comprehensive authentication package for Django REST Framework APIs by Waanverse Labs Inc.
-Provides secure, scalable, and customizable authentication solutions.
-
-Basic usage:
-    >>> from dj_waanverse_auth import WaanverseAuthentication
-    >>> from dj_waanverse_auth.models import WaanverseUser
-    >>> from dj_waanverse_auth.permissions import WaanversePermission
-
-Key Features:
-    - Custom user model with enhanced security
-    - JWT-based authentication
-    - Role-based access control
-    - Session management
-    - Audit logging
-    - Rate limiting
-
 For more information, visit:
 https://github.com/waanverse/dj_waanverse_auth
 """
@@ -103,7 +83,6 @@ def check_settings():
         required_keys = [
             "PUBLIC_KEY_PATH",
             "PRIVATE_KEY_PATH",
-            "PLATFORM_NAME",
         ]
         for key in required_keys:
             if key not in waanverse_config:

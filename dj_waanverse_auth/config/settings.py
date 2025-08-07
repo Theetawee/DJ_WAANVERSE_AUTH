@@ -92,10 +92,6 @@ class AuthConfig:
             "REGISTRATION_SERIALIZER",
             "dj_waanverse_auth.serializers.signup_serializers.SignupSerializer",
         )
-        self.update_account_serializer = config_dict.get(
-            "UPDATE_ACCOUNT_SERIALIZER",
-            "dj_waanverse_auth.serializers.authorization_serializer.UpdateAccountSerializer",
-        )
 
         # Email Settings
         self.email_verification_code_length = self._validate_range(
@@ -165,6 +161,10 @@ class AuthConfig:
         )
 
         self.disable_signup = config_dict.get("DISABLE_SIGNUP", False)
+
+        self.send_phone_verification_code_func = config_dict.get(
+            "SEND_PHONE_VERIFICATION_CODE_FUNC", None
+        )
 
         # Validate configuration
         self._validate_configuration()
