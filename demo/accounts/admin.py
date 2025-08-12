@@ -5,7 +5,6 @@ from .models import Account
 
 class AccountAdmin(admin.ModelAdmin):
     list_display = (
-        "name",
         "email_address",
         "is_active",
         "is_staff",

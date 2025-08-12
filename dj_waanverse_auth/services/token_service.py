@@ -82,6 +82,7 @@ class TokenService:
                 return {
                     "refresh_token": str(refresh),
                     "access_token": str(refresh.access_token),
+                    "sid": session_id,
                 }
         except TokenError as e:
             raise TokenError(f"Failed to generate tokens: {str(e)}")

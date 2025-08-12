@@ -1,12 +1,5 @@
-import re
-
 from django.contrib.auth import authenticate
-from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
-
-from dj_waanverse_auth.services.mfa_service import MFAHandler
-from dj_waanverse_auth.utils.email_utils import verify_email_address
-from dj_waanverse_auth.utils.security_utils import validate_turnstile_token
 
 
 class LoginSerializer(serializers.Serializer):
@@ -15,90 +8,27 @@ class LoginSerializer(serializers.Serializer):
     Handles MFA validation and provides detailed error messages.
     """
 
-    login_field = serializers.CharField(
-        write_only=True,
-        required=True,
-        error_messages={
-            "required": _("Please provide your email, username, or phone number."),
-            "blank": _("Login field cannot be blank."),
-        },
-    )
-    password = serializers.CharField(
-        write_only=True,
-        required=True,
-        style={"input_type": "password"},
-        error_messages={
-            "required": _("Password is required."),
-            "blank": _("Password cannot be blank."),
-            "min_length": _("Password must be at least 8 characters long."),
-        },
-    )
-
-    turnstile_token = serializers.CharField(required=False)
-
-    def get_login_method(self, login_field):
-        if re.fullmatch(r"[^@]+@[^@]+\.[^@]+", login_field):
-            return "email_address"
-        elif re.fullmatch(r"\+?\d{7,15}", login_field):
-            return "phone_number"
-        else:
-            return "username"
-
-    def validate_login_field(self, value):
-        """
-        Validate login field format based on type (email/phone/username).
-        """
-        if not value:
-            raise serializers.ValidationError(
-                _("Login field cannot be empty."), code="required"
-            )
-
-        return value
+    email_address = serializers.EmailField(required=True)
+    code = serializers.CharField(required=True)
 
     def validate(self, attrs):
         """
         Validate login credentials and authenticate the user.
-        Handles MFA validation and account status checks.
         """
-        turnstile_token = attrs.get("turnstile_token")
-
-        # Validate Turnstile captcha token if provided
-        if turnstile_token:
-            if not validate_turnstile_token(turnstile_token):
-                raise serializers.ValidationError(
-                    {"turnstile_token": [_("Invalid Turnstile token.")]},
-                    code="captcha_invalid",
-                )
-
-        login_field = attrs.get("login_field")
-        password = attrs.get("password")
 
         user = authenticate(
-            request=self.context.get("request"),
-            login_field=login_field,
-            password=password,
-            method=self.get_login_method(login_field),
+            email_address=attrs["email_address"],
+            code=attrs["code"],
         )
-
         if not user:
             raise serializers.ValidationError(
                 {
-                    "non_field_errors": [_("Invalid login credentials.")],
+                    "non_field_errors": ["Invalid login credentials."],
                 },
                 code="authentication",
             )
-        verify_email_address(user)
         self._validate_account_status(user)
-        mfa_manager = MFAHandler(user)
-        mfa_enabled = mfa_manager.is_mfa_enabled()
-
-        attrs.update(
-            {
-                "user": user,
-                "mfa": mfa_enabled,
-            }
-        )
-
+        attrs.update({"user": user})
         return attrs
 
     def _validate_account_status(self, user):
@@ -108,7 +38,7 @@ class LoginSerializer(serializers.Serializer):
         if not user.is_active:
             raise serializers.ValidationError(
                 {
-                    "non_field_errors": [_("This account is inactive.")],
+                    "non_field_errors": ["This account is inactive."],
                 },
                 code="inactive_account",
             )

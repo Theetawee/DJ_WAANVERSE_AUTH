@@ -1,6 +1,7 @@
 import logging
 
 from django.contrib.auth import get_user_model
+
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
@@ -14,7 +15,9 @@ from dj_waanverse_auth.serializers.signup_serializers import (
     ActivatePhoneSerializer,
     EmailVerificationSerializer,
     PhoneNumberVerificationSerializer,
+    SignupSerializer,
 )
+
 from dj_waanverse_auth.services.token_service import TokenService
 from dj_waanverse_auth.throttles import (
     EmailVerificationThrottle,
@@ -41,34 +44,15 @@ class SignupView(APIView):
                 {"error": "Something went wrong"},
                 status=status.HTTP_403_FORBIDDEN,
             )
-        signup_serializer = get_serializer_class(settings.registration_serializer)
-        serializer = signup_serializer(data=request.data, context={"request": request})
+
+        serializer = SignupSerializer(data=request.data, context={"request": request})
         if serializer.is_valid():
-            user = serializer.save()
-            token_manager = TokenService(user=user, request=request)
-            basic_serializer = get_serializer_class(
-                settings.basic_account_serializer_class
+            serializer.save()
+            return Response(
+                {"status": "success"},
+                status=status.HTTP_201_CREATED,
             )
 
-            response = Response(
-                status=status.HTTP_201_CREATED,
-                data={
-                    "user": basic_serializer(user).data,
-                },
-            )
-            res = token_manager.setup_login_cookies(response)
-            user.last_login = timezone.now()
-            user.save(update_fields=["last_login"])
-            tokens = res["tokens"]
-            response = res["response"]
-            response.data["status"] = "success"
-            response.data["access_token"] = tokens["access_token"]
-            response.data["refresh_token"] = tokens["refresh_token"]
-            if user.phone_number:
-                response.data["next"] = "verify_phone"
-            if user.email_address:
-                response.data["next"] = "verify_email"
-            return response
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -105,21 +89,52 @@ def send_email_verification_code(request):
 
 
 @api_view(["POST"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def activate_email_address(request):
     """
     Function-based view to activate an email address for a user.
     """
+    print(request.data)
     try:
-        serializer = ActivateEmailSerializer(
-            data=request.data, context={"request": request}
-        )
-        if serializer.is_valid():
-            serializer.save()
+        handle = request.data.get("handle")
+        user = request.user
+        if handle != "signup" and not user.is_authenticated:
             return Response(
-                {"message": "Email address activated successfully."},
-                status=status.HTTP_200_OK,
+                {"error": "Unable to authenticate. Please login again"},
+                status=status.HTTP_400_BAD_REQUEST,
             )
+
+        serializer = ActivateEmailSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            request.user = user
+            if handle == "signup":
+                token_manager = TokenService(user=user, request=request)
+                basic_serializer = get_serializer_class(
+                    settings.basic_account_serializer_class
+                )
+
+                response = Response(
+                    status=status.HTTP_200_OK,
+                    data={
+                        "user": basic_serializer(user).data,
+                    },
+                )
+                res = token_manager.setup_login_cookies(response)
+                user.last_login = timezone.now()
+                user.save(update_fields=["last_login"])
+                tokens = res["tokens"]
+                response = res["response"]
+                response.data["status"] = "success"
+                response.data["access_token"] = tokens["access_token"]
+                response.data["refresh_token"] = tokens["refresh_token"]
+                response.data["sid"] = tokens["sid"]
+                return response
+            else:
+                return Response(
+                    {"message": "Email address activated successfully."},
+                    status=status.HTTP_200_OK,
+                )
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:

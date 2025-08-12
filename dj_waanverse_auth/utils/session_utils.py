@@ -50,7 +50,7 @@ def revoke_session(session_id: str) -> None:
     Args:
         session_id: The ID of the session to revoke.
     """
-    UserSession.objects.filter(id=session_id).update(is_active=False)
+    UserSession.objects.filter(id=session_id).delete()
 
 
 def revoke_other_sessions(user, current_session_id: str) -> None:
@@ -63,4 +63,4 @@ def revoke_other_sessions(user, current_session_id: str) -> None:
     """
     UserSession.objects.filter(user=user, is_active=True).exclude(
         id=current_session_id
-    ).update(is_active=False)
+    ).delete()

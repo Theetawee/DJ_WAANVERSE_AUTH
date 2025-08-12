@@ -18,11 +18,11 @@ class AccountManager(BaseUserManager):
         password: Optional[str] = None,
         **extra_fields
     ):
-        from dj_waanverse_auth.validators.validate_username import generate_username
+        from dj_waanverse_auth.utils.generators import generate_username
 
         if not username:
             username = generate_username()
-        if not email_address and not phone_number:
+        if not email_address:
             raise ValueError(
                 "At least one of username, email address, or phone number is required"
             )
@@ -92,7 +92,6 @@ class AbstractBaseAccount(AbstractBaseUser, PermissionsMixin):
     last_login = models.DateTimeField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
-    password_last_updated = models.DateTimeField(null=True, blank=True)
     email_verified = models.BooleanField(default=False)
     phone_number_verified = models.BooleanField(default=False)
 

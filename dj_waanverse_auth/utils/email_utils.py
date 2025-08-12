@@ -31,6 +31,22 @@ def send_login_email(request, user):
         )
 
 
+def send_login_code_email(user, code):
+    if user.email_address and user.email_verified:
+        email_manager = EmailService()
+        template_name = "emails/login_code.html"
+        context = {
+            "code": code,
+            "user": user,
+        }
+        email_manager.send_email(
+            subject=settings.login_code_email_subject,
+            template_name=template_name,
+            recipient=user.email_address,
+            context=context,
+        )
+
+
 def verify_email_address(user):
     if user.email_address and not user.email_verified:
         code = generate_code()

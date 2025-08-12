@@ -74,3 +74,4 @@ class AuthConfigSchema(TypedDict, total=False):
     DISABLE_SIGNUP: bool
 
     SEND_PHONE_VERIFICATION_CODE_FUNC: str
+    LOGIN_CODE_EMAIL_SUBJECT: str

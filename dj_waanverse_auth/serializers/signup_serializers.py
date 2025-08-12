@@ -8,12 +8,6 @@ from dj_waanverse_auth.utils.phone_utils import get_send_code_function
 from dj_waanverse_auth.models import VerificationCode
 from dj_waanverse_auth.utils.email_utils import verify_email_address
 from dj_waanverse_auth.utils.generators import generate_code
-from dj_waanverse_auth.validators import (
-    EmailValidator,
-    PasswordValidator,
-    PhoneNumberValidator,
-    UsernameValidator,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -22,87 +16,51 @@ Account = get_user_model()
 
 class SignupSerializer(serializers.Serializer):
     """
-    Serializer for user registration with comprehensive validation.
+    Serializer for user registration without passwords.
+    Email is required.
+    Username is optional; auto-generated if not provided.
     """
 
-    username = serializers.CharField(required=False)
-
-    email_address = serializers.EmailField(required=False)
-
-    phone_number = serializers.CharField(required=False)
-
-    password = serializers.CharField(required=True)
-
-    confirm_password = serializers.CharField(required=True)
+    email_address = serializers.EmailField(required=True)
 
     def validate_email_address(self, email_address):
-        if email_address is None:
-            return None
-        return self._validate_email(email_address)
-
-    def validate_username(self, username):
-        if username is None:
-            return None
-        return self._validate_username(username)
-
-    def validate_phone_number(self, phone_number):
-        if phone_number is None:
-            return None
-        return self._validate_phone_number(phone_number)
-
-    def validate(self, attrs):
-        """
-        Validate data.
-        """
-        username = attrs.get("username", None)
-
-        email = attrs.get("email_address", None)
-        phone_number = attrs.get("phone_number", None)
-        password = attrs.get("password", None)
-        confirm_password = attrs.get("confirm_password", None)
-        if username is None and email is None and phone_number is None:
+        accounts = Account.objects.filter(email_address=email_address)
+        if accounts.filter(email_verified=True).exists():
             raise serializers.ValidationError(
-                {
-                    "non_field_errors": [
-                        _("Please provide a username, email, or phone number.")
-                    ]
-                }
+                {"email_address": _("Email address is already in use.")}
             )
-        password = self._validate_password(password, confirm_password)
-        return attrs
+
+        else:
+            return email_address
 
     def create(self, validated_data):
         """
-        Create a new user with transaction handling.
+        Create a new user without password.
+        Auto-generate username if missing.
         """
-        additional_fields = self.get_additional_fields(validated_data)
-        used_field = None
+        email = validated_data["email_address"]
+
         user_data = {
-            "password": validated_data["password"],
-            **additional_fields,
+            "email_address": email,
+            "is_active": False,
         }
-        if validated_data.get("username"):
-            user_data["username"] = validated_data["username"]
-            used_field = "username"
-        if validated_data.get("email_address"):
-            user_data["email_address"] = validated_data["email_address"]
-            used_field = "email_address"
-        if validated_data.get("phone_number"):
-            user_data["phone_number"] = validated_data["phone_number"]
-            used_field = "phone_number"
+
         try:
             with transaction.atomic():
-                user = Account.objects.create_user(**user_data)
-                if used_field:
-                    if used_field == "email_address":
-                        verify_email_address(user)
-                    if used_field == "phone_number":
-                        self._verify_phone_number(user.phone_number)
+                if Account.objects.filter(
+                    email_address=email, email_verified=False
+                ).exists():
+                    user = Account.objects.get(
+                        email_address=email, email_verified=False
+                    )
+                else:
+                    user = Account.objects.create_user(**user_data)
+                verify_email_address(user)
                 self.perform_post_creation_tasks(user)
             return user
         except Exception as e:
             logger.error(f"User creation failed: {str(e)}")
-            raise serializers.ValidationError(_("Failed to create user account."))
+            raise serializers.ValidationError(f"failed {e}")
 
     def get_additional_fields(self, validated_data):
         """
@@ -115,71 +73,6 @@ class SignupSerializer(serializers.Serializer):
         Perform any post-creation tasks, such as sending welcome emails.
         """
         pass
-
-    def _validate_email(self, email):
-        """
-        Validate email with comprehensive checks and sanitization.
-        """
-        email_validation = EmailValidator(
-            email_address=email, check_uniqueness=True
-        ).validate()
-        if email_validation.get("is_valid") is False:
-            raise serializers.ValidationError(email_validation["error"])
-
-        return email
-
-    def _validate_password(self, password, confirm_password):
-        """
-        Validate password with comprehensive checks and sanitization.
-        """
-        password_validation = PasswordValidator(
-            password=password, confirm_password=confirm_password
-        ).validate()
-        if password_validation.get("is_valid") is False:
-            raise serializers.ValidationError(password_validation["error"])
-
-        return password
-
-    def _validate_phone_number(self, phone_number):
-        """
-        Validate phone number with comprehensive checks and sanitization.
-        """
-        phone_number_validation = PhoneNumberValidator(
-            phone_number=phone_number, check_uniqueness=True
-        ).validate()
-        if phone_number_validation.get("is_valid") is False:
-            raise serializers.ValidationError(phone_number_validation["error"])
-        phone_number = phone_number_validation["phone_number"]
-        return phone_number
-
-    def _validate_username(self, username):
-        """
-        Validate username with comprehensive checks and sanitization.
-        """
-        username_validation = UsernameValidator(
-            username=username, check_uniqueness=True
-        ).validate()
-        if username_validation.get("is_valid") is False:
-            raise serializers.ValidationError(username_validation["error"])
-
-        return username
-
-    def _verify_phone_number(self, phone_number):
-        code = generate_code()
-        existing_verification = VerificationCode.objects.filter(
-            phone_number=phone_number
-        )
-        if existing_verification.exists():
-            existing_verification.delete()
-        VerificationCode.objects.create(phone_number=phone_number, code=code)
-        self._send_phone_code(phone_number, code)
-
-    def _send_phone_code(self, phone_number, code):
-        """
-        Implement the logic to send the verification code via SMS or other means.
-        """
-        send_func = get_send_code_function()
-        send_func(phone_number, code)
 
 
 class EmailVerificationSerializer(serializers.Serializer):
@@ -212,6 +105,7 @@ class EmailVerificationSerializer(serializers.Serializer):
 class ActivateEmailSerializer(serializers.Serializer):
     email_address = serializers.EmailField(required=True)
     code = serializers.CharField(required=True)
+    handle = serializers.CharField(required=False)
 
     def validate(self, data):
         """
@@ -239,15 +133,16 @@ class ActivateEmailSerializer(serializers.Serializer):
         Mark the verification code as used and verified.
         """
         with transaction.atomic():
-            user = self.context.get("request").user
+            user = Account.objects.get(email_address=validated_data["email_address"])
             email_address = validated_data["email_address"]
             verification = validated_data["verification"]
             verification.delete()
             user.email_address = email_address
             user.email_verified = True
-            user.save(update_fields=["email_address", "email_verified"])
+            user.is_active = True
+            user.save(update_fields=["email_address", "email_verified", "is_active"])
 
-        return True
+        return user
 
 
 class PhoneNumberVerificationSerializer(serializers.Serializer):

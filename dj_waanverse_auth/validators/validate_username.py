@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import Dict, Optional
 
 from django.contrib.auth import get_user_model
@@ -81,8 +80,3 @@ class UsernameValidator:
         self.result["error"] = error_message
         self.result["is_valid"] = False
         return False
-
-
-def generate_username():
-    timestamp = datetime.now().strftime("%m%d%H%M%S%f")[:-3]
-    return f"user{timestamp}"

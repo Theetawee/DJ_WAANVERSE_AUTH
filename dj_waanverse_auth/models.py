@@ -131,3 +131,26 @@ class GoogleStateToken(models.Model):
 
     def __str__(self):
         return self.state
+
+
+class LoginCode(models.Model):
+    account = models.ForeignKey(
+        Account, on_delete=models.CASCADE, related_name="login_codes"
+    )
+    code = models.CharField(max_length=8, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    EXPIRATION_MINUTES = 5
+
+    def is_expired(self):
+        return timezone.now() > self.created_at + timedelta(
+            minutes=self.EXPIRATION_MINUTES
+        )
+
+    def __str__(self):
+        return f"Login code for {self.account.email_address}"
+
+    class Meta:
+        verbose_name = "Login Code"
+        verbose_name_plural = "Login Codes"
+        ordering = ["-created_at"]

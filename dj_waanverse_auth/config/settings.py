@@ -166,6 +166,10 @@ class AuthConfig:
             "SEND_PHONE_VERIFICATION_CODE_FUNC", None
         )
 
+        self.login_code_email_subject = config_dict.get(
+            "LOGIN_CODE_EMAIL_SUBJECT", "Login code"
+        )
+
         # Validate configuration
         self._validate_configuration()
 
