@@ -24,21 +24,28 @@ from webauthn import (
     verify_authentication_response,
 )
 from webauthn.helpers.structs import (
-    AuthenticationCredential,
     AuthenticatorSelectionCriteria,
     AuthenticatorAttachment,
     ResidentKeyRequirement,
     UserVerificationRequirement,
+    PublicKeyCredentialDescriptor,
+    PublicKeyCredentialType,
+    AuthenticatorTransport,
 )
 from dj_waanverse_auth.models import WebAuthnCredential
-from django.conf import settings
 from webauthn.helpers import options_to_json
 import json
-
+import base64
 
 User = get_user_model()
 
 logger = logging.getLogger(__name__)
+
+
+def decode_base64url(data: str) -> bytes:
+    # Add padding if missing
+    padding = "=" * (-len(data) % 4)
+    return base64.urlsafe_b64decode(data + padding)
 
 
 @api_view(["POST"])
@@ -49,7 +56,6 @@ def login_view(request):
         serializer = LoginSerializer(data=request.data, context={"request": request})
         if serializer.is_valid():
             user = serializer.validated_data["user"]
-            token_manager = token_service.TokenService(user=user, request=request)
 
             response = handle_login(request=request, user=user)
             return response
@@ -131,7 +137,11 @@ class GenerateRegistrationOptionsView(APIView):
             user_name=user.username,
             user_display_name=user.get_full_name(),
             exclude_credentials=[
-                {"id": cred.credential_id, "type": "public-key"}
+                PublicKeyCredentialDescriptor(
+                    type=PublicKeyCredentialType.PUBLIC_KEY,
+                    id=cred.credential_id,
+                    transports=[AuthenticatorTransport.INTERNAL],
+                )
                 for cred in user.webauthn_credentials.all()
             ],
             authenticator_selection=AuthenticatorSelectionCriteria(
@@ -188,6 +198,8 @@ class VerifyRegistrationView(APIView):
             )
 
         try:
+            raw_id_bytes = decode_base64url(request.data["rawId"])
+
             verified_credential = verify_registration_response(
                 credential=request.data,
                 expected_challenge=expected_challenge,
@@ -199,7 +211,7 @@ class VerifyRegistrationView(APIView):
             WebAuthnCredential.objects.create(
                 user=user,
                 name=request.data.get("name", "Unnamed Passkey"),
-                credential_id=verified_credential.credential_id,
+                credential_id=raw_id_bytes,
                 public_key=verified_credential.credential_public_key,
                 sign_count=verified_credential.sign_count,
             )
@@ -239,70 +251,94 @@ class GenerateAuthenticationOptionsView(APIView):
     def post(self, request, *args, **kwargs):
         options = generate_authentication_options(
             rp_id=auth_config.webauthn_domain,
-            timeout=120000,  # 2 minutes
+            timeout=120000,
+            user_verification=UserVerificationRequirement.PREFERRED,
         )
         challenge_record = WebAuthnChallenge.objects.create(
             user=None,
             challenge=options.challenge,
         )
-        response_data = dict(options)
+        json_str = options_to_json(options)
+        response_data = json.loads(json_str)
         response_data["challengeId"] = str(challenge_record.id)
 
         return Response(response_data, status=status.HTTP_200_OK)
 
 
-class VerifyAuthenticationView(APIView):
-    """
-    Verifies the authentication data from the browser and logs the user in.
-    """
+generate_authentication_options_view = GenerateAuthenticationOptionsView.as_view()
 
+
+class VerifyAuthenticationView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
-        challenge = request.session.pop("webauthn_challenge", None)
-        if not challenge:
+        print(request.data)
+        challenge_id = request.data.get("challengeId")
+        if not challenge_id:
             return Response(
                 {"error": "Challenge not found."}, status=status.HTTP_400_BAD_REQUEST
             )
 
         try:
-            auth_credential_data = AuthenticationCredential.parse_obj(request.data)
-            credential_id_from_client = auth_credential_data.raw_id
+            challenge_record = WebAuthnChallenge.objects.get(id=challenge_id)
+
+            if challenge_record.is_expired:
+                return Response(
+                    {"error": "Challenge has expired."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            auth_credential_data = request.data
+            credential_id_from_client = decode_base64url(
+                auth_credential_data.get("rawId")
+            )
 
             db_credential = WebAuthnCredential.objects.filter(
                 credential_id=credential_id_from_client
             ).first()
+
+            for credential in WebAuthnCredential.objects.all():
+                print(credential.credential_id_b64, " base64")
+                print(credential.credential_id, " credential_id")
+                print(credential_id_from_client, " credential_id_from_client")
             if not db_credential:
                 return Response(
-                    {"error": "Credential not found."}, status=status.HTTP_404_NOT_FOUND
+                    {"error": "Credential not found."},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
             verified_credential = verify_authentication_response(
                 credential=auth_credential_data,
-                expected_challenge=challenge,
-                expected_origin=settings.WEBAUTHN_ORIGIN,
-                expected_rp_id=settings.WEBAUTHN_RP_ID,
+                expected_challenge=challenge_record.challenge,
+                expected_origin=auth_config.webauthn_origin,
+                expected_rp_id=auth_config.webauthn_domain,
                 credential_public_key=db_credential.public_key,
                 credential_current_sign_count=db_credential.sign_count,
-                require_user_verification=True,  # Require biometric/PIN
+                require_user_verification=True,
             )
 
-            # Update sign count and log in the user
+            # Update sign count
             db_credential.sign_count = verified_credential.new_sign_count
             db_credential.save()
 
-            # Use Django's session framework to log in
-            login(request, db_credential.user)
+            # Delete challenge after successful verification
+            challenge_record.delete()
 
-            return Response({"success": True, "username": db_credential.user.username})
+            # Login user
+            user = db_credential.user
 
-        except WebAuthnException as e:
-            return Response(
-                {"error": f"Authentication failed: {e}"},
+            response = handle_login(request=request, user=user)
+
+            return response
+
+        except Exception:
+            token_manager = token_service.TokenService(request=request)
+            response = Response(
+                data={"error": "Could not verify passkey"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        except Exception as e:
-            return Response(
-                {"error": "An unexpected error occurred."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+            response = token_manager.clear_all_cookies(response)
+            return response
+
+
+verify_authentication_view = VerifyAuthenticationView.as_view()

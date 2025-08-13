@@ -13,9 +13,16 @@ class AuthenticationBackend(BaseBackend):
     """
 
     def authenticate(
-        self, request, email_address=None, username=None, code=None, **kwargs
+        self,
+        request,
+        email_address=None,
+        username=None,
+        code=None,
+        password=None,
+        **kwargs
     ):
-        print("Authenticate")
+        if username and password:
+            return super().authenticate(request, username=username, password=password)
         if not email_address:
             raise ValidationError(("Email address is required for authentication."))
         if not code:

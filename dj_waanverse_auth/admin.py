@@ -9,6 +9,8 @@ if auth_config.enable_admin:
         ResetPasswordToken,
         UserSession,
         VerificationCode,
+        WebAuthnChallenge,
+        WebAuthnCredential,
     )
 
     @admin.register(UserSession)
@@ -27,3 +29,5 @@ if auth_config.enable_admin:
     admin.site.register(VerificationCode)
     admin.site.register(ResetPasswordToken)
     admin.site.register(GoogleStateToken)
+    admin.site.register(WebAuthnChallenge)
+    admin.site.register(WebAuthnCredential)
