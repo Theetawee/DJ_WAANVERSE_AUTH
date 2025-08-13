@@ -1,11 +1,14 @@
 asgiref==3.9.1
+asn1crypto==1.5.1
+cbor2==5.6.5
 certifi==2025.7.14
 cffi==1.17.1
 charset-normalizer==3.4.2
 coverage==7.9.2
 cryptography==45.0.5
--e git+https://github.com/Theetawee/DJ_WAANVERSE_AUTH.git@cfd42d7bf7a8681b3e36e2ddead9ddb913d63144#egg=dj_waanverse_auth
+-e git+https://github.com/Theetawee/DJ_WAANVERSE_AUTH.git@4eac79576d6c8c4501e60cdb952474942bdf6966#egg=dj_waanverse_auth
 Django==5.2.4
+django-cors-headers==4.7.0
 django-dotenv==1.4.2
 djangorestframework==3.16.0
 flake8==7.3.0
@@ -15,6 +18,7 @@ pycodestyle==2.14.0
 pycparser==2.22
 pyflakes==3.4.0
 PyJWT==2.10.1
+pyOpenSSL==25.1.0
 pyotp==2.9.0
 requests==2.32.4
 setuptools==80.9.0
@@ -24,3 +28,4 @@ ua-parser==1.0.1
 ua-parser-builtins==0.18.0.post1
 urllib3==2.5.0
 user-agents==2.2.0
+webauthn==2.6.0

@@ -4,17 +4,37 @@ from django.utils import timezone
 from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from dj_waanverse_auth.serializers.login_serializers import LoginSerializer
 from dj_waanverse_auth.services import token_service
-from dj_waanverse_auth.services.mfa_service import MFAHandler
 from dj_waanverse_auth.utils.login_utils import handle_login
 from dj_waanverse_auth.utils.generators import generate_code
 from dj_waanverse_auth.utils.email_utils import send_login_code_email
-from dj_waanverse_auth.models import LoginCode
+from dj_waanverse_auth.models import LoginCode, WebAuthnChallenge
 from django.core.exceptions import ValidationError
 from datetime import timedelta
+from dj_waanverse_auth import settings as auth_config
+from django.core.exceptions import ImproperlyConfigured
+from rest_framework.views import APIView
+from webauthn import (
+    generate_registration_options,
+    verify_registration_response,
+    generate_authentication_options,
+    verify_authentication_response,
+)
+from webauthn.helpers.structs import (
+    AuthenticationCredential,
+    AuthenticatorSelectionCriteria,
+    AuthenticatorAttachment,
+    ResidentKeyRequirement,
+    UserVerificationRequirement,
+)
+from dj_waanverse_auth.models import WebAuthnCredential
+from django.conf import settings
+from webauthn.helpers import options_to_json
+import json
+
 
 User = get_user_model()
 
@@ -85,50 +105,204 @@ def get_login_code(request):
     return Response({"status": "success"}, status=status.HTTP_200_OK)
 
 
-@api_view(["POST"])
-@permission_classes([AllowAny])
-def mfa_login_view(request):
-    """Handle MFA login using a provided MFA or recovery code."""
-    # Retrieve MFA cookie with user ID
-    user_id = request.data.get("user_id", None)
-    is_valid = False
-    if not user_id:
-        return Response(
-            {
-                "error": "Unable to authenticate. Please login again",
-                "code": "mfa_cookie_not_found",
-            },
-            status=status.HTTP_400_BAD_REQUEST,
+class GenerateRegistrationOptionsView(APIView):
+    """
+    Generates registration options for an authenticated user to add a new passkey.
+    Requires the user to be logged in via another method first.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        if (
+            auth_config.webauthn_domain is None
+            or auth_config.webauthn_rp_name is None
+            or auth_config.webauthn_origin is None
+        ):
+            raise ImproperlyConfigured(
+                "WEBAUTHN_DOMAIN, WEBAUTHN_RP_NAME, and WEBAUTHN_ORIGIN must be set in dj_waanverse_auth settings"
+            )
+
+        options = generate_registration_options(
+            rp_id=auth_config.webauthn_domain,
+            rp_name=auth_config.webauthn_rp_name,
+            user_id=str(user.pk).encode("utf-8"),
+            user_name=user.username,
+            user_display_name=user.get_full_name(),
+            exclude_credentials=[
+                {"id": cred.credential_id, "type": "public-key"}
+                for cred in user.webauthn_credentials.all()
+            ],
+            authenticator_selection=AuthenticatorSelectionCriteria(
+                authenticator_attachment=AuthenticatorAttachment.PLATFORM,
+                resident_key=ResidentKeyRequirement.REQUIRED,
+                user_verification=UserVerificationRequirement.REQUIRED,
+            ),
         )
 
-    try:
-        user = get_user_model().objects.get(id=int(user_id))
-    except get_user_model().DoesNotExist:
-        return Response(
-            {
-                "error": "Unable to authenticate. Please login again",
-                "code": "user_not_found",
-            },
-            status=status.HTTP_400_BAD_REQUEST,
+        challenge_record = WebAuthnChallenge.objects.create(
+            user=user,
+            challenge=options.challenge,
         )
 
-    mfa_handler = MFAHandler(user)
+        json_str = options_to_json(options)
+        response_data = json.loads(json_str)
+        response_data["challengeId"] = str(challenge_record.id)
 
-    code = request.data.get("code")
+        return Response(response_data, status=status.HTTP_200_OK)
 
-    if not code:
-        return Response(
-            {"error": "MFA code or recovery code is required."},
-            status=status.HTTP_400_BAD_REQUEST,
+
+generate_registration_options_view = GenerateRegistrationOptionsView.as_view()
+
+
+class VerifyRegistrationView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        challenge_id = request.data.get("challengeId")
+
+        if not challenge_id:
+            return Response(
+                {"error": "challengeId is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            challenge_record = WebAuthnChallenge.objects.get(id=challenge_id, user=user)
+            expected_challenge = challenge_record.challenge
+
+            challenge_record.delete()
+
+            if challenge_record.is_expired:
+                return Response(
+                    {"error": "Challenge has expired."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        except WebAuthnChallenge.DoesNotExist:
+            return Response(
+                {"error": "Invalid or expired challenge."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            verified_credential = verify_registration_response(
+                credential=request.data,
+                expected_challenge=expected_challenge,
+                expected_origin=auth_config.webauthn_origin,
+                expected_rp_id=auth_config.webauthn_domain,
+                require_user_verification=True,
+            )
+
+            WebAuthnCredential.objects.create(
+                user=user,
+                name=request.data.get("name", "Unnamed Passkey"),
+                credential_id=verified_credential.credential_id,
+                public_key=verified_credential.credential_public_key,
+                sign_count=verified_credential.sign_count,
+            )
+
+            return Response({"success": True}, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            logger.warning(
+                f"WebAuthn registration verification failed for user {user.username}: {e}"
+            )
+            return Response(
+                {"error": f"Could not verify passkey: {e}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except Exception as e:
+            # Handle other unexpected errors
+            logger.error(
+                f"Unexpected error during WebAuthn registration for user {user.username}: {e}",
+                exc_info=True,
+            )
+            return Response(
+                {"error": "An unexpected error occurred during verification."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+verify_registration_view = VerifyRegistrationView.as_view()
+
+
+class GenerateAuthenticationOptionsView(APIView):
+    """
+    Generates authentication options for a user to log in with a passkey.
+    """
+
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        options = generate_authentication_options(
+            rp_id=auth_config.webauthn_domain,
+            timeout=120000,  # 2 minutes
         )
-    if mfa_handler.verify_token(code):
-        is_valid = True
-    if is_valid:
-        response = handle_login(request=request, user=user)
-
-        return response
-    else:
-        return Response(
-            {"error": "Invalid MFA code or recovery code."},
-            status=status.HTTP_400_BAD_REQUEST,
+        challenge_record = WebAuthnChallenge.objects.create(
+            user=None,
+            challenge=options.challenge,
         )
+        response_data = dict(options)
+        response_data["challengeId"] = str(challenge_record.id)
+
+        return Response(response_data, status=status.HTTP_200_OK)
+
+
+class VerifyAuthenticationView(APIView):
+    """
+    Verifies the authentication data from the browser and logs the user in.
+    """
+
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        challenge = request.session.pop("webauthn_challenge", None)
+        if not challenge:
+            return Response(
+                {"error": "Challenge not found."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            auth_credential_data = AuthenticationCredential.parse_obj(request.data)
+            credential_id_from_client = auth_credential_data.raw_id
+
+            db_credential = WebAuthnCredential.objects.filter(
+                credential_id=credential_id_from_client
+            ).first()
+            if not db_credential:
+                return Response(
+                    {"error": "Credential not found."}, status=status.HTTP_404_NOT_FOUND
+                )
+
+            verified_credential = verify_authentication_response(
+                credential=auth_credential_data,
+                expected_challenge=challenge,
+                expected_origin=settings.WEBAUTHN_ORIGIN,
+                expected_rp_id=settings.WEBAUTHN_RP_ID,
+                credential_public_key=db_credential.public_key,
+                credential_current_sign_count=db_credential.sign_count,
+                require_user_verification=True,  # Require biometric/PIN
+            )
+
+            # Update sign count and log in the user
+            db_credential.sign_count = verified_credential.new_sign_count
+            db_credential.save()
+
+            # Use Django's session framework to log in
+            login(request, db_credential.user)
+
+            return Response({"success": True, "username": db_credential.user.username})
+
+        except WebAuthnException as e:
+            return Response(
+                {"error": f"Authentication failed: {e}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except Exception as e:
+            return Response(
+                {"error": "An unexpected error occurred."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

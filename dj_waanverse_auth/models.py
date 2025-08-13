@@ -1,5 +1,6 @@
 import secrets
 from datetime import timedelta
+import base64
 
 from django.contrib.auth import get_user_model
 from django.db import models
@@ -7,6 +8,8 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from dj_waanverse_auth.config.settings import auth_config
+import uuid
+
 
 Account = get_user_model()
 
@@ -154,3 +157,42 @@ class LoginCode(models.Model):
         verbose_name = "Login Code"
         verbose_name_plural = "Login Codes"
         ordering = ["-created_at"]
+
+
+class WebAuthnCredential(models.Model):
+    user = models.ForeignKey(
+        Account, on_delete=models.CASCADE, related_name="webauthn_credentials"
+    )
+    credential_id = models.BinaryField(max_length=255, unique=True)
+    public_key = models.BinaryField()
+    sign_count = models.PositiveIntegerField(default=0)
+    name = models.CharField(max_length=255, blank=True, null=True)
+
+    def __str__(self):
+        return f"Credential for {self.user.username} - {self.name or 'Unnamed'}"
+
+    @property
+    def credential_id_b64(self):
+        return base64.urlsafe_b64encode(self.credential_id).rstrip(b"=").decode("utf-8")
+
+    @property
+    def public_key_b64(self):
+        return base64.urlsafe_b64encode(self.public_key).rstrip(b"=").decode("utf-8")
+
+
+class WebAuthnChallenge(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    challenge = models.BinaryField(max_length=100, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(Account, on_delete=models.CASCADE, null=True, blank=True)
+
+    def __str__(self):
+        return f"Challenge {self.id} for {self.user or 'Anonymous'}"
+
+    @property
+    def is_expired(self):
+        return timezone.now() > self.created_at + timedelta(minutes=5)
+
+    class Meta:
+        verbose_name = "WebAuthn Challenge"
+        verbose_name_plural = "WebAuthn Challenges"

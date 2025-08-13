@@ -177,6 +177,9 @@ WAANVERSE_AUTH_CONFIG = {
     "GOOGLE_CLIENT_SECRET": os.environ.get("GOOGLE_SECRET_ID"),
     "GOOGLE_REDIRECT_URI": os.environ.get("GOOGLE_REDIRECT_URI"),
     "SEND_PHONE_VERIFICATION_CODE_FUNC": "accounts.utils.send_phone_code",
+    "WEBAUTHN_DOMAIN": "localhost",
+    "WEBAUTHN_RP_NAME": "localhost",
+    "WEBAUTHN_ORIGIN": "http://localhost:5173",
 }
 
 REST_FRAMEWORK = {

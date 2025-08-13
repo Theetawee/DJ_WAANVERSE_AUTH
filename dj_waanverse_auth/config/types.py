@@ -75,3 +75,8 @@ class AuthConfigSchema(TypedDict, total=False):
 
     SEND_PHONE_VERIFICATION_CODE_FUNC: str
     LOGIN_CODE_EMAIL_SUBJECT: str
+
+    WEBAUTHN_DOMAIN: str  # required
+    WEBAUTHN_RP_NAME: str  # required
+
+    WEBAUTHN_ORIGIN: str  # required

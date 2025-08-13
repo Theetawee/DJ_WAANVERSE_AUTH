@@ -170,6 +170,10 @@ class AuthConfig:
             "LOGIN_CODE_EMAIL_SUBJECT", "Login code"
         )
 
+        self.webauthn_domain = config_dict.get("WEBAUTHN_DOMAIN", None)
+        self.webauthn_rp_name = config_dict.get("WEBAUTHN_RP_NAME", None)
+        self.webauthn_origin = config_dict.get("WEBAUTHN_ORIGIN", None)
+
         # Validate configuration
         self._validate_configuration()
 
