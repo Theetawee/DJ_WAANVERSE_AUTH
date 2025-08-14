@@ -1,5 +1,5 @@
 import logging
-
+from django.core.validators import validate_email
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils.translation import gettext_lazy as _
@@ -10,6 +10,7 @@ from dj_waanverse_auth.utils.email_utils import verify_email_address
 from dj_waanverse_auth.utils.generators import generate_verification_code
 import phonenumbers
 from dj_waanverse_auth.utils.phone_utils import send_phone_verification_code
+from dj_waanverse_auth import settings
 
 logger = logging.getLogger(__name__)
 
@@ -35,36 +36,61 @@ class SignupSerializer(serializers.Serializer):
             )
 
         if email:
-            if Account.objects.filter(
-                email_address=email, email_verified=True
-            ).exists():
-                raise serializers.ValidationError(
-                    {"email_address": ("Email address is already in use.")}
-                )
+            self._validate_email(email, attrs)
 
         if phone:
-            try:
-                parsed_phone = phonenumbers.parse(phone, None)
-                if not phonenumbers.is_valid_number(parsed_phone):
-                    raise serializers.ValidationError(
-                        {"phone_number": ("Invalid phone number format.")}
-                    )
-                attrs["phone_number"] = phonenumbers.format_number(
-                    parsed_phone, phonenumbers.PhoneNumberFormat.E164
+            self._validate_phone(phone, attrs)
+
+        return attrs
+
+    def _validate_email(self, email, attrs):
+        if Account.objects.filter(email_address=email, email_verified=True).exists():
+            raise serializers.ValidationError(
+                {"email_address": ("Email address is already in use.")}
+            )
+
+        try:
+            validate_email(email)
+        except Exception as e:
+            raise serializers.ValidationError({"email_address": e})
+
+        email_domain = email.split("@")[1]
+        if len(settings.allowed_email_domains) > 0:
+            if email_domain not in settings.allowed_email_domains:
+                raise serializers.ValidationError(
+                    {"email_address": ("Invalid email address.")}
                 )
-            except phonenumbers.NumberParseException:
+        if email in settings.blacklisted_emails:
+            raise serializers.ValidationError(
+                {"email_address": ("Email address is not allowed.")}
+            )
+
+    def _validate_phone(self, phone, attrs):
+        try:
+            parsed_phone = phonenumbers.parse(phone, None)
+            if not phonenumbers.is_valid_number(parsed_phone):
                 raise serializers.ValidationError(
                     {"phone_number": ("Invalid phone number format.")}
                 )
+            attrs["phone_number"] = phonenumbers.format_number(
+                parsed_phone, phonenumbers.PhoneNumberFormat.E164
+            )
+        except phonenumbers.NumberParseException:
+            raise serializers.ValidationError(
+                {"phone_number": ("Invalid phone number format.")}
+            )
 
-            if Account.objects.filter(
-                phone_number=attrs["phone_number"], phone_verified=True
-            ).exists():
-                raise serializers.ValidationError(
-                    {"phone_number": ("Phone number is already in use.")}
-                )
+        if Account.objects.filter(
+            phone_number=attrs["phone_number"], phone_number_verified=True
+        ).exists():
+            raise serializers.ValidationError(
+                {"phone_number": ("Phone number is already in use.")}
+            )
 
-        return attrs
+        if phone in settings.blacklisted_phone_numbers:
+            raise serializers.ValidationError(
+                {"phone_number": ("Phone number is not allowed.")}
+            )
 
     def create(self, validated_data):
         """
@@ -133,9 +159,10 @@ class EmailVerificationSerializer(serializers.Serializer):
         """
         Validate email with comprehensive checks and sanitization.
         """
-        user = self.context.get("user")
-        if user.email_address != email_address:
-            raise serializers.ValidationError("mismatch")
+        try:
+            Account.objects.get(email_address=email_address, is_active=False)
+        except Account.DoesNotExist:
+            raise serializers.ValidationError("invalid")
         return email_address
 
     def validate(self, attrs):
@@ -144,11 +171,12 @@ class EmailVerificationSerializer(serializers.Serializer):
     def create(self, validated_data):
         try:
             email_address = validated_data["email_address"]
-            verify_email_address(self.context.get("user"))
+            user = Account.objects.get(email_address=email_address, is_active=False)
+            verify_email_address(user)
             return email_address
         except Exception as e:
-            logger.error(f"Email verification failed: {str(e)}")
-            raise serializers.ValidationError(f"failed {e}")
+
+            raise serializers.ValidationError(e)
 
 
 class ActivateEmailSerializer(serializers.Serializer):

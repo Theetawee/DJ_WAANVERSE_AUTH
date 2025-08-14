@@ -5,6 +5,7 @@ from django.contrib.auth.models import (
     BaseUserManager,
     PermissionsMixin,
 )
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 
@@ -22,20 +23,21 @@ class AccountManager(BaseUserManager):
 
         if not username:
             username = generate_username()
-        if not email_address:
+
+        if not email_address and not phone_number:
             raise ValueError(
-                "At least one of username, email address, or phone number is required"
+                "At least one of email address or phone number is required."
             )
 
         user = self.model(
             username=username,
-            email_address=email_address,
+            email_address=(
+                self.normalize_email(email_address) if email_address else None
+            ),
             phone_number=phone_number,
             **extra_fields
         )
 
-        if email_address:
-            user.email_address = self.normalize_email(email_address)
         if password:
             user.set_password(password)
         else:
@@ -129,6 +131,13 @@ class AbstractBaseAccount(AbstractBaseUser, PermissionsMixin):
                 fields=["phone_number"], name="%(app_label)s_%(class)s_phone_idx"
             ),
         ]
+
+    def clean(self):
+        super().clean()
+        if not self.email_address and not self.phone_number:
+            raise ValidationError(
+                "You must provide at least an email address or a phone number."
+            )
 
     def __str__(self) -> str:
         return self.get_primary_contact or "Unknown User"

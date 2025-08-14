@@ -48,8 +48,6 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    "dj_waanverse_auth.middleware.auth.IPBlockerMiddleware",
-    "dj_waanverse_auth.middleware.client_hints.ClientHintsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
@@ -162,12 +160,6 @@ WAANVERSE_AUTH_CONFIG = {
     "REFRESH_TOKEN_COOKIE_MAX_AGE": timedelta(days=30),
     "ACCESS_TOKEN_COOKIE_MAX_AGE": timedelta(minutes=30),
     "BASIC_ACCOUNT_SERIALIZER": "accounts.serializers.BasicAccountSerializer",
-    "DISPOSABLE_EMAIL_DOMAINS": [
-        "tempmail.com",
-        "throwawaymail.com",
-        "guerrillamail.com",
-        "mailinator.com",
-    ],
     "ENABLE_ADMIN_PANEL": True,
     "REGISTRATION_SERIALIZER": "accounts.serializers.SignupSerializer",
     "MFA_DEBUG_CODE": "123456",

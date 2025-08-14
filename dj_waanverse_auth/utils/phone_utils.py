@@ -19,7 +19,7 @@ def get_send_code_function():
         ValueError: If SEND_PHONE_VERIFICATION_CODE_FUNC is not defined in settings.
         ImportError: If the module or function cannot be imported.
     """
-    dotted_path = getattr(settings, "SEND_PHONE_VERIFICATION_CODE_FUNC", None)
+    dotted_path = settings.send_phone_verification_code_func
     if not dotted_path:
         raise ValueError("SEND_PHONE_VERIFICATION_CODE_FUNC is not defined in settings")
 

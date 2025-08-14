@@ -79,11 +79,11 @@ def decode_token(token: str) -> Dict[str, Any]:
     Example:
         >>> try:
         ...     payload = decode_token("eyJ0eXAiOiJKV1QiLC...")
-        ...     user_id = payload[settings.user_id_claim]
+        ...     user_id = payload["id"]
         ... except exceptions.AuthenticationFailed as e:
         ...     print(f"Authentication failed: {str(e)}")
     """
-    user_claim = settings.user_id_claim
+
     if not token:
         raise exceptions.AuthenticationFailed("No token provided")
 
@@ -102,7 +102,7 @@ def decode_token(token: str) -> Dict[str, Any]:
                     "exp",
                     "iat",
                     "iss",
-                    user_claim,
+                    "id",
                     "sid",
                 ],
             },
@@ -133,12 +133,11 @@ def encode_token(payload) -> str:
     """
     Encode payload into JWT token with error handling and logging
     """
-    user_claim = settings.user_id_claim
 
     if not isinstance(payload, dict):
         raise ValueError("Payload must be a dictionary")
 
-    required_claims = {user_claim, "exp", "iat", "iss"}
+    required_claims = {"id", "exp", "iat", "iss"}
     missing_claims = required_claims - set(payload.keys())
     if missing_claims:
         raise ValueError(f"Missing required claims: {missing_claims}")

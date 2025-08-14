@@ -1,5 +1,5 @@
 from django.db import transaction
-
+from django.utils import timezone
 from dj_waanverse_auth import settings as auth_config
 from dj_waanverse_auth.models import VerificationCode
 from dj_waanverse_auth.services.email_service import EmailService
@@ -9,6 +9,7 @@ from dj_waanverse_auth.utils.security_utils import (
     get_ip_address,
     get_location_from_ip,
 )
+from datetime import timedelta
 
 
 def send_login_email(request, user):
@@ -48,17 +49,26 @@ def send_login_code_email(user, code):
 
 def verify_email_address(user):
     if user.email_address and not user.email_verified:
+        now = timezone.now()
+
+        last_code = (
+            VerificationCode.objects.filter(email_address=user.email_address)
+            .order_by("-created_at")
+            .first()
+        )
+
+        if last_code and (now - last_code.created_at) < timedelta(minutes=1):
+            raise Exception("too_fast")
+
         code = generate_verification_code()
         email_manager = EmailService()
         template_name = "emails/verify_email.html"
-        with transaction.atomic():
-            if VerificationCode.objects.filter(
-                email_address=user.email_address
-            ).exists():
-                VerificationCode.objects.filter(
-                    email_address=user.email_address
-                ).delete()
 
+        with transaction.atomic():
+            # Remove old codes
+            VerificationCode.objects.filter(email_address=user.email_address).delete()
+
+            # Create new code
             VerificationCode.objects.create(email_address=user.email_address, code=code)
 
             # Send email

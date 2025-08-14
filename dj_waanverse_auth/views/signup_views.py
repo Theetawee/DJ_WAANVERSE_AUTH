@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 
 from django.utils import timezone
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes, throttle_classes
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -19,10 +19,6 @@ from dj_waanverse_auth.serializers.signup_serializers import (
 )
 
 from dj_waanverse_auth.services.token_service import TokenService
-from dj_waanverse_auth.throttles import (
-    EmailVerificationThrottle,
-    PhoneVerificationThrottle,
-)
 from dj_waanverse_auth.utils.serializer_utils import get_serializer_class
 
 logger = logging.getLogger(__name__)
@@ -60,22 +56,19 @@ signup_view = SignupView.as_view()
 
 
 @api_view(["POST"])
-@permission_classes([IsAuthenticated])
-@throttle_classes([EmailVerificationThrottle])
+@permission_classes([AllowAny])
 def send_email_verification_code(request):
     """
     Function-based view to initiate email verification.
     """
     try:
-        serializer = EmailVerificationSerializer(
-            data=request.data, context={"user": request.user}
-        )
+        serializer = EmailVerificationSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(
                 {
                     "message": "Email verification code sent successfully.",
-                    "expires_in": f"{settings.verification_email_code_expiry_in_minutes} minutes",
+                    "expires_in": "10 minutes",
                 },
                 status=status.HTTP_200_OK,
             )
@@ -94,7 +87,6 @@ def activate_email_address(request):
     """
     Function-based view to activate an email address for a user.
     """
-    print(request.data)
     try:
         handle = request.data.get("handle")
         user = request.user
@@ -146,7 +138,6 @@ def activate_email_address(request):
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
-@throttle_classes([PhoneVerificationThrottle])
 def send_phone_number_verification_code_view(request):
     """
     Function-based view to initiate phone number verification.

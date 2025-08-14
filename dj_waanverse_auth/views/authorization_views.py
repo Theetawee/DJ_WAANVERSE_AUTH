@@ -8,7 +8,6 @@ from rest_framework.response import Response
 from dj_waanverse_auth.config.settings import auth_config
 from dj_waanverse_auth.models import UserSession
 from dj_waanverse_auth.serializers.authorization_serializer import SessionSerializer
-from dj_waanverse_auth.serializers.client_hints_serializers import ClientInfoSerializer
 from dj_waanverse_auth.services.token_service import TokenService
 from dj_waanverse_auth.utils.serializer_utils import get_serializer_class
 from dj_waanverse_auth.utils.session_utils import revoke_session
@@ -16,14 +15,6 @@ from dj_waanverse_auth.utils.token_utils import decode_token
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
-
-
-@api_view(["GET"])
-@permission_classes([AllowAny])
-def get_device_info(request):
-    client_info = ClientInfoSerializer(request.client_info)
-
-    return Response(client_info.data, status=status.HTTP_200_OK)
 
 
 @api_view(["POST"])

@@ -74,7 +74,7 @@ class RefreshToken:
         try:
             expiration = now() + auth_config.access_token_cookie_max_age
             access_payload = {
-                auth_config.user_id_claim: self._payload[auth_config.user_id_claim],
+                "id": self._payload["id"],
                 "exp": expiration,
                 "iat": now(),
                 "iss": auth_config.platform_name,

@@ -56,7 +56,7 @@ class AuthConfig:
         self.blacklisted_phone_numbers = config_dict.get(
             "BLACKLISTED_PHONE_NUMBERS", []
         )
-        self.disposable_email_domains = config_dict.get("DISPOSABLE_EMAIL_DOMAINS", [])
+        self.allowed_email_domains = config_dict.get("ALLOWED_EMAIL_DOMAINS", [])
         self.verification_email_subject = config_dict.get(
             "VERIFICATION_EMAIL_SUBJECT", "Verify your email address"
         )

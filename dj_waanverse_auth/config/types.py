@@ -27,7 +27,7 @@ class AuthConfigSchema(TypedDict, total=False):
     EMAIL_THREADING_ENABLED: bool
     BLACKLISTED_EMAILS: List[str]
     BLACKLISTED_PHONE_NUMBERS: List[str]
-    DISPOSABLE_EMAIL_DOMAINS: List[str]
+    ALLOWED_EMAIL_DOMAINS: List[str]
     VERIFICATION_EMAIL_SUBJECT: str
     PASSWORD_RESET_EMAIL_SUBJECT: str
 
@@ -35,7 +35,6 @@ class AuthConfigSchema(TypedDict, total=False):
     ENABLE_ADMIN_PANEL: bool
 
     DISABLE_SIGNUP: bool
-
     SEND_PHONE_VERIFICATION_CODE_FUNC: str
     LOGIN_CODE_EMAIL_SUBJECT: str
 
