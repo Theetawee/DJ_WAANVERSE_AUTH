@@ -2,13 +2,12 @@ import logging
 
 from django.contrib.auth import get_user_model
 
-from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
+from dj_waanverse_auth.utils.login_utils import handle_login
 from dj_waanverse_auth import settings
 from dj_waanverse_auth.serializers.signup_serializers import (
     ActivateEmailSerializer,
@@ -17,9 +16,6 @@ from dj_waanverse_auth.serializers.signup_serializers import (
     PhoneNumberVerificationSerializer,
     SignupSerializer,
 )
-
-from dj_waanverse_auth.services.token_service import TokenService
-from dj_waanverse_auth.utils.serializer_utils import get_serializer_class
 
 logger = logging.getLogger(__name__)
 
@@ -101,26 +97,7 @@ def activate_email_address(request):
             user = serializer.save()
             request.user = user
             if handle == "signup":
-                token_manager = TokenService(user=user, request=request)
-                basic_serializer = get_serializer_class(
-                    settings.basic_account_serializer_class
-                )
-
-                response = Response(
-                    status=status.HTTP_200_OK,
-                    data={
-                        "user": basic_serializer(user).data,
-                    },
-                )
-                res = token_manager.setup_login_cookies(response)
-                user.last_login = timezone.now()
-                user.save(update_fields=["last_login"])
-                tokens = res["tokens"]
-                response = res["response"]
-                response.data["status"] = "success"
-                response.data["access_token"] = tokens["access_token"]
-                response.data["refresh_token"] = tokens["refresh_token"]
-                response.data["sid"] = tokens["sid"]
+                response = handle_login(request, user)
                 return response
             else:
                 return Response(
@@ -137,23 +114,21 @@ def activate_email_address(request):
 
 
 @api_view(["POST"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def send_phone_number_verification_code_view(request):
     """
     Function-based view to initiate phone number verification.
     """
     try:
 
-        serializer = PhoneNumberVerificationSerializer(
-            data=request.data, context={"user": request.user}
-        )
+        serializer = PhoneNumberVerificationSerializer(data=request.data)
 
         if serializer.is_valid():
             serializer.save()
             return Response(
                 {
                     "message": "Verification code sent successfully.",
-                    "expires_in": f"{settings.verification_email_code_expiry_in_minutes} minutes",
+                    "expires_in": "10 minutes",
                 },
                 status=status.HTTP_200_OK,
             )
@@ -165,17 +140,26 @@ def send_phone_number_verification_code_view(request):
 
 
 @api_view(["POST"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def activate_phone_number(request):
     """
     Function-based view to activate an phone_number for a user.
     """
     try:
-        serializer = ActivatePhoneSerializer(
-            data=request.data, context={"request": request}
-        )
+        handle = request.data.get("handle")
+        user = request.user
+
+        if handle != "signup" and not user.is_authenticated:
+            return Response(
+                {"error": "Unable to authenticate. Please login again"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        serializer = ActivatePhoneSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            user = serializer.save()
+            if handle == "signup":
+                response = handle_login(request, user)
+                return response
             return Response(
                 {"message": "PhoneNumber activated successfully."},
                 status=status.HTTP_200_OK,

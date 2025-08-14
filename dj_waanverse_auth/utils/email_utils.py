@@ -13,8 +13,8 @@ from datetime import timedelta
 
 
 def send_login_email(request, user):
-    if user.email_address:
-        email_manager = EmailService(request=request)
+    if user.email_address and user.email_verified:
+        email_manager = EmailService()
         template_name = "emails/login_alert.html"
         ip_address = get_ip_address(request)
         context = {
@@ -69,7 +69,9 @@ def verify_email_address(user):
             VerificationCode.objects.filter(email_address=user.email_address).delete()
 
             # Create new code
-            VerificationCode.objects.create(email_address=user.email_address, code=code)
+            VerificationCode.objects.create(
+                email_address=user.email_address, code=code, created_at=now
+            )
 
             # Send email
             email_manager.send_email(

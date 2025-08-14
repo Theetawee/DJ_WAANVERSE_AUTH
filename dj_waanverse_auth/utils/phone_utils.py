@@ -3,6 +3,8 @@ from django.db import transaction
 from dj_waanverse_auth import settings
 from dj_waanverse_auth.utils.generators import generate_verification_code
 from dj_waanverse_auth.models import VerificationCode
+from django.utils import timezone
+from datetime import timedelta
 
 
 def get_send_code_function():
@@ -48,11 +50,24 @@ def send_phone_verification_code(user) -> None:
     if not user.phone_number or user.phone_number_verified:
         raise ValueError("User has no phone number or it is already verified.")
 
+    now = timezone.now()
+
+    last_code = (
+        VerificationCode.objects.filter(phone_number=user.phone_number)
+        .order_by("-created_at")
+        .first()
+    )
+
+    if last_code and (now - last_code.created_at) < timedelta(minutes=1):
+        raise Exception("too_fast")
+
     code = generate_verification_code()
 
     with transaction.atomic():
         VerificationCode.objects.filter(phone_number=user.phone_number).delete()
-        VerificationCode.objects.create(phone_number=user.phone_number, code=code)
+        VerificationCode.objects.create(
+            phone_number=user.phone_number, code=code, created_at=now
+        )
 
     send_func = get_send_code_function()
     send_func(user.phone_number, code)

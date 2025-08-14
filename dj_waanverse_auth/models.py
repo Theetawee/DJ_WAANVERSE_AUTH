@@ -45,7 +45,7 @@ class VerificationCode(models.Model):
     code = models.CharField(
         max_length=255, unique=True, verbose_name=_("Verification Code")
     )
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created At"))
+    created_at = models.DateTimeField(verbose_name=_("Created At"))
 
     def is_expired(self):
         """

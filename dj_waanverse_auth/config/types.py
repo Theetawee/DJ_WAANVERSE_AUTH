@@ -42,3 +42,5 @@ class AuthConfigSchema(TypedDict, total=False):
     WEBAUTHN_RP_NAME: str  # required
 
     WEBAUTHN_ORIGIN: str  # required
+
+    LOGIN_ALERT_EMAIL_SUBJECT: str

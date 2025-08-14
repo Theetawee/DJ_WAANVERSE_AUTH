@@ -2,12 +2,10 @@ import logging
 from django.core.validators import validate_email
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from dj_waanverse_auth.utils.phone_utils import get_send_code_function
 from dj_waanverse_auth.models import VerificationCode
 from dj_waanverse_auth.utils.email_utils import verify_email_address
-from dj_waanverse_auth.utils.generators import generate_verification_code
 import phonenumbers
 from dj_waanverse_auth.utils.phone_utils import send_phone_verification_code
 from dj_waanverse_auth import settings
@@ -160,8 +158,9 @@ class EmailVerificationSerializer(serializers.Serializer):
         Validate email with comprehensive checks and sanitization.
         """
         try:
-            Account.objects.get(email_address=email_address, is_active=False)
+            Account.objects.get(email_address=email_address, email_verified=False)
         except Account.DoesNotExist:
+            print("here")
             raise serializers.ValidationError("invalid")
         return email_address
 
@@ -171,7 +170,9 @@ class EmailVerificationSerializer(serializers.Serializer):
     def create(self, validated_data):
         try:
             email_address = validated_data["email_address"]
-            user = Account.objects.get(email_address=email_address, is_active=False)
+            user = Account.objects.get(
+                email_address=email_address, email_verified=False
+            )
             verify_email_address(user)
             return email_address
         except Exception as e:
@@ -229,10 +230,10 @@ class PhoneNumberVerificationSerializer(serializers.Serializer):
         """
         Ensure the phone number is unique and not already used for verification.
         """
-        user = self.context.get("user")
-        if user.phone_number != value:
-            raise serializers.ValidationError("mismatch")
-
+        try:
+            Account.objects.get(phone_number=value, phone_number_verified=False)
+        except Account.DoesNotExist:
+            raise serializers.ValidationError("invalid")
         return value
 
     def create(self, validated_data):
@@ -241,28 +242,12 @@ class PhoneNumberVerificationSerializer(serializers.Serializer):
         """
         try:
             with transaction.atomic():
-                phone_number = validated_data["phone_number"]
+                user = Account.objects.get(phone_number=validated_data["phone_number"])
+                send_phone_verification_code(user)
 
-                VerificationCode.objects.filter(phone_number=phone_number).delete()
-
-                code = generate_verification_code()
-
-                new_verification = VerificationCode.objects.create(
-                    phone_number=phone_number, code=code
-                )
-                new_verification.save()
-
-                self._send_code(phone_number, code)
-
-                return {
-                    "phone_number": phone_number,
-                    "message": _("Verification code sent."),
-                }
+            return True
         except Exception as e:
-            logger.error(f"Phone number verification failed: {str(e)}")
-            raise serializers.ValidationError(
-                _("Failed to initiate phone verification.")
-            )
+            raise serializers.ValidationError((e))
 
     def _send_code(self, phone_number, code):
         """
@@ -301,13 +286,17 @@ class ActivatePhoneSerializer(serializers.Serializer):
         """
         Mark the verification code as used and verified.
         """
+        try:
+            user = Account.objects.get(phone_number=validated_data["phone_number"])
+        except Account.DoesNotExist:
+            raise serializers.ValidationError("invalid")
         with transaction.atomic():
-            user = self.context.get("request").user
             phone_number = validated_data["phone_number"]
             verification = validated_data["verification"]
             verification.delete()
             user.phone_number = phone_number
             user.phone_number_verified = True
+            user.is_active = True
             user.save()
 
-        return True
+        return user

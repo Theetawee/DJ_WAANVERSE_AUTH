@@ -64,6 +64,10 @@ class AuthConfig:
             "PASSWORD_RESET_EMAIL_SUBJECT", "Password reset request"
         )
 
+        self.login_alert_email_subject = config_dict.get(
+            "LOGIN_ALERT_EMAIL_SUBJECT", "Login alert"
+        )
+
         # Admin Interface
         self.enable_admin = config_dict.get("ENABLE_ADMIN_PANEL", False)
 
