@@ -22,7 +22,6 @@ class JWTAuthentication(authentication.BaseAuthentication):
     """
 
     COOKIE_NAME = auth_config.access_token_cookie
-    USER_ID_CLAIM = auth_config.user_id_claim
 
     def authenticate(self, request: Request) -> Optional[Tuple]:
         try:
@@ -117,7 +116,7 @@ class JWTAuthentication(authentication.BaseAuthentication):
         """
         Retrieve and validate user from token payload.
         """
-        user_id = payload.get(self.USER_ID_CLAIM)
+        user_id = payload.get("id")
         if not user_id:
             raise exceptions.AuthenticationFailed("Invalid token payload")
 

@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from dj_waanverse_auth.serializers.login_serializers import LoginSerializer
 from dj_waanverse_auth.services import token_service
 from dj_waanverse_auth.utils.login_utils import handle_login
-from dj_waanverse_auth.utils.generators import generate_code
+from dj_waanverse_auth.utils.generators import generate_verification_code
 from dj_waanverse_auth.utils.email_utils import send_login_code_email
 from dj_waanverse_auth.models import LoginCode, WebAuthnChallenge
 from django.core.exceptions import ValidationError
@@ -103,7 +103,7 @@ def get_login_code(request):
         )
 
     LoginCode.objects.filter(account=user).delete()
-    code = generate_code(length=8, alphanumeric=True)
+    code = generate_verification_code()
     LoginCode.objects.create(account=user, code=code)
 
     send_login_code_email(user=user, code=code)

@@ -7,7 +7,9 @@ from rest_framework import serializers
 from dj_waanverse_auth.utils.phone_utils import get_send_code_function
 from dj_waanverse_auth.models import VerificationCode
 from dj_waanverse_auth.utils.email_utils import verify_email_address
-from dj_waanverse_auth.utils.generators import generate_code
+from dj_waanverse_auth.utils.generators import generate_verification_code
+import phonenumbers
+from dj_waanverse_auth.utils.phone_utils import send_phone_verification_code
 
 logger = logging.getLogger(__name__)
 
@@ -17,56 +19,103 @@ Account = get_user_model()
 class SignupSerializer(serializers.Serializer):
     """
     Serializer for user registration without passwords.
-    Email is required.
-    Username is optional; auto-generated if not provided.
+    Either email or phone number is required.
     """
 
-    email_address = serializers.EmailField(required=True)
+    email_address = serializers.EmailField(required=False)
+    phone_number = serializers.CharField(required=False)
 
-    def validate_email_address(self, email_address):
-        accounts = Account.objects.filter(email_address=email_address)
-        if accounts.filter(email_verified=True).exists():
+    def validate(self, attrs):
+        email = attrs.get("email_address")
+        phone = attrs.get("phone_number")
+
+        if not email and not phone:
             raise serializers.ValidationError(
-                {"email_address": _("Email address is already in use.")}
+                ("You must provide either an email address or a phone number.")
             )
 
-        else:
-            return email_address
+        if email:
+            if Account.objects.filter(
+                email_address=email, email_verified=True
+            ).exists():
+                raise serializers.ValidationError(
+                    {"email_address": ("Email address is already in use.")}
+                )
+
+        if phone:
+            try:
+                parsed_phone = phonenumbers.parse(phone, None)
+                if not phonenumbers.is_valid_number(parsed_phone):
+                    raise serializers.ValidationError(
+                        {"phone_number": ("Invalid phone number format.")}
+                    )
+                attrs["phone_number"] = phonenumbers.format_number(
+                    parsed_phone, phonenumbers.PhoneNumberFormat.E164
+                )
+            except phonenumbers.NumberParseException:
+                raise serializers.ValidationError(
+                    {"phone_number": ("Invalid phone number format.")}
+                )
+
+            if Account.objects.filter(
+                phone_number=attrs["phone_number"], phone_verified=True
+            ).exists():
+                raise serializers.ValidationError(
+                    {"phone_number": ("Phone number is already in use.")}
+                )
+
+        return attrs
 
     def create(self, validated_data):
         """
         Create a new user without password.
         Auto-generate username if missing.
         """
-        email = validated_data["email_address"]
+        email = validated_data.get("email_address")
+        phone = validated_data.get("phone_number")
 
         user_data = {
             "email_address": email,
+            "phone_number": phone,
             "is_active": False,
         }
 
         try:
             with transaction.atomic():
-                if Account.objects.filter(
-                    email_address=email, email_verified=False
-                ).exists():
+                if (
+                    email
+                    and Account.objects.filter(
+                        email_address=email, email_verified=False
+                    ).exists()
+                ):
                     user = Account.objects.get(
                         email_address=email, email_verified=False
                     )
+                elif (
+                    phone
+                    and Account.objects.filter(
+                        phone_number=phone, phone_number_verified=False
+                    ).exists()
+                ):
+                    user = Account.objects.get(
+                        phone_number=phone, phone_number_verified=False
+                    )
                 else:
                     user = Account.objects.create_user(**user_data)
-                verify_email_address(user)
+
+                # Trigger verification if email is provided
+                if email:
+                    verify_email_address(user)
+
+                if phone:
+                    send_phone_verification_code(user)
+
                 self.perform_post_creation_tasks(user)
+
             return user
         except Exception as e:
             logger.error(f"User creation failed: {str(e)}")
-            raise serializers.ValidationError(f"failed {e}")
-
-    def get_additional_fields(self, validated_data):
-        """
-        Return any additional fields needed for user creation.
-        """
-        return {}
+            raise serializers.ValidationError(f"Failed to create user: {e}")
 
     def perform_post_creation_tasks(self, user):
         """
@@ -168,7 +217,7 @@ class PhoneNumberVerificationSerializer(serializers.Serializer):
 
                 VerificationCode.objects.filter(phone_number=phone_number).delete()
 
-                code = generate_code()
+                code = generate_verification_code()
 
                 new_verification = VerificationCode.objects.create(
                     phone_number=phone_number, code=code

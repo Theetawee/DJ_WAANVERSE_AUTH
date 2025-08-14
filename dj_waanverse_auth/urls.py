@@ -2,7 +2,6 @@ from django.urls import include, path
 
 from dj_waanverse_auth.routes import (
     authorization_urls,
-    google_urls,
     login_urls,
     password_urls,
     signup_urls,
@@ -13,5 +12,4 @@ urlpatterns = [
     path("", include(authorization_urls)),
     path("signup/", include(signup_urls)),
     path("password/", include(password_urls)),
-    path("google/", include(google_urls)),
 ]

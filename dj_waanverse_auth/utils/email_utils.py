@@ -1,10 +1,9 @@
 from django.db import transaction
 
-from dj_waanverse_auth import settings
 from dj_waanverse_auth import settings as auth_config
 from dj_waanverse_auth.models import VerificationCode
 from dj_waanverse_auth.services.email_service import EmailService
-from dj_waanverse_auth.utils.generators import generate_code
+from dj_waanverse_auth.utils.generators import generate_verification_code
 from dj_waanverse_auth.utils.security_utils import (
     get_device,
     get_ip_address,
@@ -40,7 +39,7 @@ def send_login_code_email(user, code):
             "user": user,
         }
         email_manager.send_email(
-            subject=settings.login_code_email_subject,
+            subject=auth_config.login_code_email_subject,
             template_name=template_name,
             recipient=user.email_address,
             context=context,
@@ -49,7 +48,7 @@ def send_login_code_email(user, code):
 
 def verify_email_address(user):
     if user.email_address and not user.email_verified:
-        code = generate_code()
+        code = generate_verification_code()
         email_manager = EmailService()
         template_name = "emails/verify_email.html"
         with transaction.atomic():
@@ -64,7 +63,7 @@ def verify_email_address(user):
 
             # Send email
             email_manager.send_email(
-                subject=settings.verification_email_subject,
+                subject=auth_config.verification_email_subject,
                 template_name=template_name,
                 recipient=user.email_address,
                 context={"code": code, "user": user},

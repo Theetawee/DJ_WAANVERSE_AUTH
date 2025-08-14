@@ -51,9 +51,7 @@ class VerificationCode(models.Model):
         """
         Check if the verification code is expired based on the configured expiry duration.
         """
-        expiration_time = self.created_at + timedelta(
-            minutes=auth_config.verification_email_code_expiry_in_minutes
-        )
+        expiration_time = self.created_at + timedelta(minutes=10)
         return timezone.now() > expiration_time
 
     def __str__(self):

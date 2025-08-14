@@ -14,7 +14,7 @@ class TokenError(Exception):
 
 class RefreshToken:
     REQUIRED_CLAIMS = {
-        auth_config.user_id_claim,
+        "id",
         "exp",
         "iat",
         "iss",
@@ -45,7 +45,7 @@ class RefreshToken:
         try:
             expiration = now() + auth_config.refresh_token_cookie_max_age
             payload = {
-                auth_config.user_id_claim: user.id,
+                "id": user.id,
                 "exp": expiration,
                 "iat": now(),
                 "iss": auth_config.platform_name,
