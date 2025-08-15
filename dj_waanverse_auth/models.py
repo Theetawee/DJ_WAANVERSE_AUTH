@@ -1,4 +1,3 @@
-import secrets
 from datetime import timedelta
 import base64
 
@@ -7,52 +6,25 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from dj_waanverse_auth.config.settings import auth_config
 import uuid
 
 
 Account = get_user_model()
 
 
-class MultiFactorAuth(models.Model):
-    account = models.OneToOneField(
-        Account, related_name="mfa", on_delete=models.CASCADE
-    )
-    activated = models.BooleanField(default=False)
-    activated_at = models.DateTimeField(null=True, blank=True)
-    recovery_codes = models.JSONField(default=list, blank=True, null=True)
-    secret_key = models.CharField(max_length=255, null=True, blank=True)
-    last_updated = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f"Account: {self.account} - Activated: {self.activated}"
-
-
 class VerificationCode(models.Model):
     email_address = models.EmailField(
-        blank=True,
-        null=True,
         db_index=True,
         verbose_name=_("Email Address"),
-    )
-    phone_number = models.CharField(
-        max_length=15,
-        blank=True,
-        null=True,
-        db_index=True,
-        verbose_name=_("Phone Number"),
     )
     code = models.CharField(
         max_length=255, unique=True, verbose_name=_("Verification Code")
     )
-    created_at = models.DateTimeField(verbose_name=_("Created At"))
+    expires_at = models.DateTimeField(verbose_name=_("Expires At"))
 
     def is_expired(self):
-        """
-        Check if the verification code is expired based on the configured expiry duration.
-        """
-        expiration_time = self.created_at + timedelta(minutes=10)
-        return timezone.now() > expiration_time
+        """Check if the verification code has expired."""
+        return timezone.now() > self.expires_at
 
     def __str__(self):
         return f"Code: {self.code}"
@@ -89,49 +61,6 @@ class UserSession(models.Model):
 
     def __str__(self):
         return f"Session: {self.id}, Account: {self.account}"
-
-
-class ResetPasswordToken(models.Model):
-    account = models.ForeignKey(
-        Account, related_name="reset_password_tokens", on_delete=models.CASCADE
-    )
-    code = models.CharField(max_length=255, unique=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    is_used = models.BooleanField(default=False)
-
-    @classmethod
-    def generate_code(cls):
-        """Generate a secure random code."""
-        return secrets.token_urlsafe(auth_config.password_reset_code_length)
-
-    @classmethod
-    def create_for_user(cls, user):
-        """Create a new reset token for user, invalidating any existing ones."""
-        cls.objects.filter(account=user, is_used=False).update(is_used=True)
-        return cls.objects.create(account=user, code=cls.generate_code())
-
-    def is_expired(self):
-        """Check if the reset password token is expired."""
-        expiration_time = self.created_at + timedelta(
-            minutes=auth_config.password_reset_expiry_in_minutes
-        )
-        return timezone.now() > expiration_time or self.is_used
-
-    def use_token(self):
-        """Mark token as used."""
-        self.is_used = True
-        self.save()
-
-    def __str__(self):
-        return f"Reset token for {self.account.email_address}"
-
-
-class GoogleStateToken(models.Model):
-    state = models.CharField(max_length=255)
-    code_verifier = models.CharField(max_length=255)
-
-    def __str__(self):
-        return self.state
 
 
 class LoginCode(models.Model):

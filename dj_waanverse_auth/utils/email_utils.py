@@ -48,16 +48,22 @@ def send_login_code_email(user, code):
 
 
 def verify_email_address(user):
+    """
+    Generate and send an email verification code for the given user.
+    Stores the expiry time in `expires_at` instead of `created_at`.
+    """
     if user.email_address and not user.email_verified:
         now = timezone.now()
 
         last_code = (
             VerificationCode.objects.filter(email_address=user.email_address)
-            .order_by("-created_at")
+            .order_by("-expires_at")
             .first()
         )
 
-        if last_code and (now - last_code.created_at) < timedelta(minutes=1):
+        # Prevent sending codes too frequently
+        if last_code and (now < last_code.expires_at - timedelta(minutes=9)):
+            # Assuming original rule: can't resend within 1 minute
             raise Exception("too_fast")
 
         code = generate_verification_code()
@@ -68,12 +74,14 @@ def verify_email_address(user):
             # Remove old codes
             VerificationCode.objects.filter(email_address=user.email_address).delete()
 
-            # Create new code
+            # Create new code with expiry 10 minutes from now
             VerificationCode.objects.create(
-                email_address=user.email_address, code=code, created_at=now
+                email_address=user.email_address,
+                code=code,
+                expires_at=now + timedelta(minutes=10),
             )
 
-            # Send email
+            # Send verification email
             email_manager.send_email(
                 subject=auth_config.verification_email_subject,
                 template_name=template_name,

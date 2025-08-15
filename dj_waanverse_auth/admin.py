@@ -4,9 +4,6 @@ if auth_config.enable_admin:
     from django.contrib import admin
 
     from .models import (
-        GoogleStateToken,
-        MultiFactorAuth,
-        ResetPasswordToken,
         UserSession,
         VerificationCode,
         WebAuthnChallenge,
@@ -25,9 +22,6 @@ if auth_config.enable_admin:
         search_fields = ("account__email", "user_agent", "ip_address")
         ordering = ("-last_used",)
 
-    admin.site.register(MultiFactorAuth)
     admin.site.register(VerificationCode)
-    admin.site.register(ResetPasswordToken)
-    admin.site.register(GoogleStateToken)
     admin.site.register(WebAuthnChallenge)
     admin.site.register(WebAuthnCredential)
