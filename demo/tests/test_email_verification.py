@@ -45,6 +45,8 @@ class TestEmailVerificationViews(APITestCase):
                 email_address=self.user_unverified.email_address
             ).exists()
         )
+        for key in ["user", "access_token", "refresh_token", "sid"]:
+            self.assertIn(key, response.data)
 
     def test_activate_email_expired_code(self):
         VerificationCode.objects.create(

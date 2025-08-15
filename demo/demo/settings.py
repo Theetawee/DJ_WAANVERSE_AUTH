@@ -161,17 +161,12 @@ WAANVERSE_AUTH_CONFIG = {
     "ACCESS_TOKEN_COOKIE_MAX_AGE": timedelta(minutes=30),
     "BASIC_ACCOUNT_SERIALIZER": "accounts.serializers.BasicAccountSerializer",
     "ENABLE_ADMIN_PANEL": True,
-    "REGISTRATION_SERIALIZER": "accounts.serializers.SignupSerializer",
-    "MFA_DEBUG_CODE": "123456",
     "PLATFORM_NAME": "Demo Platform",
-    "EMAIL_THREADING_ENABLED": False,
-    "GOOGLE_CLIENT_ID": os.environ.get("GOOGLE_CLIENT_ID"),
-    "GOOGLE_CLIENT_SECRET": os.environ.get("GOOGLE_SECRET_ID"),
-    "GOOGLE_REDIRECT_URI": os.environ.get("GOOGLE_REDIRECT_URI"),
-    "SEND_PHONE_VERIFICATION_CODE_FUNC": "accounts.utils.send_phone_code",
     "WEBAUTHN_DOMAIN": "localhost",
     "WEBAUTHN_RP_NAME": "localhost",
     "WEBAUTHN_ORIGIN": "http://localhost:5173",
+    "ALLOWED_EMAIL_DOMAINS": ["gmail.com"],
+    "BLACKLISTED_EMAILS": ["blocked@gmail.com"],
 }
 
 REST_FRAMEWORK = {

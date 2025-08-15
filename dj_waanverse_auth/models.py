@@ -68,14 +68,10 @@ class LoginCode(models.Model):
         Account, on_delete=models.CASCADE, related_name="login_codes"
     )
     code = models.CharField(max_length=8, db_index=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    EXPIRATION_MINUTES = 5
+    expires_at = models.DateTimeField()
 
     def is_expired(self):
-        return timezone.now() > self.created_at + timedelta(
-            minutes=self.EXPIRATION_MINUTES
-        )
+        return timezone.now() > self.expires_at
 
     def __str__(self):
         return f"Login code for {self.account.email_address}"
@@ -83,7 +79,6 @@ class LoginCode(models.Model):
     class Meta:
         verbose_name = "Login Code"
         verbose_name_plural = "Login Codes"
-        ordering = ["-created_at"]
 
 
 class WebAuthnCredential(models.Model):
