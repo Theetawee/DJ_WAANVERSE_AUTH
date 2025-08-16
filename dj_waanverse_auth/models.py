@@ -69,6 +69,7 @@ class LoginCode(models.Model):
     )
     code = models.CharField(max_length=8, db_index=True)
     expires_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def is_expired(self):
         return timezone.now() > self.expires_at

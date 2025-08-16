@@ -15,7 +15,6 @@ from dj_waanverse_auth.models import LoginCode, WebAuthnChallenge
 from django.core.exceptions import ValidationError
 from datetime import timedelta
 from dj_waanverse_auth import settings as auth_config
-from django.core.exceptions import ImproperlyConfigured
 from rest_framework.views import APIView
 from webauthn import (
     generate_registration_options,
@@ -104,7 +103,9 @@ def get_login_code(request):
 
     LoginCode.objects.filter(account=user).delete()
     code = generate_verification_code()
-    LoginCode.objects.create(account=user, code=code)
+    LoginCode.objects.create(
+        account=user, code=code, expires_at=timezone.now() + timedelta(minutes=5)
+    )
 
     send_login_code_email(user=user, code=code)
 
@@ -126,14 +127,17 @@ class GenerateRegistrationOptionsView(APIView):
             or auth_config.webauthn_rp_name is None
             or auth_config.webauthn_origin is None
         ):
-            raise ImproperlyConfigured(
-                "WEBAUTHN_DOMAIN, WEBAUTHN_RP_NAME, and WEBAUTHN_ORIGIN must be set in dj_waanverse_auth settings"
+            return Response(
+                {"error": "WebAuthn settings are not configured."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+        user_id_bytes = str(user.pk).encode("utf-8")
 
         options = generate_registration_options(
             rp_id=auth_config.webauthn_domain,
             rp_name=auth_config.webauthn_rp_name,
-            user_id=str(user.pk).encode("utf-8"),
+            user_id=user_id_bytes,
             user_name=user.username,
             user_display_name=user.get_full_name(),
             exclude_credentials=[
