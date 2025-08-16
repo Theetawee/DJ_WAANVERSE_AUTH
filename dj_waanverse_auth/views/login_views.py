@@ -175,6 +175,7 @@ class VerifyRegistrationView(APIView):
 
     def post(self, request, *args, **kwargs):
         user = request.user
+        print(request.data)
         challenge_id = request.data.get("challengeId")
 
         if not challenge_id:

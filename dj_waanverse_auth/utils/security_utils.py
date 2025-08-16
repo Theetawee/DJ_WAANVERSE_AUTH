@@ -1,14 +1,10 @@
 import logging
-import random
-import string
 from ipaddress import ip_address, ip_network
 from typing import Optional
 
 import requests
-from django.utils.translation import gettext_lazy as _
 from user_agents import parse
 
-from dj_waanverse_auth import settings as auth_settings
 
 from .constants import TRUSTED_PROXIES
 
@@ -120,52 +116,3 @@ def get_device(request):
         return "Unknown device"
 
     return " on ".join(device_info)
-
-
-TURNSTILE_API_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
-
-
-def validate_turnstile_token(token):
-    """
-    Validate the Turnstile captcha token with the external service.
-
-    Args:
-        token (str): The Turnstile token received from the client.
-
-    Returns:
-        bool: True if the token is valid, False otherwise.
-    """
-    # Get your Turnstile secret key from the settings
-    secret_key = auth_settings.cloudflare_turnstile_secret
-
-    if not secret_key:
-        raise ValueError(_("Turnstile secret key is not configured."))
-
-    response = requests.post(
-        TURNSTILE_API_URL, data={"secret": secret_key, "response": token}
-    )
-
-    if response.status_code != 200:
-        raise Exception(_("Error while validating Turnstile token."))
-
-    result = response.json()
-
-    if result.get("success"):
-        return True
-
-    return False
-
-
-def generate_code(length: int = 6, is_alphanumeric: bool = True) -> str:
-    """
-    Generate a random code of a given length.
-
-    Args:
-        length (int): The length of the code to generate.
-
-    Returns:
-        str: The generated code.
-    """
-    if is_alphanumeric:
-        return "".join(random.choices(string.ascii_uppercase + string.digits, k=length))
-    return "".join(random.choices(string.digits, k=length))

@@ -1,0 +1,250 @@
+[
+{
+    "model": "dj_waanverse_auth.verificationcode",
+    "pk": 1,
+    "fields": {
+        "email_address": "tawee@gmail.com",
+        "code": "870648",
+        "expires_at": "2025-08-15T21:56:13.489Z"
+    }
+},
+{
+    "model": "dj_waanverse_auth.usersession",
+    "pk": 10,
+    "fields": {
+        "account": 12,
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+        "ip_address": "127.0.0.1",
+        "created_at": "2025-08-12T08:49:02.064Z",
+        "last_used": "2025-08-12T08:49:02.064Z",
+        "is_active": true
+    }
+},
+{
+    "model": "dj_waanverse_auth.usersession",
+    "pk": 16,
+    "fields": {
+        "account": 1,
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+        "ip_address": "127.0.0.1",
+        "created_at": "2025-08-13T14:46:43.241Z",
+        "last_used": "2025-08-13T14:46:43.241Z",
+        "is_active": true
+    }
+},
+{
+    "model": "dj_waanverse_auth.usersession",
+    "pk": 21,
+    "fields": {
+        "account": 1,
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+        "ip_address": "127.0.0.1",
+        "created_at": "2025-08-16T11:38:03.858Z",
+        "last_used": "2025-08-16T11:41:32.113Z",
+        "is_active": true
+    }
+},
+{
+    "model": "dj_waanverse_auth.webauthncredential",
+    "pk": 3,
+    "fields": {
+        "user": 1,
+        "credential_id": "7RS2wNrKzf/BfKKdONAKls/iPjDxHZ6lCTgragxFugM=",
+        "public_key": "pAEDAzkBACBZAQCzugB0r7Qr6fcgse+OnKDcZrz5P9UCY1KUiCSfGiB12xCBAbXZWUznpX0x7IOTbnmOrEMooDF1eB8yXCrdmq2fiTeViDfklfXery4wCCAEMBXJ7QY5gP8VTRbMzBQU8+S3fZ5MJYROGJHQqkp0A6CfY8xSYOtrsJ/W3PaurzveMJ5KkGd4OLTNtqQ/XiAL+q0cq1aIQph3V0/QtxJmyWVm25KJdzbTFjQ+4zvT0wL/6yrLD3P0DEEnwOvVUnNgadeHCuxctf3O8yHUDSWgE5oDCihB+RxMvDy3Oakwo6o3f9OOryJ4EvU+g5Zb4riFC1Bu+KUG0Lt3OhTXVtNUVNd1IUMBAAE=",
+        "sign_count": 0,
+        "name": "Unnamed Passkey"
+    }
+},
+{
+    "model": "dj_waanverse_auth.webauthnchallenge",
+    "pk": "1222648f-2944-4627-a86a-ec2551112ff5",
+    "fields": {
+        "challenge": "5+0D6d6Mv/pVSYvuk3FD9Umw19puZY0T0IY11TMypxK8X5SZwr0DAxmJ72EyD8QfTcxYKy2VXz0pdy/yNzEIFg==",
+        "created_at": "2025-08-15T16:48:30.817Z",
+        "user": null
+    }
+},
+{
+    "model": "dj_waanverse_auth.webauthnchallenge",
+    "pk": "240ef78d-6b05-4f13-bfd1-a9bdf4a8fce3",
+    "fields": {
+        "challenge": "e7kGcoNFh/p03bnwa4XstFymSZSDMocKHuOrGhJKEZGWsoSrOex2mgg7T1reSZUKZ6Hf4pRDiv+l8pFsEKflWQ==",
+        "created_at": "2025-08-15T21:54:25.847Z",
+        "user": null
+    }
+},
+{
+    "model": "dj_waanverse_auth.webauthnchallenge",
+    "pk": "247106e7-6bcc-4af3-8c74-2eab45fb2b2d",
+    "fields": {
+        "challenge": "V/nyCt0Nut+7jgxxt4HQNSD24QW++XOQmzuN6sdhznhEJwDSw4UVPjR+rWnDGpWGSZBroLRnIL2YWc7pbaHHFQ==",
+        "created_at": "2025-08-16T11:37:53.889Z",
+        "user": null
+    }
+},
+{
+    "model": "dj_waanverse_auth.webauthnchallenge",
+    "pk": "2d2156c5-0702-440a-9f18-1ca8209f0eae",
+    "fields": {
+        "challenge": "8rrCeL0bWU3mHQ3Yz6KWSEypqthZz+NXq4Qk72CAFY692OEvjEdK13CG1wD2bPX4u6BE+jB/tuVZ0DcpUH9Qlg==",
+        "created_at": "2025-08-15T16:57:47.986Z",
+        "user": null
+    }
+},
+{
+    "model": "dj_waanverse_auth.webauthnchallenge",
+    "pk": "4348fa8b-d7fb-4b45-822a-df99bc8a2d39",
+    "fields": {
+        "challenge": "GHcgBNgjGzs0SxijjHW3SpFGl0dNz0yTMhfdRafHrrtot4zA6EYnhkZ0XkFxyDIC0CWXLnVCsd+B++fVY7BHxA==",
+        "created_at": "2025-08-15T18:40:15.995Z",
+        "user": null
+    }
+},
+{
+    "model": "dj_waanverse_auth.webauthnchallenge",
+    "pk": "48230017-add2-4fef-a70e-d1e9e4b2a8e9",
+    "fields": {
+        "challenge": "nLDnmGJ1ina674rxNIUIeFiUhh81pZNmu2sZS/ofvEoxOBVnQoDp1TIgu96p8r2bM++gBmX4UO6K4If71MHwiQ==",
+        "created_at": "2025-08-15T16:47:41.494Z",
+        "user": null
+    }
+},
+{
+    "model": "dj_waanverse_auth.webauthnchallenge",
+    "pk": "4bf9a1fc-3abf-402a-ab35-b190f5388c62",
+    "fields": {
+        "challenge": "0naIz7Rpdhir8EpM+W3xwbQi6YW8o+6KI4i1ONGiyStMssLlPc3eNoSxVK6YPhLtgwanP82WDozXR3rWGUfECg==",
+        "created_at": "2025-08-15T16:47:47.367Z",
+        "user": null
+    }
+},
+{
+    "model": "dj_waanverse_auth.webauthnchallenge",
+    "pk": "8dc746d4-e4c2-444a-bb55-55c2b73dee6b",
+    "fields": {
+        "challenge": "ntzm2lXwEGi9xfYQNZi2pJt8XhWUJm7qG/L/KWQYuBPMj0zyxRx+uZ1iQCUSCExlA7eXfgnegXviD9Um9vchXA==",
+        "created_at": "2025-08-15T16:57:47.986Z",
+        "user": null
+    }
+},
+{
+    "model": "dj_waanverse_auth.webauthnchallenge",
+    "pk": "a84e9510-53c0-47c2-a16b-468d8df1d35f",
+    "fields": {
+        "challenge": "rxWoRSnHg4Hdgvk1nJbjtLYrOrczhNbfLnq/ubdy9xEe8VeJIbdwMtF/LSYKiD/37uHad/Q/fVxfi9cJ2AotTA==",
+        "created_at": "2025-08-15T16:48:06.164Z",
+        "user": null
+    }
+},
+{
+    "model": "dj_waanverse_auth.webauthnchallenge",
+    "pk": "aae4af45-3324-41c3-bb65-1db490c4d50f",
+    "fields": {
+        "challenge": "4DgqnfRp/LzKnq0mG+PZ6mxlhGdtyfW6bw21dmefIgzZzNTJ9JkrDV4WMr3Ygyf1Ckw6kkd6U0CD1zgkiZNcsw==",
+        "created_at": "2025-08-15T16:47:47.368Z",
+        "user": null
+    }
+},
+{
+    "model": "dj_waanverse_auth.webauthnchallenge",
+    "pk": "adb62621-19d5-4a8d-8e82-ec40085ab22a",
+    "fields": {
+        "challenge": "1g+x/5WeBW9LiVDT2s/OCfo8mopi3tankj5m3xK/Ykd0CFPiZE/axd862WM10bCEARMWQRUikMh8vA3X4JAx+Q==",
+        "created_at": "2025-08-15T16:48:30.816Z",
+        "user": null
+    }
+},
+{
+    "model": "dj_waanverse_auth.webauthnchallenge",
+    "pk": "bf0a175a-7c38-4181-817b-22c6d54ff6c1",
+    "fields": {
+        "challenge": "bt7YtmTm6QpoSoc+JInLIXR3dAFlj9ybMRRkazM35X+HmUUyDf/qYZ99kP0T1MXodEjKcBut5qrC9tcjiebF6w==",
+        "created_at": "2025-08-15T21:54:25.849Z",
+        "user": null
+    }
+},
+{
+    "model": "dj_waanverse_auth.webauthnchallenge",
+    "pk": "bf7cf05c-d2d9-4ea3-8a2a-a8a3edbe3a79",
+    "fields": {
+        "challenge": "pRR65aflL+3oi6lkBZRxtT1eg0Cv6xDkDONnehubOQI5lpSjGBVW5yi2O+f+zaFFRDkbKogPdawWl/Iw4v1F6w==",
+        "created_at": "2025-08-15T16:48:21.184Z",
+        "user": null
+    }
+},
+{
+    "model": "dj_waanverse_auth.webauthnchallenge",
+    "pk": "c048afb0-031c-4035-aa40-8311744bf7ab",
+    "fields": {
+        "challenge": "2W4muPQ7I406AXgP0SsiS6mllX3VGPvkDb10Hzw31E0Cr+E1yxT2W6u+rKJKzDwi1wkj2qgTqCQx2GLTAyxapg==",
+        "created_at": "2025-08-15T18:40:15.995Z",
+        "user": null
+    }
+},
+{
+    "model": "dj_waanverse_auth.webauthnchallenge",
+    "pk": "e217b9b8-e73e-4cfb-9642-12409e28e77f",
+    "fields": {
+        "challenge": "zoR8TBEJc5i/b5JFWYADXRc+pXFaNwl9sm5T0d85DZA8XlYJxYA6Y5WrFRLu9mwN7dXlJ2g10o6A/SWm/ZsQwA==",
+        "created_at": "2025-08-15T16:47:41.494Z",
+        "user": null
+    }
+},
+{
+    "model": "accounts.account",
+    "pk": 1,
+    "fields": {
+        "password": "pbkdf2_sha256$1000000$MSv8f31uumKOEGulR4fvPq$hRlGh7/38Xs78xKCMSv97Lu/KmKX9o24oMcgpNEiWPc=",
+        "is_superuser": true,
+        "username": "tawee",
+        "email_address": "tawee.drake@gmail.com",
+        "date_joined": "2025-08-11T19:45:15.207Z",
+        "last_login": "2025-08-16T11:38:26.553Z",
+        "is_active": true,
+        "is_staff": true,
+        "email_verified": true,
+        "name": null,
+        "date_of_birth": null,
+        "groups": [],
+        "user_permissions": []
+    }
+},
+{
+    "model": "accounts.account",
+    "pk": 12,
+    "fields": {
+        "password": "!IoBjJlWB1LhRqMc50E1IQonznlgPNmx5BXUL2Ygp",
+        "is_superuser": false,
+        "username": "user-0812102121197oxhq",
+        "email_address": "tan@gmail.com",
+        "date_joined": "2025-08-12T07:21:21.201Z",
+        "last_login": "2025-08-12T08:50:58.383Z",
+        "is_active": true,
+        "is_staff": false,
+        "email_verified": true,
+        "name": null,
+        "date_of_birth": null,
+        "groups": [],
+        "user_permissions": []
+    }
+},
+{
+    "model": "accounts.account",
+    "pk": 13,
+    "fields": {
+        "password": "!gOCPoK6JayOFCS2acxSRYVHUfSuLNH5XMvYZ5QsA",
+        "is_superuser": false,
+        "username": "user_08160111319718kul",
+        "email_address": "user@gmail.com",
+        "date_joined": "2025-08-15T22:11:31.974Z",
+        "last_login": "2025-08-15T22:11:58.269Z",
+        "is_active": true,
+        "is_staff": false,
+        "email_verified": true,
+        "name": null,
+        "date_of_birth": null,
+        "groups": [],
+        "user_permissions": []
+    }
+}
+]
