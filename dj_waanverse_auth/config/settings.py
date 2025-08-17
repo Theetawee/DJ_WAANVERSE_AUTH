@@ -51,7 +51,6 @@ class AuthConfig:
             "dj_waanverse_auth.serializers.base_serializers.BasicAccountSerializer",
         )
 
-        self.email_threading_enabled = config_dict.get("EMAIL_THREADING_ENABLED", True)
         self.blacklisted_emails = config_dict.get("BLACKLISTED_EMAILS", [])
         self.blacklisted_phone_numbers = config_dict.get(
             "BLACKLISTED_PHONE_NUMBERS", []
@@ -59,9 +58,6 @@ class AuthConfig:
         self.allowed_email_domains = config_dict.get("ALLOWED_EMAIL_DOMAINS", [])
         self.verification_email_subject = config_dict.get(
             "VERIFICATION_EMAIL_SUBJECT", "Verify your email address"
-        )
-        self.password_reset_email_subject = config_dict.get(
-            "PASSWORD_RESET_EMAIL_SUBJECT", "Password reset request"
         )
 
         self.login_alert_email_subject = config_dict.get(
@@ -72,10 +68,6 @@ class AuthConfig:
         self.enable_admin = config_dict.get("ENABLE_ADMIN_PANEL", False)
 
         self.disable_signup = config_dict.get("DISABLE_SIGNUP", False)
-
-        self.send_phone_verification_code_func = config_dict.get(
-            "SEND_PHONE_VERIFICATION_CODE_FUNC", None
-        )
 
         self.login_code_email_subject = config_dict.get(
             "LOGIN_CODE_EMAIL_SUBJECT", "Login code"

@@ -3,7 +3,6 @@ import logging
 from django.contrib.auth import get_user_model
 
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -11,7 +10,6 @@ from dj_waanverse_auth.utils.login_utils import handle_login
 from dj_waanverse_auth import settings
 from dj_waanverse_auth.serializers.signup_serializers import (
     ActivateEmailSerializer,
-    EmailVerificationSerializer,
     SignupSerializer,
 )
 
@@ -35,77 +33,29 @@ class SignupView(APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        serializer = SignupSerializer(data=request.data, context={"request": request})
-        if serializer.is_valid():
-            serializer.save()
-            return Response(
-                {"status": "success"},
-                status=status.HTTP_201_CREATED,
-            )
+        code = request.data.get("code")
+        if code:
+            serializer = ActivateEmailSerializer(data=request.data)
+            if serializer.is_valid():
+                user = serializer.save()
+                request.user = user
+                response = handle_login(request, user)
+                return response
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            serializer = SignupSerializer(
+                data=request.data, context={"request": request}
+            )
+            if serializer.is_valid():
+                serializer.save()
+                return Response(
+                    {"status": "success"},
+                    status=status.HTTP_200_OK,
+                )
+
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 signup_view = SignupView.as_view()
-
-
-@api_view(["POST"])
-@permission_classes([AllowAny])
-def send_email_verification_code(request):
-    """
-    Function-based view to initiate email verification.
-    """
-    try:
-        serializer = EmailVerificationSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(
-                {
-                    "message": "Email verification code sent successfully.",
-                    "expires_in": "10 minutes",
-                },
-                status=status.HTTP_200_OK,
-            )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    except Exception as e:
-        return Response(
-            {"error": str(e)},
-            status=status.HTTP_404_NOT_FOUND,
-        )
-
-
-@api_view(["POST"])
-@permission_classes([AllowAny])
-def activate_email_address(request):
-    """
-    Function-based view to activate an email address for a user.
-    """
-    try:
-        handle = request.data.get("handle")
-        user = request.user
-        if handle != "signup" and not user.is_authenticated:
-            return Response(
-                {"error": "Unable to authenticate. Please login again"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        serializer = ActivateEmailSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.save()
-            request.user = user
-            if handle == "signup":
-                response = handle_login(request, user)
-                return response
-            else:
-                return Response(
-                    {"message": "Email address activated successfully."},
-                    status=status.HTTP_200_OK,
-                )
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    except Exception as e:
-        return Response(
-            {"error": str(e)},
-            status=status.HTTP_404_NOT_FOUND,
-        )

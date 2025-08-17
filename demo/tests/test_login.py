@@ -22,7 +22,6 @@ class AuthViewsTests(APITestCase):
         )
         self.client = APIClient()
         self.login_url = reverse("dj_waanverse_auth_login")
-        self.get_login_code_url = reverse("dj_waanverse_auth_get_login_code")
 
     def log_user_in(self):
         """Helper: issue login code and log in user."""
@@ -73,30 +72,28 @@ class AuthViewsTests(APITestCase):
 
     def test_get_login_code_success_and_throttling(self):
         # No email
-        res = self.client.post(self.get_login_code_url, {})
+        res = self.client.post(self.login_url, {})
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
         # Invalid email
-        res = self.client.post(self.get_login_code_url, {"email_address": "bademail"})
+        res = self.client.post(self.login_url, {"email_address": "bademail"})
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
         # Nonexistent user (always returns success)
-        res = self.client.post(
-            self.get_login_code_url, {"email_address": "ghost@example.com"}
-        )
+        res = self.client.post(self.login_url, {"email_address": "ghost@example.com"})
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         for key in ["user", "access_token", "refresh_token", "sid"]:
             self.assertNotIn(key, res.data)
 
         # Valid user
         res = self.client.post(
-            self.get_login_code_url, {"email_address": self.user.email_address}
+            self.login_url, {"email_address": self.user.email_address}
         )
         self.assertEqual(res.status_code, status.HTTP_200_OK)
 
         # Throttled (request again immediately)
         res = self.client.post(
-            self.get_login_code_url, {"email_address": self.user.email_address}
+            self.login_url, {"email_address": self.user.email_address}
         )
         self.assertEqual(res.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
 

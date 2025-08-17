@@ -79,33 +79,13 @@ class SignupSerializer(serializers.Serializer):
 
             return user
         except Exception as e:
-            logger.error(f"User creation failed: {str(e)}")
-            raise serializers.ValidationError(f"Failed to create user: {e}")
+            raise serializers.ValidationError({"email_address": [str(e)]})
 
     def perform_post_creation_tasks(self, user):
         """
         Optional post-creation tasks, e.g., welcome email.
         """
         pass
-
-
-class EmailVerificationSerializer(serializers.Serializer):
-    email_address = serializers.EmailField(required=True)
-
-    def validate_email_address(self, email_address):
-        try:
-            Account.objects.get(email_address=email_address, email_verified=False)
-        except Account.DoesNotExist:
-            raise serializers.ValidationError("invalid")
-        return email_address
-
-    def create(self, validated_data):
-        email_address = validated_data["email_address"]
-        user = Account.objects.get(email_address=email_address, email_verified=False)
-        verify_email_address(
-            user
-        )
-        return email_address
 
 
 class ActivateEmailSerializer(serializers.Serializer):

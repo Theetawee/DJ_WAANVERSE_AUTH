@@ -5,6 +5,8 @@ from django.urls import reverse
 from django.core import mail
 from dj_waanverse_auth import settings
 from dj_waanverse_auth.models import VerificationCode
+from django.utils import timezone
+from datetime import timedelta
 
 Account = get_user_model()
 
@@ -16,7 +18,7 @@ class TestSignup(APITestCase):
         self.signup_url = reverse("dj_waanverse_auth_signup")
 
         # Existing accounts
-        Account.objects.create_user(
+        self.user = Account.objects.create_user(
             email_address="test1@gmail.com", email_verified=False
         )
         Account.objects.create_user(
@@ -28,7 +30,9 @@ class TestSignup(APITestCase):
     def test_successful_signup_email(self):
         data = {"email_address": "newuser@gmail.com"}
         response = self.client.post(self.signup_url, data)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIn(
+            response.status_code, [status.HTTP_201_CREATED, status.HTTP_200_OK]
+        )
         self.assertTrue(
             Account.objects.filter(
                 email_address=data["email_address"],
@@ -82,6 +86,47 @@ class TestSignup(APITestCase):
         data = {"email_address": "test1@gmail.com"}
         response = self.client.post(self.signup_url, data)
         print(response.data)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(Account.objects.count(), 2)
         self.assertEqual(len(mail.outbox), 1)
+
+    def test_activate_email_success(self):
+
+        VerificationCode.objects.create(
+            email_address="test1@gmail.com",
+            code="123456",
+            expires_at=timezone.now() + timedelta(minutes=10),
+        )
+        data = {
+            "email_address": "test1@gmail.com",
+            "code": "123456",
+        }
+        response = self.client.post(self.signup_url, data)
+        self.assertIn(
+            response.status_code, [status.HTTP_200_OK, status.HTTP_201_CREATED]
+        )
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.email_verified)
+        self.assertTrue(self.user.is_active)
+        self.assertFalse(
+            VerificationCode.objects.filter(email_address="test1@gmail.com").exists()
+        )
+        for key in ["user", "access_token", "refresh_token", "sid"]:
+            self.assertIn(key, response.data)
+
+    def test_activate_email_expired_code(self):
+        VerificationCode.objects.create(
+            email_address="test1@gmail.com",
+            code="123456",
+            expires_at=timezone.now() - timedelta(minutes=1),  # already expired
+        )
+        data = {
+            "email_address": "test1@gmail.com",
+            "code": "123456",
+        }
+        response = self.client.post(self.signup_url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("code_expired", str(response.data))
+        self.assertFalse(
+            VerificationCode.objects.filter(email_address="test1@gmail.com").exists()
+        )

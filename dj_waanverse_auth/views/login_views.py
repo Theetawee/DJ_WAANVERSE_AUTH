@@ -52,64 +52,73 @@ def decode_base64url(data: str) -> bytes:
 def login_view(request):
     """View for user login."""
     try:
-        serializer = LoginSerializer(data=request.data, context={"request": request})
-        if serializer.is_valid():
-            user = serializer.validated_data["user"]
 
-            response = handle_login(request=request, user=user)
-            return response
+        email_address = request.data.get("email_address")
+        code = request.data.get("code")
+
+        if code:
+
+            serializer = LoginSerializer(
+                data=request.data, context={"request": request}
+            )
+            if serializer.is_valid():
+                user = serializer.validated_data["user"]
+
+                response = handle_login(request=request, user=user)
+                return response
+            else:
+                token_manager = token_service.TokenService(request=request)
+                response = Response(
+                    serializer.errors, status=status.HTTP_400_BAD_REQUEST
+                )
+                response = token_manager.clear_all_cookies(response)
+                return response
         else:
-            token_manager = token_service.TokenService(request=request)
-            response = Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            response = token_manager.clear_all_cookies(response)
-            return response
+            if not email_address:
+                return Response(
+                    {"error": "Email address is required"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            try:
+                validate_email(email_address)
+            except ValidationError:
+                return Response(
+                    {"error": "Invalid email format"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            user = User.objects.filter(email_address__iexact=email_address).first()
+
+            # Always return success to prevent enumeration
+            if not user:
+                return Response({"status": "success"}, status=status.HTTP_200_OK)
+
+            # Throttle requests
+            recent_code = LoginCode.objects.filter(
+                account=user, created_at__gte=timezone.now() - timedelta(minutes=1)
+            ).exists()
+            if recent_code:
+                return Response(
+                    {"error": "Please wait before requesting another code."},
+                    status=status.HTTP_429_TOO_MANY_REQUESTS,
+                )
+
+            LoginCode.objects.filter(account=user).delete()
+            code = generate_verification_code()
+            LoginCode.objects.create(
+                account=user,
+                code=code,
+                expires_at=timezone.now() + timedelta(minutes=5),
+            )
+
+            send_login_code_email(user=user, code=code)
+
+            return Response({"status": "success"}, status=status.HTTP_200_OK)
 
     except Exception as e:
         logger.exception(f"Error occurred while logging in. Error: {str(e)}")
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-
-@api_view(["POST"])
-@permission_classes([AllowAny])
-def get_login_code(request):
-    email_address = request.data.get("email_address")
-    if not email_address:
-        return Response(
-            {"error": "Email address is required"}, status=status.HTTP_400_BAD_REQUEST
-        )
-
-    try:
-        validate_email(email_address)
-    except ValidationError:
-        return Response(
-            {"error": "Invalid email format"}, status=status.HTTP_400_BAD_REQUEST
-        )
-
-    user = User.objects.filter(email_address__iexact=email_address).first()
-
-    # Always return success to prevent enumeration
-    if not user:
-        return Response({"status": "success"}, status=status.HTTP_200_OK)
-
-    # Throttle requests
-    recent_code = LoginCode.objects.filter(
-        account=user, created_at__gte=timezone.now() - timedelta(minutes=1)
-    ).exists()
-    if recent_code:
-        return Response(
-            {"error": "Please wait before requesting another code."},
-            status=status.HTTP_429_TOO_MANY_REQUESTS,
-        )
-
-    LoginCode.objects.filter(account=user).delete()
-    code = generate_verification_code()
-    LoginCode.objects.create(
-        account=user, code=code, expires_at=timezone.now() + timedelta(minutes=5)
-    )
-
-    send_login_code_email(user=user, code=code)
-
-    return Response({"status": "success"}, status=status.HTTP_200_OK)
 
 
 class GenerateRegistrationOptionsView(APIView):

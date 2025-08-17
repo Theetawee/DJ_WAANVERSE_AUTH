@@ -64,7 +64,9 @@ def verify_email_address(user):
         # Prevent sending codes too frequently
         if last_code and (now < last_code.expires_at - timedelta(minutes=9)):
             # Assuming original rule: can't resend within 1 minute
-            raise Exception("too_fast")
+            raise Exception(
+                "Too many attempts. Please wait for sometime before trying again."
+            )
 
         code = generate_verification_code()
         email_manager = EmailService()
