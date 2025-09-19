@@ -10,6 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
+import sys
+
 import os
 from datetime import timedelta
 from pathlib import Path
@@ -30,6 +32,8 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 AUTH_USER_MODEL = "accounts.Account"
+
+TESTING = any(arg in sys.argv for arg in ["test", "pytest"])
 
 
 # Application definition
@@ -146,7 +150,15 @@ AUTHENTICATION_BACKENDS = [
 # Email settings
 # EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 # use console backend
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+DEFAULT_FROM_NAME = "Django Waanverse Auth"
+DEFAULT_FROM_EMAIL = "test@test-r9084zv9kvxgw63d.mlsender.net"
+
+MAILERSEND_API_KEY = os.environ.get("MAIL_KEY")
+
+EMAIL_BACKEND = "dj_waanverse_auth.services.email_service.EmailBackend"
+
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_HOST_USER = os.environ.get("SMTP_EMAIL", "email@gmail.com")

@@ -5,7 +5,6 @@ from rest_framework.response import Response
 
 from dj_waanverse_auth import settings as auth_config
 from dj_waanverse_auth.services.token_service import TokenService
-from dj_waanverse_auth.utils.email_utils import send_login_email
 from dj_waanverse_auth.utils.serializer_utils import get_serializer_class
 
 
@@ -30,5 +29,4 @@ def handle_login(request: object, user: User) -> Response:
     response.data["refresh_token"] = tokens["refresh_token"]
     response.data["sid"] = tokens["sid"]
 
-    send_login_email(request, user)
     return response

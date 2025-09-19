@@ -96,7 +96,7 @@ def login_view(request):
 
             # Throttle requests
             recent_code = LoginCode.objects.filter(
-                account=user, created_at__gte=timezone.now() - timedelta(minutes=1)
+                account=user, created_at__gte=timezone.now() - timedelta(seconds=1)
             ).exists()
             if recent_code:
                 return Response(

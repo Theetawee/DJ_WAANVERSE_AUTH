@@ -1,3 +1,4 @@
+annotated-types==0.7.0
 asgiref==3.9.1
 asn1crypto==1.5.1
 cbor2==5.6.5
@@ -6,17 +7,22 @@ cffi==1.17.1
 charset-normalizer==3.4.2
 coverage==7.9.2
 cryptography==45.0.5
--e git+https://github.com/Theetawee/DJ_WAANVERSE_AUTH.git@89e5d254e137293d6b92dc6ef74ddabaf5287740#egg=dj_waanverse_auth
+-e git+https://github.com/Theetawee/DJ_WAANVERSE_AUTH.git@489ef751a7fcd8adbfb2352a71745c3237e13784#egg=dj_waanverse_auth
 Django==5.2.4
 django-cors-headers==4.7.0
 django-dotenv==1.4.2
 djangorestframework==3.16.0
+dnspython==2.8.0
+email-validator==2.3.0
 flake8==7.3.0
 idna==3.10
+mailersend==2.0.0
 mccabe==0.7.0
 phonenumbers==9.0.11
 pycodestyle==2.14.0
 pycparser==2.22
+pydantic==2.11.9
+pydantic_core==2.33.2
 pyflakes==3.4.0
 PyJWT==2.10.1
 pyOpenSSL==25.1.0
@@ -24,6 +30,8 @@ pyotp==2.9.0
 requests==2.32.4
 setuptools==80.9.0
 sqlparse==0.5.3
+typing-inspection==0.4.1
+typing_extensions==4.15.0
 tzdata==2025.2
 ua-parser==1.0.1
 ua-parser-builtins==0.18.0.post1

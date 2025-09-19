@@ -56,6 +56,7 @@ class AccountManager(BaseUserManager):
             is_staff=True,
             is_superuser=True,
             is_active=True,
+            email_verified=True,
             **extra_fields
         )
 

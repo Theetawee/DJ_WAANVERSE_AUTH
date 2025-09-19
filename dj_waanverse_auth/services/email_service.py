@@ -1,76 +1,66 @@
-import logging
-from typing import Union, List
-
-from django.conf import settings as django_settings
-from django.core.mail import EmailMultiAlternatives, get_connection
-from django.template.loader import render_to_string
+from django.core.mail.backends.base import BaseEmailBackend
+from mailersend import MailerSendClient, EmailBuilder
+from django.conf import settings
 from django.utils.html import strip_tags
 
-logger = logging.getLogger(__name__)
 
+class EmailBackend(BaseEmailBackend):
+    def send_messages(self, email_messages):
+        if not email_messages:
+            return 0
 
-class EmailService:
-    """Simple email service for sending emails using Django's EmailMultiAlternatives."""
+        api_key = settings.MAILERSEND_API_KEY
+        default_from_email = settings.DEFAULT_FROM_EMAIL
+        default_from_name = getattr(settings, "DEFAULT_FROM_NAME", "No Reply")
 
-    def __init__(self):
-        """Initialize email service with lazy connection."""
-        self._connection = None
+        if not api_key:
+            raise ValueError("MAILERSEND_API_KEY is not set")
+        if not default_from_email:
+            raise ValueError("DEFAULT_FROM_EMAIL is not set")
 
-    @property
-    def connection(self):
-        """Lazy loading of email connection."""
-        if self._connection is None:
-            self._connection = get_connection(
-                username=django_settings.EMAIL_HOST_USER,
-                password=django_settings.EMAIL_HOST_PASSWORD,
-                fail_silently=False,
-            )
-        return self._connection
-
-    def send_email(
-        self,
-        subject: str,
-        template_name: str,
-        context: dict,
-        recipient: Union[str, List[str]],
-    ) -> bool:
-        """
-        Send an email with both plain text and HTML content.
-
-        Args:
-            subject: Email subject.
-            template_name: Path to HTML template.
-            context: Context for rendering template.
-            recipient: Single email or list of emails.
-            html_template: Optional separate HTML template.
-
-        Returns:
-            True if email was sent successfully, False otherwise.
-        """
-        if isinstance(recipient, str):
-            recipients = [recipient]
-        else:
-            recipients = [r for r in recipient if r]
-
-        if not recipients:
-            logger.warning("No valid recipients provided for email")
-            return False
-
+        send_count = 0
         try:
-            html_content = render_to_string(template_name, context)
-            text_content = strip_tags(html_content)
+            ms = MailerSendClient(api_key=api_key)
 
-            email = EmailMultiAlternatives(
-                subject=subject,
-                body=text_content,
-                from_email=django_settings.DEFAULT_FROM_EMAIL,
-                to=recipients,
-                connection=self.connection,
-            )
-            email.attach_alternative(html_content, "text/html")
-            email.send()
-            logger.info(f"Email sent to {recipients}")
-            return True
+            for message in email_messages:
+                # Only one recipient
+                recipient = message.to[
+                    0
+                ]  # assume dict with "email" and optional "name"
+                recipient_email = (
+                    recipient.get("email") if isinstance(recipient, dict) else recipient
+                )
+                recipient_name = (
+                    recipient.get("name", "") if isinstance(recipient, dict) else ""
+                )
+
+                # Get HTML if available
+                template_content = message.body or ""
+                for alt, mimetype in getattr(message, "alternatives", []):
+                    if mimetype == "text/html":
+                        template_content = alt
+                        break
+
+                # Fallback for text body
+                text_body = message.body or strip_tags(template_content)
+
+                # Build and send email
+                email = (
+                    EmailBuilder()
+                    .from_email(default_from_email, default_from_name)
+                    .to_many([{"email": recipient_email, "name": recipient_name}])
+                    .subject(message.subject)
+                    .html(template_content)
+                    .text(text_body)
+                    .build()
+                )
+
+                ms.emails.send(email)
+                send_count += 1
+
+            return send_count
+
         except Exception as e:
-            logger.error(f"Failed to send email: {e}", exc_info=True)
-            return False
+            if not self.fail_silently:
+                raise e
+            raise

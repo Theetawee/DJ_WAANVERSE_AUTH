@@ -2,49 +2,33 @@ from django.db import transaction
 from django.utils import timezone
 from dj_waanverse_auth import settings as auth_config
 from dj_waanverse_auth.models import VerificationCode
-from dj_waanverse_auth.services.email_service import EmailService
 from dj_waanverse_auth.utils.generators import generate_verification_code
-from dj_waanverse_auth.utils.security_utils import (
-    get_device,
-    get_ip_address,
-    get_location_from_ip,
-)
 from datetime import timedelta
 
-
-def send_login_email(request, user):
-    if user.email_address and user.email_verified:
-        email_manager = EmailService()
-        template_name = "emails/login_alert.html"
-        ip_address = get_ip_address(request)
-        context = {
-            "ip_address": ip_address,
-            "location": get_location_from_ip(ip_address),
-            "device": get_device(request),
-            "user": user,
-        }
-        email_manager.send_email(
-            subject=auth_config.login_alert_email_subject,
-            template_name=template_name,
-            recipient=user.email_address,
-            context=context,
-        )
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+from django.conf import settings
 
 
 def send_login_code_email(user, code):
     if user.email_address and user.email_verified:
-        email_manager = EmailService()
         template_name = "emails/login_code.html"
-        context = {
-            "code": code,
-            "user": user,
-        }
-        email_manager.send_email(
-            subject=auth_config.login_code_email_subject,
-            template_name=template_name,
-            recipient=user.email_address,
-            context=context,
-        )
+        context = {"code": code, "user": user}
+
+        # Render templates
+        html_body = render_to_string(template_name, context)
+        text_body = strip_tags(html_body)
+
+        subject = auth_config.login_code_email_subject
+        from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@waanverse.com")
+        to_email = [{"email": user.email_address, "name": user.username}]
+
+        email = EmailMultiAlternatives(subject, text_body, from_email, to_email)
+        email.attach_alternative(html_body, "text/html")
+
+        # Send
+        email.send(fail_silently=False)
 
 
 def verify_email_address(user):
@@ -61,15 +45,13 @@ def verify_email_address(user):
             .first()
         )
 
-        # Prevent sending codes too frequently
+        # Prevent sending codes too frequently (within 1 minute window)
         if last_code and (now < last_code.expires_at - timedelta(minutes=9)):
-            # Assuming original rule: can't resend within 1 minute
             raise Exception(
-                "Too many attempts. Please wait for sometime before trying again."
+                "Too many attempts. Please wait for some time before trying again."
             )
 
         code = generate_verification_code()
-        email_manager = EmailService()
         template_name = "emails/verify_email.html"
 
         with transaction.atomic():
@@ -83,13 +65,21 @@ def verify_email_address(user):
                 expires_at=now + timedelta(minutes=10),
             )
 
-            # Send verification email
-            email_manager.send_email(
-                subject=auth_config.verification_email_subject,
-                template_name=template_name,
-                recipient=user.email_address,
-                context={"code": code, "user": user},
+            # Render email content
+            context = {"code": code, "user": user}
+            html_body = render_to_string(template_name, context)
+            text_body = strip_tags(html_body)
+
+            subject = auth_config.verification_email_subject
+            from_email = getattr(
+                settings, "DEFAULT_FROM_EMAIL", "noreply@waanverse.com"
             )
+            to_email = [user.email_address]
+
+            # Send email
+            email = EmailMultiAlternatives(subject, text_body, from_email, to_email)
+            email.attach_alternative(html_body, "text/html")
+            email.send(fail_silently=False)
 
         return True
 
