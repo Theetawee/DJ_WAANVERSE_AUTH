@@ -7,7 +7,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from dj_waanverse_auth.config.settings import auth_config
 from dj_waanverse_auth.models import UserSession
-from dj_waanverse_auth.serializers.authorization_serializer import SessionSerializer
+from dj_waanverse_auth.serializers import SessionSerializer
 from dj_waanverse_auth.services.token_service import TokenService
 from dj_waanverse_auth.utils.serializer_utils import get_serializer_class
 from dj_waanverse_auth.utils.session_utils import revoke_session

@@ -41,28 +41,13 @@ class AuthConfig:
             "REFRESH_TOKEN_COOKIE_MAX_AGE", timedelta(days=30)
         )
 
-        self.reserved_usernames = set(
-            config_dict.get(
-                "RESERVED_USERNAMES", ["admin", "administrator", "root", "system"]
-            )
-        )
         self.basic_account_serializer_class = config_dict.get(
             "BASIC_ACCOUNT_SERIALIZER",
-            "dj_waanverse_auth.serializers.base_serializers.BasicAccountSerializer",
+            "dj_waanverse_auth.serializers.BasicAccountSerializer",
         )
 
         self.blacklisted_emails = config_dict.get("BLACKLISTED_EMAILS", [])
-        self.blacklisted_phone_numbers = config_dict.get(
-            "BLACKLISTED_PHONE_NUMBERS", []
-        )
         self.allowed_email_domains = config_dict.get("ALLOWED_EMAIL_DOMAINS", [])
-        self.verification_email_subject = config_dict.get(
-            "VERIFICATION_EMAIL_SUBJECT", "Verify your email address"
-        )
-
-        self.login_alert_email_subject = config_dict.get(
-            "LOGIN_ALERT_EMAIL_SUBJECT", "Login alert"
-        )
 
         # Admin Interface
         self.enable_admin = config_dict.get("ENABLE_ADMIN_PANEL", False)

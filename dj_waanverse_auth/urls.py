@@ -1,13 +1,6 @@
-from django.urls import include, path
-
-from dj_waanverse_auth.routes import (
-    authorization_urls,
-    login_urls,
-    signup_urls,
-)
+from django.urls import path
+from dj_waanverse_auth.views.login_views import authenticate_account
 
 urlpatterns = [
-    path("login/", include(login_urls)),
-    path("", include(authorization_urls)),
-    path("signup/", include(signup_urls)),
+    path("", authenticate_account, name="dj_waanverse_auth_auth"),
 ]

@@ -1,86 +1,53 @@
-from django.db import transaction
-from django.utils import timezone
-from dj_waanverse_auth import settings as auth_config
-from dj_waanverse_auth.models import VerificationCode
-from dj_waanverse_auth.utils.generators import generate_verification_code
-from datetime import timedelta
-
+import secrets
+from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
-from django.conf import settings
+from dj_waanverse_auth import settings as app_settings
+from dj_waanverse_auth.models import AccessCode
+from django.utils import timezone
+from datetime import timedelta
+from django.db import transaction
 
 
-def send_login_code_email(user, code):
-    if user.email_address and user.email_verified:
-        template_name = "emails/login_code.html"
-        context = {"code": code, "user": user}
+def send_auth_code_via_email(account):
+    if not account.email_address:
+        raise ValueError("Account must have an email address to send auth code.")
 
-        # Render templates
-        html_body = render_to_string(template_name, context)
-        text_body = strip_tags(html_body)
+    now = timezone.now()
+    one_minute_ago = now - timedelta(minutes=1)
 
-        subject = auth_config.login_code_email_subject
-        from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@waanverse.com")
-        to_email = [{"email": user.email_address, "name": user.username}]
+    existing_code = (
+        AccessCode.objects.filter(email_address=account.email_address)
+        .order_by("-created_at")
+        .first()
+    )
 
-        email = EmailMultiAlternatives(subject, text_body, from_email, to_email)
-        email.attach_alternative(html_body, "text/html")
-
-        # Send
-        email.send(fail_silently=False)
-
-
-def verify_email_address(user):
-    """
-    Generate and send an email verification code for the given user.
-    Stores the expiry time in `expires_at` instead of `created_at`.
-    """
-    if user.email_address and not user.email_verified:
-        now = timezone.now()
-
-        last_code = (
-            VerificationCode.objects.filter(email_address=user.email_address)
-            .order_by("-expires_at")
-            .first()
+    if existing_code and existing_code.created_at > one_minute_ago:
+        seconds_remaining = int(
+            (existing_code.created_at + timedelta(minutes=1) - now).total_seconds()
+        )
+        raise ValueError(
+            f"A code was recently sent. Please wait {seconds_remaining} seconds before requesting a new one."
         )
 
-        # Prevent sending codes too frequently (within 1 minute window)
-        if last_code and (now < last_code.expires_at - timedelta(minutes=9)):
-            raise Exception(
-                "Too many attempts. Please wait for some time before trying again."
-            )
+    code = f"{secrets.randbelow(900000) + 100000}"
 
-        code = generate_verification_code()
-        template_name = "emails/verify_email.html"
+    with transaction.atomic():
+        AccessCode.objects.filter(email_address=account.email_address).delete()
+        AccessCode.objects.create(
+            email_address=account.email_address,
+            code=code,
+            expires_at=now + timedelta(minutes=5),
+        )
+    user_name = account.get_full_name()
+    context = {"code": code, "user": account, "user_name": user_name}
+    html_body = render_to_string("emails/access_code.html", context)
+    text_body = strip_tags(html_body)
+    subject = f"{app_settings.platform_name} Access Code"
+    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", None)
+    to_email = [account.email_address]
 
-        with transaction.atomic():
-            # Remove old codes
-            VerificationCode.objects.filter(email_address=user.email_address).delete()
-
-            # Create new code with expiry 10 minutes from now
-            VerificationCode.objects.create(
-                email_address=user.email_address,
-                code=code,
-                expires_at=now + timedelta(minutes=10),
-            )
-
-            # Render email content
-            context = {"code": code, "user": user}
-            html_body = render_to_string(template_name, context)
-            text_body = strip_tags(html_body)
-
-            subject = auth_config.verification_email_subject
-            from_email = getattr(
-                settings, "DEFAULT_FROM_EMAIL", "noreply@waanverse.com"
-            )
-            to_email = [user.email_address]
-
-            # Send email
-            email = EmailMultiAlternatives(subject, text_body, from_email, to_email)
-            email.attach_alternative(html_body, "text/html")
-            email.send(fail_silently=False)
-
-        return True
-
-    return False
+    email = EmailMultiAlternatives(subject, text_body, from_email, to_email)
+    email.attach_alternative(html_body, "text/html")
+    email.send(fail_silently=False)

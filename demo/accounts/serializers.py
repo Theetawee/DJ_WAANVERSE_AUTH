@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from dj_waanverse_auth.serializers.signup_serializers import SignupSerializer as Base
 
 from .models import Account
 
@@ -20,9 +19,3 @@ class AccountSerializer(serializers.ModelSerializer):
             "profile_image",
             "date_of_birth",
         ]
-
-
-class SignupSerializer(Base):
-    def perform_post_creation_tasks(self, user):
-
-        return super().perform_post_creation_tasks(user)

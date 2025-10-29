@@ -5,9 +5,7 @@ if auth_config.enable_admin:
 
     from .models import (
         UserSession,
-        VerificationCode,
-        WebAuthnChallenge,
-        WebAuthnCredential,
+        AccessCode,
     )
 
     @admin.register(UserSession)
@@ -22,6 +20,4 @@ if auth_config.enable_admin:
         search_fields = ("account__email", "user_agent", "ip_address")
         ordering = ("-last_used",)
 
-    admin.site.register(VerificationCode)
-    admin.site.register(WebAuthnChallenge)
-    admin.site.register(WebAuthnCredential)
+    admin.site.register(AccessCode)

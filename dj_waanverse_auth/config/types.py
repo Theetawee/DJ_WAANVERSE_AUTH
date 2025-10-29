@@ -21,23 +21,13 @@ class AuthConfigSchema(TypedDict, total=False):
     ACCESS_TOKEN_COOKIE_MAX_AGE: timedelta
     REFRESH_TOKEN_COOKIE_MAX_AGE: timedelta
 
-    RESERVED_USERNAMES: List[str]
     BASIC_ACCOUNT_SERIALIZER: str
 
     BLACKLISTED_EMAILS: List[str]
     BLACKLISTED_PHONE_NUMBERS: List[str]
     ALLOWED_EMAIL_DOMAINS: List[str]
-    VERIFICATION_EMAIL_SUBJECT: str
 
     # Admin Interface
     ENABLE_ADMIN_PANEL: bool
 
     DISABLE_SIGNUP: bool
-    LOGIN_CODE_EMAIL_SUBJECT: str
-
-    WEBAUTHN_DOMAIN: str  # required
-    WEBAUTHN_RP_NAME: str  # required
-
-    WEBAUTHN_ORIGIN: str  # required
-
-    LOGIN_ALERT_EMAIL_SUBJECT: str
