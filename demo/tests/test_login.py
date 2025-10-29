@@ -37,7 +37,7 @@ class LoginTests(APITestCase):
         self.assertEqual(len(mail.outbox), 1)
         sent_mail = mail.outbox[0]
         self.assertEqual(
-            sent_mail.to, [{"email": "test@example.com", "name": "Test User"}]
+            sent_mail.to, ["test@example.com"]
         )
         self.assertIn(access_code.code, sent_mail.body)
 

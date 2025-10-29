@@ -8,7 +8,8 @@ from django.core.exceptions import ValidationError
 from logging import getLogger
 from django.core.validators import validate_email
 from dj_waanverse_auth import settings as auth_config
-
+from rest_framework.permissions import AllowAny
+from rest_framework.decorators import permission_classes
 from django.contrib.auth.models import User
 from django.utils import timezone
 from dj_waanverse_auth.services.token_service import TokenService
@@ -20,6 +21,7 @@ Account = get_user_model()
 
 
 @api_view(["POST"])
+@permission_classes([AllowAny])
 def authenticate_account(request):
     email = request.data.get("email_address")
     code = request.data.get("code")
