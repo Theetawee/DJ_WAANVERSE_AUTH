@@ -11,7 +11,6 @@ from dj_waanverse_auth.serializers import SessionSerializer
 from dj_waanverse_auth.services.token_service import TokenService
 from dj_waanverse_auth.utils.serializer_utils import get_serializer_class
 from dj_waanverse_auth.utils.session_utils import revoke_session
-from dj_waanverse_auth.utils.token_utils import decode_token
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -93,27 +92,8 @@ def authenticated_user(request):
 
 
 @api_view(["POST"])
-@permission_classes([IsAuthenticated])
-def logout_view(request):
-    access_token = request.COOKIES.get(auth_config.access_token_cookie)
-
-    if not access_token:
-        access_token = request.data.get("access_token")
-
-    if not access_token:
-        return Response(
-            {"error": "Access token required"}, status=status.HTTP_400_BAD_REQUEST
-        )
-
-    payload = decode_token(access_token)
-    session_id = payload.get("sid")
-
-    if not session_id:
-        return Response(
-            {"error": "Session ID missing from token"},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
+@permission_classes([AllowAny])
+def logout_view(request, session_id):
     try:
         revoke_session(session_id=session_id)
     except UserSession.DoesNotExist:
