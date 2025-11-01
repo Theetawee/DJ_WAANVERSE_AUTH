@@ -141,12 +141,6 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
-AUTHENTICATION_BACKENDS = [
-    "dj_waanverse_auth.backends.AuthenticationBackend",
-    "django.contrib.auth.backends.ModelBackend",
-]
-
-
 # Email settings
 # EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 # use console backend
