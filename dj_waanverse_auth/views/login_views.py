@@ -100,7 +100,7 @@ def _handle_new_account(email: str):
 
     # Step 6: Create new user safely
     try:
-        user = Account.objects.create(email_address=email)
+        user = Account.objects.create_user(email_address=email)
         return user
     except Exception as e:
         logger.error(f"Error creating account for {email}: {e}")
