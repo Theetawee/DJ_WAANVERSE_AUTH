@@ -41,10 +41,16 @@ def authenticate_account(request):
 def _request_code_flow(email):
     try:
         if email == "johndoe@gmail.com":
-            return Response(
-                {"detail": "Authentication code sent to email."},
-                status=status.HTTP_200_OK,
-            )
+            if auth_config.is_testing:
+                return Response(
+                    {"detail": "Authentication code sent to email."},
+                    status=status.HTTP_200_OK,
+                )
+            else:
+                return Response(
+                    {"detail": "Something went wrong."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
         account = Account.objects.filter(email_address=email).first()
         if not account:
             account = _handle_new_account(email=email)
@@ -116,7 +122,7 @@ def _handle_new_account(email: str):
 
 def _verify_code_flow(request, email, code):
     access_instance = AccessCode.objects.filter(code=code, email_address=email).first()
-    if email != "johndoe@gmail.com":
+    if email != "johndoe@gmail.com" or not auth_config.is_testing:
         if not access_instance or access_instance.is_expired():
             return Response(
                 {"detail": "Invalid or expired code."},
@@ -138,7 +144,7 @@ def _verify_code_flow(request, email, code):
     response = _handle_login(request, account)
 
     # Delete used code
-    if email != "johndoe@gmail.com":
+    if email != "johndoe@gmail.com" or not auth_config.is_testing:
         access_instance.delete()
 
     return response

@@ -62,6 +62,8 @@ class AuthConfig:
         self.webauthn_rp_name = config_dict.get("WEBAUTHN_RP_NAME", None)
         self.webauthn_origin = config_dict.get("WEBAUTHN_ORIGIN", None)
 
+        self.is_testing = config_dict.get("IS_TESTING", False)
+
 
 AUTH_CONFIG = getattr(settings, "WAANVERSE_AUTH_CONFIG", {})
 auth_config = AuthConfig(AUTH_CONFIG)

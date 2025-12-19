@@ -31,3 +31,5 @@ class AuthConfigSchema(TypedDict, total=False):
     ENABLE_ADMIN_PANEL: bool
 
     DISABLE_SIGNUP: bool
+
+    IS_TESTING: bool
