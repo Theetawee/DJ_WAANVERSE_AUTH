@@ -33,24 +33,6 @@ def login_view(request):
     return _verify_code_flow(request, email_address, code)
 
 
-@api_view(["POST"])
-@permission_classes([AllowAny])
-def authenticate_account(request):
-    email = request.data.get("email_address")
-    code = request.data.get("code")
-
-    if not email:
-        return Response(
-            {"detail": "Email address is required."},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
-    if code is None:
-        return _request_code_flow(email)
-
-    return _verify_code_flow(request, email, code)
-
-
 def _request_code_flow(email):
     try:
         if email == "johndoe@gmail.com":
