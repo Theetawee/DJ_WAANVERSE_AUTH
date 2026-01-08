@@ -10,14 +10,28 @@ from django.core.validators import validate_email
 from dj_waanverse_auth import settings as auth_config
 from rest_framework.permissions import AllowAny
 from rest_framework.decorators import permission_classes
-from django.contrib.auth.models import User
-from django.utils import timezone
-from dj_waanverse_auth.services.token_service import TokenService
-from dj_waanverse_auth.utils.serializer_utils import get_serializer_class
-
+from dj_waanverse_auth.utils.login import handle_login
 
 logger = getLogger(__name__)
 Account = get_user_model()
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def login_view(request):
+    email_address = request.data.get("email_address")
+    code = request.data.get("code")
+
+    if email_address is None:
+        return Response(
+            {"detail": "Email address is required."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if code is None:
+        return _request_code_flow(email_address)
+
+    return _verify_code_flow(request, email_address, code)
 
 
 @api_view(["POST"])
@@ -53,7 +67,10 @@ def _request_code_flow(email):
                 )
         account = Account.objects.filter(email_address=email).first()
         if not account:
-            account = _handle_new_account(email=email)
+            return Response(
+                {"detail": "Account not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         send_auth_code_via_email(account)
         return Response(
@@ -141,34 +158,10 @@ def _verify_code_flow(request, email, code):
         account.save(update_fields=["email_verified", "is_active"])
 
     # Login and return response (e.g., tokens or session)
-    response = _handle_login(request, account)
+    response = handle_login(request, account)
 
     # Delete used code
     if email != "johndoe@gmail.com" or not auth_config.is_testing:
         access_instance.delete()
-
-    return response
-
-
-def _handle_login(request: object, user: User) -> Response:
-    token_manager = TokenService(request=request, user=user)
-
-    basic_serializer = get_serializer_class(auth_config.basic_account_serializer_class)
-    response = Response(
-        data={
-            "status": "success",
-            "user": basic_serializer(user).data,
-        },
-        status=status.HTTP_200_OK,
-    )
-    user.last_login = timezone.now()
-    user.save(update_fields=["last_login"])
-
-    response_data = token_manager.setup_login_cookies(response=response)
-    response = response_data["response"]
-    tokens = response_data["tokens"]
-    response.data["access_token"] = tokens["access_token"]
-    response.data["refresh_token"] = tokens["refresh_token"]
-    response.data["sid"] = tokens["sid"]
 
     return response

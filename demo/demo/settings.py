@@ -151,7 +151,8 @@ DEFAULT_FROM_EMAIL = "test@test-r9084zv9kvxgw63d.mlsender.net"
 
 MAILERSEND_API_KEY = os.environ.get("MAIL_KEY")
 
-EMAIL_BACKEND = "dj_waanverse_auth.backends.EmailBackend"
+# EMAIL_BACKEND = "dj_waanverse_auth.backends.EmailBackend"
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587

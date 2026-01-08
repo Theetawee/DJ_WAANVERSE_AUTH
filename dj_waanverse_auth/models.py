@@ -57,3 +57,15 @@ class UserSession(models.Model):
 
     def __str__(self):
         return f"Session: {self.id}, Account: {self.account}"
+
+
+class Passkey(models.Model):
+    user = models.ForeignKey(Account, on_delete=models.CASCADE, related_name="passkeys")
+    credential_id = models.BinaryField(unique=True)
+    public_key = models.BinaryField()
+    sign_count = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    name = models.CharField(max_length=255, default="My Passkey")
+
+    def __str__(self):
+        return f"Passkey for {self.user.username}"

@@ -33,3 +33,7 @@ class AuthConfigSchema(TypedDict, total=False):
     DISABLE_SIGNUP: bool
 
     IS_TESTING: bool
+
+    WEBAUTHN_DOMAIN: str
+    WEBAUTHN_RP_NAME: str
+    WEBAUTHN_ORIGIN: str
