@@ -11,8 +11,10 @@ from dj_waanverse_auth.views.passkey_views import (
     login_begin,
     login_complete,
 )
+from dj_waanverse_auth.views.signup_views import signup_view
 
 urlpatterns = [
+    path("signup/", signup_view, name="dj_waanverse_auth_signup"),
     path("", authenticate_account, name="dj_waanverse_auth_auth"),
     path("me/", authenticated_user, name="dj_waanverse_auth_me"),
     path("refresh/", refresh_access_token, name="dj_waanverse_auth_refresh_token"),

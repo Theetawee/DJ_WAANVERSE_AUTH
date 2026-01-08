@@ -6,7 +6,6 @@ from dj_waanverse_auth.utils.email_utils import send_auth_code_via_email
 from dj_waanverse_auth.models import AccessCode
 from django.core.exceptions import ValidationError
 from logging import getLogger
-from django.core.validators import validate_email
 from dj_waanverse_auth import settings as auth_config
 from rest_framework.permissions import AllowAny
 from rest_framework.decorators import permission_classes
@@ -87,53 +86,6 @@ def _request_code_flow(email):
         return Response(
             {"detail": str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
-
-
-def _handle_new_account(email: str):
-    """
-    Creates or retrieves a user account safely after validating the email.
-    Raises ValidationError if the email is invalid, domain not allowed, or blacklisted.
-    """
-    # Step 1: Validate email format
-    try:
-        validate_email(email)
-    except ValidationError:
-        raise ValidationError("Invalid email address format.")
-
-    # Normalize email and extract domain
-    email = email.strip().lower()
-    domain = email.split("@")[-1]
-
-    # Step 2: Load configuration lists
-    ALLOWED_EMAIL_DOMAINS = [
-        d.lower() for d in (auth_config.allowed_email_domains or [])
-    ]
-    BLACKLISTED_EMAILS = [e.lower() for e in (auth_config.blacklisted_emails or [])]
-
-    # Step 3: Check if allowed email domains list is provided and enforce it
-    if ALLOWED_EMAIL_DOMAINS:  # only check if not empty
-        if domain not in ALLOWED_EMAIL_DOMAINS:
-            raise ValidationError(f"Email domain '{domain}' is not allowed.")
-
-    # Step 4: Check if the specific email is blacklisted
-    if email in BLACKLISTED_EMAILS:
-        raise ValidationError("This email address is blocked from registration.")
-
-    # Step 5: Get account model and check if user already exists
-    Account = get_user_model()
-    existing_user = Account.objects.filter(email_address__iexact=email).first()
-    if existing_user:
-        return existing_user
-
-    # Step 6: Create new user safely
-    try:
-        user = Account.objects.create_user(email_address=email)
-        return user
-    except Exception as e:
-        logger.error(f"Error creating account for {email}: {e}")
-        raise ValidationError(
-            "An unexpected error occurred while creating the account."
         )
 
 
