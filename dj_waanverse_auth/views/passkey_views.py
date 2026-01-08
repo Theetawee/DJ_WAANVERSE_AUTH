@@ -5,7 +5,10 @@ from webauthn import (
     verify_registration_response,
     options_to_json,
 )
-from webauthn.helpers.structs import PublicKeyCredentialDescriptor,UserVerificationRequirement
+from webauthn.helpers.structs import (
+    UserVerificationRequirement,
+    PublicKeyCredentialDescriptor,
+)
 
 from dj_waanverse_auth import settings
 from rest_framework.decorators import api_view, permission_classes
@@ -42,14 +45,17 @@ def register_begin(request):
 
     rp_origin = settings.webauthn_origin
 
-    print(rp_id, rp_name, rp_origin)
-
     if not rp_id or not rp_name or not rp_origin:
         logger.error("Webauthn domain or name not configured.")
         return Response(
             {"detail": "Webauthn domain or name not configured."},
             status=status.HTTP_400_BAD_REQUEST,
         )
+
+    existing_keys = Passkey.objects.filter(user=user)
+    exclude_list = [
+        PublicKeyCredentialDescriptor(id=pk.credential_id) for pk in existing_keys
+    ]
 
     # 1. Generate options
     options = generate_registration_options(
@@ -58,6 +64,7 @@ def register_begin(request):
         user_id=str(user.id).encode(),
         user_name=user.username,
         user_display_name=user.username,
+        exclude_credentials=exclude_list,
     )
 
     # 2. Encode the challenge to Base64
