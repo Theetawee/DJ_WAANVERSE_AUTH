@@ -93,7 +93,7 @@ def register_complete(request):
 
         if not signed_challenge:
             return Response(
-                {"error": "Missing challenge_token"}, status=status.HTTP_400_BAD_REQUEST
+                {"detail": "Missing challenge_token"}, status=status.HTTP_400_BAD_REQUEST
             )
 
         signer = TimestampSigner()
@@ -101,12 +101,12 @@ def register_complete(request):
             original_challenge_b64 = signer.unsign(signed_challenge, max_age=120)
         except SignatureExpired:
             return Response(
-                {"error": "Registration timed out. Please try again."},
+                {"detail": "Registration timed out. Please try again."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         except BadSignature:
             return Response(
-                {"error": "Invalid challenge signature."},
+                {"detail": "Invalid challenge signature."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -126,7 +126,7 @@ def register_complete(request):
         # If the user tries to register the same device twice
         if Passkey.objects.filter(credential_id=verification.credential_id).exists():
             return Response(
-                {"error": "This passkey is already registered."}, status=400
+                {"detail": "This passkey is already registered."}, status=400
             )
 
         key_name = request.data.get("key_name", "My Passkey")
@@ -146,7 +146,7 @@ def register_complete(request):
 
     except Exception as e:
         logger.error(f"WebAuthn Error: {e}")
-        return Response({"error": f"Registration failed: {str(e)}"}, status=400)
+        return Response({"detail": f"Registration failed: {str(e)}"}, status=400)
 
 
 @api_view(["POST"])
@@ -187,7 +187,7 @@ def login_complete(request):
         signed_challenge = request.data.get("challenge_token")
         if not signed_challenge:
             return Response(
-                {"error": "Missing challenge_token"}, status=status.HTTP_400_BAD_REQUEST
+                {"detail": "Missing challenge_token"}, status=status.HTTP_400_BAD_REQUEST
             )
 
         # 2. Unsign Challenge
@@ -196,7 +196,7 @@ def login_complete(request):
             original_challenge_b64 = signer.unsign(signed_challenge, max_age=120)
         except (SignatureExpired, BadSignature):
             return Response(
-                {"error": "Login timed out or invalid session"},
+                {"detail": "Login timed out or invalid session"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -216,7 +216,7 @@ def login_complete(request):
             passkey = Passkey.objects.get(credential_id=credential_id_bytes)
         except Passkey.DoesNotExist:
             return Response(
-                {"error": "Unknown passkey"}, status=status.HTTP_400_BAD_REQUEST
+                {"detail": "Unknown passkey"}, status=status.HTTP_400_BAD_REQUEST
             )
 
         # 4. Verify Signature
@@ -242,4 +242,4 @@ def login_complete(request):
 
     except Exception as e:
         logger.error(f"Login Error: {e}")
-        return Response({"error": "Login failed"}, status=400)
+        return Response({"detail": "Login failed"}, status=400)
