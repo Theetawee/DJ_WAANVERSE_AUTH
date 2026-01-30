@@ -174,6 +174,8 @@ WAANVERSE_AUTH_CONFIG = {
     "WEBAUTHN_ORIGIN": "http://localhost:5173",
     "ALLOWED_EMAIL_DOMAINS": ["gmail.com"],
     "BLACKLISTED_EMAILS": ["blocked@gmail.com"],
+    "ACCESS_TOKEN_COOKIE_NAME": "a_t",
+    "REFRESH_TOKEN_COOKIE_NAME": "r_t",
 }
 
 REST_FRAMEWORK = {
