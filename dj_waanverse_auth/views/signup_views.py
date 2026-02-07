@@ -14,6 +14,11 @@ logger = getLogger(__name__)
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def signup_view(request):
+    if auth_config.disable_signup:
+        return Response(
+            {"detail": "Pong"},
+            status=status.HTTP_200_OK,
+        )
     email_address = request.data.get("email_address")
 
     if not email_address:
