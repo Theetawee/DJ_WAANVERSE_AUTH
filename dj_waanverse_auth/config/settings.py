@@ -60,6 +60,9 @@ class AuthConfig:
         self.login_code_email_subject = config_dict.get(
             "LOGIN_CODE_EMAIL_SUBJECT", "Login code"
         )
+        self.signup_code_email_subject = config_dict.get(
+            "SIGNUP_CODE_EMAIL_SUBJECT", "Signup code"
+        )
 
         self.webauthn_domain = config_dict.get("WEBAUTHN_DOMAIN", None)
         self.webauthn_rp_name = config_dict.get("WEBAUTHN_RP_NAME", None)

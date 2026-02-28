@@ -20,6 +20,8 @@ class AuthConfigSchema(TypedDict, total=False):
     COOKIE_HTTP_ONLY: bool
     ACCESS_TOKEN_COOKIE_MAX_AGE: timedelta
     REFRESH_TOKEN_COOKIE_MAX_AGE: timedelta
+    LOGIN_CODE_EMAIL_SUBJECT: str
+    SIGNUP_CODE_EMAIL_SUBJECT: str
 
     BASIC_ACCOUNT_SERIALIZER: str
 

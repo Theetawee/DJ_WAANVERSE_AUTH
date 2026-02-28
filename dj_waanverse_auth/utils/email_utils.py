@@ -81,7 +81,7 @@ def request_code_flow(email, is_signup=False):
             _generate_and_send_code(
                 email_address=email,
                 template_name="emails/signup_code.html",
-                subject=f"{app_settings.platform_name} Signup Code",
+                subject=app_settings.signup_code_email_subject,
             )
 
             return Response(
@@ -99,7 +99,7 @@ def request_code_flow(email, is_signup=False):
         _generate_and_send_code(
             email_address=email,
             template_name="emails/login_code.html",
-            subject=f"{app_settings.platform_name} Login Code",
+            subject=app_settings.login_code_email_subject,
         )
 
         return Response(
