@@ -25,7 +25,6 @@ class JWTAuthentication(authentication.BaseAuthentication):
     def authenticate(self, request: Request) -> Optional[Tuple]:
         token = self._get_token_from_request(request)
 
-        # Short-circuit if no token (e.g., login/register requests)
         if not token:
             return None
 

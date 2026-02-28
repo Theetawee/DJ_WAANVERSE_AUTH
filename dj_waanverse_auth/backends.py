@@ -1,11 +1,7 @@
-from django.contrib.auth import get_user_model
-
 from django.core.mail.backends.base import BaseEmailBackend
 from mailersend import MailerSendClient, EmailBuilder
 from django.conf import settings
 from django.utils.html import strip_tags
-
-User = get_user_model()
 
 
 class EmailBackend(BaseEmailBackend):
@@ -27,10 +23,7 @@ class EmailBackend(BaseEmailBackend):
             ms = MailerSendClient(api_key=api_key)
 
             for message in email_messages:
-                # Only one recipient
-                recipient = message.to[
-                    0
-                ]  # assume dict with "email" and optional "name"
+                recipient = message.to[0]
                 recipient_email = (
                     recipient.get("email") if isinstance(recipient, dict) else recipient
                 )
@@ -38,17 +31,14 @@ class EmailBackend(BaseEmailBackend):
                     recipient.get("name", "") if isinstance(recipient, dict) else ""
                 )
 
-                # Get HTML if available
                 template_content = message.body or ""
                 for alt, mimetype in getattr(message, "alternatives", []):
                     if mimetype == "text/html":
                         template_content = alt
                         break
 
-                # Fallback for text body
                 text_body = message.body or strip_tags(template_content)
 
-                # Build and send email
                 email = (
                     EmailBuilder()
                     .from_email(default_from_email, default_from_name)

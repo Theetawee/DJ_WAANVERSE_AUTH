@@ -26,6 +26,7 @@ class AuthConfigSchema(TypedDict, total=False):
     BLACKLISTED_EMAILS: List[str]
     BLACKLISTED_PHONE_NUMBERS: List[str]
     ALLOWED_EMAIL_DOMAINS: List[str]
+    BLACKLISTED_EMAIL_DOMAINS: List[str]
 
     # Admin Interface
     ENABLE_ADMIN_PANEL: bool
@@ -33,6 +34,7 @@ class AuthConfigSchema(TypedDict, total=False):
     DISABLE_SIGNUP: bool
 
     IS_TESTING: bool
+    TESTING_EMAIL_ADDRESSES: List[str]
 
     WEBAUTHN_DOMAIN: str
     WEBAUTHN_RP_NAME: str

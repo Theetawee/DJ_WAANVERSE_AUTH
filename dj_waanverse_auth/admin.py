@@ -6,6 +6,7 @@ if auth_config.enable_admin:
     from .models import (
         UserSession,
         AccessCode,
+        Passkey,
     )
 
     @admin.register(UserSession)
@@ -21,3 +22,4 @@ if auth_config.enable_admin:
         ordering = ("-last_used",)
 
     admin.site.register(AccessCode)
+    admin.site.register(Passkey)

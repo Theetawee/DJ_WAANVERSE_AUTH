@@ -48,6 +48,9 @@ class AuthConfig:
 
         self.blacklisted_emails = config_dict.get("BLACKLISTED_EMAILS", [])
         self.allowed_email_domains = config_dict.get("ALLOWED_EMAIL_DOMAINS", [])
+        self.blacklisted_email_domains = config_dict.get(
+            "BLACKLISTED_EMAIL_DOMAINS", []
+        )
 
         # Admin Interface
         self.enable_admin = config_dict.get("ENABLE_ADMIN_PANEL", False)
@@ -63,6 +66,7 @@ class AuthConfig:
         self.webauthn_origin = config_dict.get("WEBAUTHN_ORIGIN", None)
 
         self.is_testing = config_dict.get("IS_TESTING", False)
+        self.testing_email_addresses = config_dict.get("TESTING_EMAIL_ADDRESSES", [])
 
 
 AUTH_CONFIG = getattr(settings, "WAANVERSE_AUTH_CONFIG", {})
