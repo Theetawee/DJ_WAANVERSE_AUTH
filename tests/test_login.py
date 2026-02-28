@@ -16,7 +16,9 @@ class LoginCodeRequestTests(BaseAPITestCase):
         super().setUp()
         self.url = reverse("dj_waanverse_auth_login")
         self.email = "newuser@example.com"
-        self.account = Account.objects.create_user(email_address=self.email)
+        self.account = Account.objects.create_user(
+            email_address=self.email,
+        )
 
     def test_login_code_request(self):
         response = self.client.post(self.url, {"email_address": self.email})
@@ -42,7 +44,10 @@ class LoginCodeVerifyTests(BaseAPITestCase):
         super().setUp()
         self.url = reverse("dj_waanverse_auth_login")
         self.email = "newuser@example.com"
-        self.account = Account.objects.create_user(email_address=self.email)
+        self.account = Account.objects.create_user(
+            email_address=self.email,
+            last_login=timezone.now() - timedelta(minutes=5),
+        )
         AccessCode.objects.create(
             email_address=self.email,
             code="123456",
@@ -50,9 +55,16 @@ class LoginCodeVerifyTests(BaseAPITestCase):
         )
 
     def test_login_code_verify(self):
+        first_login_time = self.account.last_login
         response = self.client.post(
             self.url, {"email_address": self.email, "code": "123456"}
         )
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertLoginData(response)
         self.assertAuthCookies(response)
+        self.account.refresh_from_db()
+        self.assertNotEqual(
+            first_login_time,
+            Account.objects.filter(email_address=self.email).first().last_login,
+        )
