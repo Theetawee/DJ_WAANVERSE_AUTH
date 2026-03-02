@@ -4,6 +4,8 @@ from dj_waanverse_auth.views.authorization_views import (
     authenticated_user,
     refresh_access_token,
     logout_view,
+    get_user_sessions,
+    delete_user_session,
 )
 from dj_waanverse_auth.views.passkey_views import (
     register_begin,
@@ -19,6 +21,12 @@ urlpatterns = [
     path("refresh/", refresh_access_token, name="dj_waanverse_auth_refresh_token"),
     path("logout/<int:session_id>/", logout_view, name="dj_waanverse_auth_logout"),
     path("login/", login_view, name="dj_waanverse_auth_login"),
+    path("session/", get_user_sessions, name="dj_waanverse_auth_sessions"),
+    path(
+        "session/<int:session_id>/",
+        delete_user_session,
+        name="dj_waanverse_auth_delete_session",
+    ),
     # Passkey
     path(
         "passkey/register/",

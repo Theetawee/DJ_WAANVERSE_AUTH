@@ -11,34 +11,13 @@ class BaseAPITestCase(APITestCase):
 
     def setUp(self):
         super().setUp()
-        self._original_auth_config = {
-            "disable_signup": auth_config.disable_signup,
-            "blacklisted_emails": deepcopy(auth_config.blacklisted_emails),
-            "blacklisted_email_domains": deepcopy(
-                auth_config.blacklisted_email_domains
-            ),
-            "allowed_email_domains": deepcopy(auth_config.allowed_email_domains),
-            "testing_email_addresses": deepcopy(auth_config.testing_email_addresses),
-            "is_testing": auth_config.is_testing,
-        }
+        # Snapshot original config to avoid test bleed
+        self._original_config = deepcopy(auth_config.__dict__)
 
     def tearDown(self):
-        auth_config.disable_signup = self._original_auth_config["disable_signup"]
-        auth_config.blacklisted_emails = self._original_auth_config[
-            "blacklisted_emails"
-        ]
-        auth_config.blacklisted_email_domains = self._original_auth_config[
-            "blacklisted_email_domains"
-        ]
-        auth_config.allowed_email_domains = self._original_auth_config[
-            "allowed_email_domains"
-        ]
-        auth_config.testing_email_addresses = self._original_auth_config[
-            "testing_email_addresses"
-        ]
-        auth_config.is_testing = self._original_auth_config["is_testing"]
-
-        super().tearDown()
+        # Restore original config
+        for key, value in self._original_config.items():
+            setattr(auth_config, key, value)
 
     def assertLoginData(self, response, status_code=status.HTTP_200_OK):
         self.assertEqual(response.status_code, status_code)

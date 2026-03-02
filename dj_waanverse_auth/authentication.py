@@ -23,6 +23,8 @@ class JWTAuthentication(authentication.BaseAuthentication):
     COOKIE_NAME = auth_config.access_token_cookie
 
     def authenticate(self, request: Request) -> Optional[Tuple]:
+        pass
+
         token = self._get_token_from_request(request)
 
         if not token:
@@ -117,22 +119,12 @@ class JWTAuthentication(authentication.BaseAuthentication):
 
         try:
             user = User.objects.get(id=user_id, is_active=True)
-            self._validate_user(user, payload)
             return user
         except User.DoesNotExist:
             logger.warning(f"User {user_id} from token not found or inactive")
             raise exceptions.AuthenticationFailed(
                 "user_not_found", code="user_not_found"
             )
-
-    def _validate_user(self, user, payload: dict):
-        """
-        Extra validation, e.g., password change
-        """
-        if payload.get("iat"):
-            password_changed = getattr(user, "password_last_updated", None)
-            if password_changed and password_changed.timestamp() > payload["iat"]:
-                raise exceptions.AuthenticationFailed("Password has been changed")
 
     def authenticate_header(self, request):
         return 'Bearer realm="api"'
