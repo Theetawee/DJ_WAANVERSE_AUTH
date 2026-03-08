@@ -41,3 +41,8 @@ class AuthConfigSchema(TypedDict, total=False):
     WEBAUTHN_DOMAIN: str
     WEBAUTHN_RP_NAME: str
     WEBAUTHN_ORIGIN: str
+
+    GOOGLE_CLIENT_ID: str
+    GOOGLE_CLIENT_SECRET: str
+
+    GOOGLE_REDIRECT_URI: str

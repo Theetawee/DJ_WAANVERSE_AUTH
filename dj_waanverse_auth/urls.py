@@ -1,5 +1,6 @@
 from django.urls import path
 from dj_waanverse_auth.views.login_views import login_view
+from dj_waanverse_auth.views.google_views import GoogleAuthView, google_oauth_link
 from dj_waanverse_auth.views.authorization_views import (
     authenticated_user,
     refresh_access_token,
@@ -48,4 +49,10 @@ urlpatterns = [
         login_complete,
         name="dj_waanverse_auth_passkey_login_complete",
     ),
+    path(
+        "google/redirect/",
+        GoogleAuthView.as_view(),
+        name="dj_waanverse_auth_google_oauth_link",
+    ),
+    path("google/auth/", google_oauth_link, name="dj_waanverse_auth_google_auth"),
 ]

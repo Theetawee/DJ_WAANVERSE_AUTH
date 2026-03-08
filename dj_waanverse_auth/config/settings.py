@@ -71,6 +71,10 @@ class AuthConfig:
         self.is_testing = config_dict.get("IS_TESTING", False)
         self.testing_email_addresses = config_dict.get("TESTING_EMAIL_ADDRESSES", [])
 
+        self.google_client_id = config_dict.get("GOOGLE_CLIENT_ID", None)
+        self.google_client_secret = config_dict.get("GOOGLE_CLIENT_SECRET", None)
+        self.google_redirect_uri = config_dict.get("GOOGLE_REDIRECT_URI", None)
+
 
 AUTH_CONFIG = getattr(settings, "WAANVERSE_AUTH_CONFIG", {})
 auth_config = AuthConfig(AUTH_CONFIG)
