@@ -14,7 +14,7 @@ from django.contrib.auth import get_user_model
 logger = getLogger(__name__)
 
 
-def validate_email_address(email: str):
+def validate_email_address(email: str, platform: str = "web"):
     """
     Validates rules and creates a user.
     Raises ValidationError on failure.
@@ -31,9 +31,9 @@ def validate_email_address(email: str):
     email = email.strip().lower()
     domain = email.split("@")[-1]
 
-    allowed_domains = getattr(auth_config, "allowed_email_domains", []) or []
-    blacklisted_emails = getattr(auth_config, "blacklisted_emails", []) or []
-    blacklisted_domains = getattr(auth_config, "blacklisted_email_domains", []) or []
+    allowed_domains = auth_config.allowed_email_domains or []
+    blacklisted_emails = auth_config.blacklisted_emails or []
+    blacklisted_domains = auth_config.blacklisted_email_domains or []
 
     allowed_domains = [d.lower() for d in allowed_domains]
     blacklisted_emails = [e.lower() for e in blacklisted_emails]
@@ -69,7 +69,7 @@ def validate_email_address(email: str):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    return request_code_flow(email=email, is_signup=True)
+    return request_code_flow(email=email, platform=platform, is_signup=True)
 
 
 @api_view(["POST"])
@@ -82,6 +82,7 @@ def signup_view(request):
         )
     email_address = request.data.get("email_address")
     code = request.data.get("code")
+    platform = request.query_params.get("platform", "web")  # web or app
 
     if not email_address:
         return Response(
@@ -89,8 +90,10 @@ def signup_view(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
     if not code:
-        response = validate_email_address(email_address)
+        response = validate_email_address(email_address, platform=platform)
         return response
+
+    print(email_address, code)
 
     if email_address and code:
         response = verify_code_flow(request, email_address, code)

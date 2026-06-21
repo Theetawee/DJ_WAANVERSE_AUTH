@@ -46,3 +46,5 @@ class AuthConfigSchema(TypedDict, total=False):
     GOOGLE_CLIENT_SECRET: str
 
     GOOGLE_REDIRECT_URI: str
+
+    AUTH_FRONTEND_URL: str

@@ -13,10 +13,14 @@ from rest_framework import status
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 
+from django.core.signing import TimestampSigner
+
 Account = get_user_model()
 
+signer = TimestampSigner()
 
-def _generate_and_send_code(email_address, template_name, subject):
+
+def _generate_and_send_code(email_address, subject, platform="web"):
     now = timezone.now()
     one_minute_ago = now - timedelta(minutes=1)
 
@@ -31,32 +35,61 @@ def _generate_and_send_code(email_address, template_name, subject):
             (existing_code.created_at + timedelta(minutes=1) - now).total_seconds()
         )
         raise ValueError(
-            f"A code was recently sent. Please wait {seconds_remaining} seconds before requesting a new one."
+            f"A login request was recently sent. Please wait {seconds_remaining} seconds."
         )
 
-    code = f"{secrets.randbelow(900000) + 100000}"
+    context = {"email": email_address}
 
     with transaction.atomic():
         AccessCode.objects.filter(email_address=email_address).delete()
-        AccessCode.objects.create(
-            email_address=email_address,
-            code=code,
-            expires_at=now + timedelta(minutes=5),
-        )
 
-    context = {"code": code, "email": email_address}
+        if platform == "app":
+            code = f"{secrets.randbelow(900000) + 100000}"
+
+            AccessCode.objects.create(
+                email_address=email_address,
+                code=code,
+                expires_at=now + timedelta(minutes=5),
+            )
+
+            context["code"] = code
+            template_name = "emails/login_code_app.html"
+
+        else:
+            if app_settings.auth_frontend_url is None:
+                raise ValueError("AUTH_FRONTEND_URL is not set.")
+            token = secrets.token_urlsafe(32)
+            login_link = f"{app_settings.auth_frontend_url}?token={token}"
+
+            AccessCode.objects.create(
+                email_address=email_address,
+                code=token,
+                expires_at=now + timedelta(minutes=5),
+            )
+
+            context["login_link"] = login_link
+            template_name = "emails/login_link.html"
+
     html_body = render_to_string(template_name, context)
     text_body = strip_tags(html_body)
 
-    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", None)
-    to_email = [email_address]
-
-    email = EmailMultiAlternatives(subject, text_body, from_email, to_email)
+    email = EmailMultiAlternatives(
+        subject,
+        text_body,
+        settings.DEFAULT_FROM_EMAIL,
+        [email_address],
+    )
     email.attach_alternative(html_body, "text/html")
     email.send(fail_silently=False)
 
 
-def request_code_flow(email, is_signup=False):
+def request_code_flow(email: str, platform: str, is_signup: bool = False):
+    """
+    Req
+
+    Returns:
+        _type_: _description_
+    """
     try:
         if email in app_settings.testing_email_addresses:
             if app_settings.is_testing:
@@ -80,8 +113,8 @@ def request_code_flow(email, is_signup=False):
 
             _generate_and_send_code(
                 email_address=email,
-                template_name="emails/signup_code.html",
                 subject=app_settings.signup_code_email_subject,
+                platform=platform,
             )
 
             return Response(
@@ -98,8 +131,8 @@ def request_code_flow(email, is_signup=False):
 
         _generate_and_send_code(
             email_address=email,
-            template_name="emails/login_code.html",
             subject=app_settings.login_code_email_subject,
+            platform=platform,
         )
 
         return Response(

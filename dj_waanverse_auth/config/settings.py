@@ -75,6 +75,8 @@ class AuthConfig:
         self.google_client_secret = config_dict.get("GOOGLE_CLIENT_SECRET", None)
         self.google_redirect_uri = config_dict.get("GOOGLE_REDIRECT_URI", None)
 
+        self.auth_frontend_url = config_dict.get("AUTH_FRONTEND_URL", None)
+
 
 AUTH_CONFIG = getattr(settings, "WAANVERSE_AUTH_CONFIG", {})
 auth_config = AuthConfig(AUTH_CONFIG)

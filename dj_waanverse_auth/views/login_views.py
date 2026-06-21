@@ -17,6 +17,7 @@ Account = get_user_model()
 def login_view(request):
     email_address = request.data.get("email_address")
     code = request.data.get("code")
+    platform = request.query_params.get("platform", "web")  # web or app
 
     if email_address is None:
         return Response(
@@ -25,6 +26,6 @@ def login_view(request):
         )
 
     if code is None:
-        return request_code_flow(email_address)
+        return request_code_flow(email_address, platform, is_signup=False)
 
     return verify_code_flow(request, email_address, code)
