@@ -73,6 +73,19 @@ class AbstractBaseAccount(AbstractBaseUser, PermissionsMixin):
         db_index=True,
         unique=True,
     )
+    phone_number = models.CharField(
+        max_length=20,
+        verbose_name="Phone Number",
+        blank=True,
+        null=True,
+        unique=True,
+    )
+    phone_region = models.CharField(
+        max_length=10,
+        verbose_name="Phone Region",
+        blank=True,
+        null=True,
+    )
     date_joined = models.DateTimeField(auto_now_add=True)
     last_login = models.DateTimeField(null=True, blank=True)
     is_active = models.BooleanField(default=False)

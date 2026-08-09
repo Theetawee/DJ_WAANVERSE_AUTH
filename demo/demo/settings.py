@@ -60,7 +60,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "dj_waanverse_auth.middleware.auth.AuthCookieMiddleware",
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True
@@ -162,18 +161,18 @@ EMAIL_USE_TLS = True
 
 
 WAANVERSE_AUTH_CONFIG = {
-    "PUBLIC_KEY_PATH": os.path.join(BASE_DIR, "secrets/public_key.pem"),
-    "PRIVATE_KEY_PATH": os.path.join(BASE_DIR, "secrets/private_key.pem"),
-    "REFRESH_TOKEN_COOKIE_MAX_AGE": timedelta(days=30),
-    "ACCESS_TOKEN_COOKIE_MAX_AGE": timedelta(minutes=30),
-    "BASIC_ACCOUNT_SERIALIZER": "accounts.serializers.BasicAccountSerializer",
-    "ENABLE_ADMIN_PANEL": True,
-    "PLATFORM_NAME": "Demo Platform",
-    "WEBAUTHN_DOMAIN": "localhost",
-    "WEBAUTHN_RP_NAME": "localhost",
-    "WEBAUTHN_ORIGIN": "http://localhost:5173",
-    "ACCESS_TOKEN_COOKIE_NAME": "a_t",
-    "REFRESH_TOKEN_COOKIE_NAME": "r_t",
+    # "PUBLIC_KEY_PATH": os.path.join(BASE_DIR, "secrets/public_key.pem"),
+    # "PRIVATE_KEY_PATH": os.path.join(BASE_DIR, "secrets/private_key.pem"),
+    # "REFRESH_TOKEN_COOKIE_MAX_AGE": timedelta(days=30),
+    # "ACCESS_TOKEN_COOKIE_MAX_AGE": timedelta(minutes=30),
+    # "BASIC_ACCOUNT_SERIALIZER": "accounts.serializers.BasicAccountSerializer",
+    # "ENABLE_ADMIN_PANEL": True,
+    # "PLATFORM_NAME": "Demo Platform",
+    # "WEBAUTHN_DOMAIN": "localhost",
+    # "WEBAUTHN_RP_NAME": "localhost",
+    # "WEBAUTHN_ORIGIN": "http://localhost:5173",
+    # "ACCESS_TOKEN_COOKIE_NAME": "a_t",
+    # "REFRESH_TOKEN_COOKIE_NAME": "r_t",
 }
 
 REST_FRAMEWORK = {

@@ -17,6 +17,9 @@ class AuthConfig:
 
     def __init__(self, config_dict: AuthConfigSchema):
         # Security Settings
+        self.authentication_identifiers = config_dict.get(
+            "AUTHENTICATION_IDENTIFIERS", ["email", "username", "phone"]
+        )
         self.public_key_path = config_dict.get("PUBLIC_KEY_PATH")
         self.private_key_path = config_dict.get("PRIVATE_KEY_PATH")
         self.platform_name = config_dict.get("PLATFORM_NAME")

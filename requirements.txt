@@ -5,9 +5,10 @@ cbor2==5.6.5
 certifi==2025.7.14
 cffi==1.17.1
 charset-normalizer==3.4.2
+colorama==0.4.6
 coverage==7.9.2
 cryptography==45.0.5
--e git+https://github.com/Theetawee/DJ_WAANVERSE_AUTH.git@c93075525f4153d2ff23150a96564431bcdbb885#egg=dj_waanverse_auth
+-e git+https://github.com/Theetawee/DJ_WAANVERSE_AUTH.git@fc9253882bd47e4cbac7c0987b2e5b47cfa2f07c#egg=dj_waanverse_auth
 Django==5.2.4
 django-cors-headers==4.7.0
 django-dotenv==1.4.2
@@ -15,19 +16,29 @@ djangorestframework==3.16.0
 dnspython==2.8.0
 email-validator==2.3.0
 flake8==7.3.0
+google-auth==2.49.0
 idna==3.10
+iniconfig==2.3.0
 mailersend==2.0.0
 mccabe==0.7.0
+packaging==26.3
 phonenumbers==9.0.11
+pluggy==1.6.0
+pyasn1==0.6.2
+pyasn1_modules==0.4.2
 pycodestyle==2.14.0
 pycparser==2.22
 pydantic==2.11.9
 pydantic_core==2.33.2
 pyflakes==3.4.0
+Pygments==2.20.0
 PyJWT==2.10.1
 pyOpenSSL==25.1.0
 pyotp==2.9.0
+pytest==9.1.1
+pytest-django==4.13.0
 requests==2.32.4
+rsa==4.9.1
 setuptools==80.9.0
 sqlparse==0.5.3
 typing-inspection==0.4.1

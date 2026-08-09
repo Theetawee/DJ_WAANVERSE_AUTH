@@ -5,6 +5,8 @@ from typing import List, Optional, TypedDict
 class AuthConfigSchema(TypedDict, total=False):
     """TypedDict defining all possible authentication configuration options."""
 
+    AUTHENTICATION_IDENTIFIERS: List[str]
+
     # Key and Identity Configuration
     PUBLIC_KEY_PATH: str
     PRIVATE_KEY_PATH: str
