@@ -6,6 +6,7 @@ class AuthConfigSchema(TypedDict, total=False):
     """TypedDict defining all possible authentication configuration options."""
 
     AUTHENTICATION_IDENTIFIERS: List[str]
+    BLACKLISTED_USERNAMES: List[str]
 
     # Key and Identity Configuration
     PUBLIC_KEY_PATH: str

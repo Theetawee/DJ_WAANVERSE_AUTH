@@ -20,6 +20,7 @@ class AuthConfig:
         self.authentication_identifiers = config_dict.get(
             "AUTHENTICATION_IDENTIFIERS", ["email", "username", "phone"]
         )
+        self.blacklisted_usernames = config_dict.get("BLACKLISTED_USERNAMES", [])
         self.public_key_path = config_dict.get("PUBLIC_KEY_PATH")
         self.private_key_path = config_dict.get("PRIVATE_KEY_PATH")
         self.platform_name = config_dict.get("PLATFORM_NAME")

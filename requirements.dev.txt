@@ -1,0 +1,15 @@
+coverage
+Django
+django-cors-headers
+django-dotenv
+djangorestframework
+email-validator
+flake8
+mailersend
+phonenumbers
+PyJWT
+pyotp
+requests
+setuptools
+user-agents
+webauthn
