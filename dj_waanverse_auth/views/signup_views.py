@@ -1,20 +1,21 @@
 from logging import getLogger
+from django.core.validators import validate_email
 
-import phonenumbers
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from django.core.validators import validate_email
 from django.db import IntegrityError, transaction
 from django.contrib.auth.password_validation import validate_password
-from phonenumbers import NumberParseException
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-# from dj_waanverse_auth.throttles import SignupIdentifierThrottle, SignupIPThrottle
 from dj_waanverse_auth import settings as auth_config
 from dj_waanverse_auth.utils.security.turnstile import verify_turnstile_token
+from dj_waanverse_auth.utils.identifiers import (
+    get_identifier_type,
+    normalize_phone,
+)
 
 logger = getLogger(__name__)
 
@@ -45,7 +46,7 @@ class SignupView(APIView):
             return parsed_payload
 
         identifier, password = parsed_payload
-        identifier_type = self.get_identifier_type(identifier)
+        identifier_type = get_identifier_type(identifier)
 
         handler = {
             "email": self.handle_signup_email,
@@ -126,24 +127,6 @@ class SignupView(APIView):
             )
 
         return identifier, password
-
-    def get_identifier_type(self, identifier: str):
-        """
-        Determines which enabled authentication identifier
-        the supplied value represents.
-        """
-
-        enabled_identifiers = auth_config.authentication_identifiers
-
-        if "email" in enabled_identifiers:
-            if self._is_email_identifier(identifier):
-                return "email"
-
-        if "phone" in enabled_identifiers:
-            if self._is_phone_identifier(identifier):
-                return "phone"
-
-        return None
 
     @staticmethod
     def validate_password_strength(password: str, user=None):
@@ -258,7 +241,7 @@ class SignupView(APIView):
         """
 
         try:
-            phone_number, phone_region = self.normalize_phone(phone)
+            phone_number, phone_region = normalize_phone(phone)
         except ValueError as exc:
             return Response(
                 {"msg": str(exc)},
@@ -301,58 +284,3 @@ class SignupView(APIView):
             {"msg": "Account created successfully."},
             status=status.HTTP_201_CREATED,
         )
-
-    @staticmethod
-    def normalize_phone(phone: str):
-        """
-        Validates and normalizes a phone number.
-
-        Phone numbers must include an international country code.
-        """
-
-        phone = phone.strip()
-
-        if not phone.startswith("+"):
-            raise ValueError("Phone number must include the country code.")
-
-        try:
-            parsed = phonenumbers.parse(phone, None)
-        except NumberParseException:
-            raise ValueError("Invalid phone number.")
-
-        if not phonenumbers.is_valid_number(parsed):
-            raise ValueError("Invalid phone number.")
-
-        phone_number = phonenumbers.format_number(
-            parsed,
-            phonenumbers.PhoneNumberFormat.E164,
-        )
-
-        phone_region = phonenumbers.region_code_for_number(parsed)
-
-        return phone_number, phone_region
-
-    @staticmethod
-    def _is_email_identifier(identifier: str) -> bool:
-        try:
-            validate_email(identifier)
-            return True
-        except ValidationError:
-            return False
-
-    @staticmethod
-    def _is_phone_identifier(identifier: str) -> bool:
-        """
-        Checks whether the identifier is a valid international
-        phone number.
-        """
-
-        if not identifier.startswith("+"):
-            return False
-
-        try:
-            parsed_phone = phonenumbers.parse(identifier, None)
-        except NumberParseException:
-            return False
-
-        return phonenumbers.is_valid_number(parsed_phone)

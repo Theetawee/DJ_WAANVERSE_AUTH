@@ -1,71 +1,96 @@
-from django.contrib.auth import get_user_model
+from __future__ import annotations
+
+import hashlib
+import hmac
+import secrets
+from dj_waanverse_auth import settings as auth_config
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
+
+CODE_LENGTH = auth_config.verification_code_length
+CODE_TTL = auth_config.verification_code_ttl
+LINK_TTL = auth_config.verification_link_ttl
+MAX_ATTEMPTS = auth_config.verification_max_attempts
 
 
-Account = get_user_model()
+def _generate_code() -> str:
+    return "".join(secrets.choice("0123456789") for _ in range(CODE_LENGTH))
 
 
-class AccessCode(models.Model):
-    email_address = models.EmailField(
-        db_index=True,
-        verbose_name=_("Email Address"),
-    )
-    code = models.CharField(
-        max_length=255, unique=True, verbose_name=_("Verification Code")
-    )
-    expires_at = models.DateTimeField(verbose_name=_("Expires At"))
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created At"))
-
-    def is_expired(self):
-        """Check if the verification code has expired."""
-        return timezone.now() > self.expires_at
-
-    def __str__(self):
-        return f"Code: {self.code}"
-
-    class Meta:
-        verbose_name = _("Verification Code")
-        verbose_name_plural = _("Verification Codes")
+def _generate_token() -> str:
+    return secrets.token_urlsafe(32)
 
 
-class UserSession(models.Model):
+def _hash(value: str) -> str:
+    return hashlib.sha256(value.encode()).hexdigest()
+
+
+class VerificationCode(models.Model):
     """
-    Represents a user's session tied to a specific device and account.
-    Used for tracking and managing session-related data.
+    A single pending verification for an account. Holds both a
+    numeric code and a link token from the same issuance — email
+    can be verified with either, phone can only use the code.
+
+    Raw code/token values are never stored — only their hashes,
+    so a database leak doesn't hand out live verification secrets.
     """
 
     account = models.ForeignKey(
-        Account, related_name="sessions", on_delete=models.CASCADE
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="verification_codes",
     )
-    user_agent = models.TextField(blank=True, null=True)
-    ip_address = models.GenericIPAddressField(blank=True, null=True)
-    # Timestamps
+    code_hash = models.CharField(max_length=64, db_index=True)
+    token_hash = models.CharField(max_length=64, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    last_used = models.DateTimeField(auto_now=True)
+    code_expires_at = models.DateTimeField()
+    link_expires_at = models.DateTimeField()
+    attempts = models.PositiveSmallIntegerField(default=0)
+    is_used = models.BooleanField(default=False)
 
-    # Status
-    is_active = models.BooleanField(default=True)
+    # TODO: add a command to delete all used and expired verification codes, to keep the table from growing indefinitely.
 
-    class Meta:
-        indexes = [
-            models.Index(fields=["account", "is_active"]),
-        ]
-        verbose_name = "User Session"
-        verbose_name_plural = "User Sessions"
+    @classmethod
+    def issue_for(cls, account) -> tuple["VerificationCode", str, str]:
+        """
+        Creates a new verification record and returns it along with
+        the raw code and raw link token — the only point at which the
+        raw values exist, for the caller to send via email/SMS.
 
-    def __str__(self):
-        return f"Session: {self.id}, Account: {self.account}"
+        Invalidates any previously issued, unused codes for this
+        account first, so only one verification code/link is ever
+        valid at a time — requesting a new one supersedes the old.
+        """
 
+        cls.objects.filter(account=account, is_used=False).update(is_used=True)
 
-class Passkey(models.Model):
-    user = models.ForeignKey(Account, on_delete=models.CASCADE, related_name="passkeys")
-    credential_id = models.BinaryField(unique=True)
-    public_key = models.BinaryField()
-    sign_count = models.IntegerField(default=0)
-    created_at = models.DateTimeField(auto_now_add=True)
-    name = models.CharField(max_length=255, default="My Passkey")
+        code = _generate_code()
+        token = _generate_token()
+        now = timezone.now()
 
-    def __str__(self):
-        return f"Passkey for {self.user.username}"
+        instance = cls.objects.create(
+            account=account,
+            code_hash=_hash(code),
+            token_hash=_hash(token),
+            code_expires_at=now + CODE_TTL,
+            link_expires_at=now + LINK_TTL,
+        )
+
+        return instance, code, token
+
+    def matches(self, access: str, *, is_code: bool) -> bool:
+        """
+        Constant-time comparison against the stored hash for
+        whichever access type was supplied.
+        """
+
+        expected_hash = self.code_hash if is_code else self.token_hash
+        return hmac.compare_digest(_hash(access), expected_hash)
+
+    def is_valid_for(self, *, is_code: bool) -> bool:
+        if self.is_used or self.attempts >= MAX_ATTEMPTS:
+            return False
+
+        expires_at = self.code_expires_at if is_code else self.link_expires_at
+        return timezone.now() < expires_at

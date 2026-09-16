@@ -12,15 +12,14 @@ class AccountManager(BaseUserManager):
 
     def create_user(
         self,
-        username: Optional[str] = None,
         email_address: Optional[str] = None,
         phone_number: Optional[str] = None,
         phone_region: Optional[str] = None,
         password: Optional[str] = None,
         **extra_fields,
     ):
-        if not username and not email_address and not phone_number:
-            raise ValueError("A username, email address, or phone number is required.")
+        if not email_address and not phone_number:
+            raise ValueError("An email address or phone number is required.")
 
         if email_address:
             email_address = self.normalize_email(email_address)
@@ -29,7 +28,6 @@ class AccountManager(BaseUserManager):
             phone_number = phone_number.strip()
 
         user = self.model(
-            username=username,
             email_address=email_address,
             phone_number=phone_number,
             phone_region=phone_region,
@@ -48,15 +46,14 @@ class AccountManager(BaseUserManager):
 
     def create_superuser(
         self,
-        username: Optional[str] = None,
         email_address: Optional[str] = None,
         phone_number: Optional[str] = None,
         phone_region: Optional[str] = None,
         password: Optional[str] = None,
         **extra_fields,
     ):
-        if not username and not email_address and not phone_number:
-            raise ValueError("A username, email address, or phone number is required.")
+        if not email_address and not phone_number:
+            raise ValueError("An email address or phone number is required.")
 
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
@@ -70,7 +67,6 @@ class AccountManager(BaseUserManager):
             raise ValueError("Superuser must have is_superuser=True.")
 
         return self.create_user(
-            username=username,
             email_address=email_address,
             phone_number=phone_number,
             phone_region=phone_region,
@@ -80,12 +76,6 @@ class AccountManager(BaseUserManager):
 
 
 class AbstractBaseAccount(AbstractBaseUser, PermissionsMixin):
-    username = models.CharField(
-        max_length=35,
-        unique=True,
-        null=True,
-        blank=True,
-    )
 
     email_address = models.EmailField(
         max_length=255,
@@ -132,7 +122,7 @@ class AbstractBaseAccount(AbstractBaseUser, PermissionsMixin):
 
     objects = AccountManager()
 
-    USERNAME_FIELD = "username"
+    USERNAME_FIELD = "email_address"
 
     REQUIRED_FIELDS = []
 
@@ -142,8 +132,6 @@ class AbstractBaseAccount(AbstractBaseUser, PermissionsMixin):
     def clean(self):
         super().clean()
 
-        if self.username == "":
-            self.username = None
         if self.email_address == "":
             self.email_address = None
         if self.phone_number == "":
@@ -152,14 +140,11 @@ class AbstractBaseAccount(AbstractBaseUser, PermissionsMixin):
         # At least one identifier must exist.
         if not any(
             [
-                self.username,
                 self.email_address,
                 self.phone_number,
             ]
         ):
-            raise ValidationError(
-                "A username, email address, or phone number is required."
-            )
+            raise ValidationError("An email address or phone number is required.")
 
         # A phone region only makes sense when a phone number exists.
         if self.phone_region and not self.phone_number:
@@ -180,7 +165,7 @@ class AbstractBaseAccount(AbstractBaseUser, PermissionsMixin):
             )
 
     def __str__(self) -> str:
-        return self.email_address or self.phone_number or self.username or str(self.pk)
+        return self.email_address or self.phone_number or str(self.pk)
 
     def get_full_name(self) -> str:
         return str(self)

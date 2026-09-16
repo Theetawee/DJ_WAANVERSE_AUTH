@@ -8,13 +8,12 @@ class AccountAdmin(admin.ModelAdmin):
         "email_address",
         "is_active",
         "is_staff",
-        "username",
         "last_login",
         "date_joined",
     )
 
     # Define fields to be searchable
-    search_fields = ("email_address", "name", "username")
+    search_fields = ("email_address", "name")
 
     # Define fields that should be read-only
     readonly_fields = ("last_login", "date_joined")
@@ -32,7 +31,6 @@ class AccountAdmin(admin.ModelAdmin):
             {
                 "fields": (
                     "email_address",
-                    "username",
                     "name",
                     "password1",
                     "password2",

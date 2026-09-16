@@ -26,9 +26,30 @@ class AuthConfig:
         self.turnstile_enabled = config_dict.get("TURNSTILE_ENABLED", False)
         self.turnstile_secret_key = config_dict.get("TURNSTILE_SECRET_KEY", None)
 
+        self.account_verification_email_subject = config_dict.get(
+            "ACCOUNT_VERIFICATION_EMAIL_SUBJECT", "Verify your account"
+        )
+
+        self.sms_sender = config_dict.get("SMS_SENDER", None)
+        self.frontend_url = config_dict.get("FRONTEND_URL", None)
+
+        self.verification_code_length = config_dict.get("VERIFICATION_CODE_LENGTH", 6)
+        self.verification_code_ttl = config_dict.get(
+            "VERIFICATION_CODE_TTL", timedelta(minutes=15)
+        )
+        self.verification_link_ttl = config_dict.get(
+            "VERIFICATION_LINK_TTL", timedelta(minutes=15)
+        )
+        self.verification_max_attempts = config_dict.get("VERIFICATION_MAX_ATTEMPTS", 3)
+
+        self.blacklisted_emails = config_dict.get("BLACKLISTED_EMAILS", [])
+        self.allowed_email_domains = config_dict.get("ALLOWED_EMAIL_DOMAINS", [])
+        self.blacklisted_email_domains = config_dict.get(
+            "BLACKLISTED_EMAIL_DOMAINS", []
+        )
+
         # rest ...
 
-        self.blacklisted_usernames = config_dict.get("BLACKLISTED_USERNAMES", [])
         self.public_key_path = config_dict.get("PUBLIC_KEY_PATH")
         self.private_key_path = config_dict.get("PRIVATE_KEY_PATH")
         self.platform_name = config_dict.get("PLATFORM_NAME")
@@ -56,12 +77,6 @@ class AuthConfig:
         self.basic_account_serializer_class = config_dict.get(
             "BASIC_ACCOUNT_SERIALIZER",
             "dj_waanverse_auth.serializers.BasicAccountSerializer",
-        )
-
-        self.blacklisted_emails = config_dict.get("BLACKLISTED_EMAILS", [])
-        self.allowed_email_domains = config_dict.get("ALLOWED_EMAIL_DOMAINS", [])
-        self.blacklisted_email_domains = config_dict.get(
-            "BLACKLISTED_EMAIL_DOMAINS", []
         )
 
         # Admin Interface

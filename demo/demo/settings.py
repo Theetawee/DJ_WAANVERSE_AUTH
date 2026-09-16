@@ -118,7 +118,7 @@ WAANVERSE_AUTH_CONFIG = {
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "dj_waanverse_auth.authentication.JWTAuthentication",
+        # "dj_waanverse_auth.authentication.JWTAuthentication",
     ),
     "TEST_REQUEST_DEFAULT_FORMAT": "json",
 }

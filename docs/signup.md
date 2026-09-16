@@ -4,3 +4,9 @@ required params
 
 optional 
 turnstile_token - if turnstile is enabled
+
+
+settings include `DISABLE_SIGNUP`
+    `AUTHENTICATION_IDENTIFIERS`
+    `TURNSTILE_ENABLED`
+   `TURNSTILE_SECRET_KEY`

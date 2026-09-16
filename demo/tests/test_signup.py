@@ -3,7 +3,12 @@ from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from rest_framework import status
-from dj_waanverse_auth.views.signup_views import SignupView
+from dj_waanverse_auth.utils.identifiers import (
+    is_email_identifier,
+    is_phone_identifier,
+    normalize_phone,
+    get_identifier_type,
+)
 
 Account = get_user_model()
 
@@ -320,7 +325,6 @@ class SignupViewTests(TestCase):
         self,
     ):
         Account.objects.create_user(
-            username="existing",
             email_address="existing@example.com",
             phone_number="+256700123456",
             phone_region="UG",
@@ -426,17 +430,6 @@ class SignupViewTests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    @patch(
-        "dj_waanverse_auth.views.signup_views.auth_config.authentication_identifiers",
-        ["email"],
-    )
-    def test_username_signup_rejected_when_username_disabled(
-        self,
-    ):
-        response = self.signup("wave")
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
     # ------------------------------------------------------------------
     # Signup configuration
     # ------------------------------------------------------------------
@@ -459,46 +452,41 @@ class SignupViewTests(TestCase):
     # ------------------------------------------------------------------
 
     def test_email_identifier_detection(self):
-        view = SignupView()
+        self.assertTrue(is_email_identifier("wave@example.com"))
 
-        self.assertTrue(view._is_email_identifier("wave@example.com"))
-
-        self.assertFalse(view._is_email_identifier("wave"))
+        self.assertFalse(is_email_identifier("wave"))
 
     def test_phone_identifier_detection(self):
-        view = SignupView()
 
-        self.assertTrue(view._is_phone_identifier("+256700123456"))
+        self.assertTrue(is_phone_identifier("+256700123456"))
 
-        self.assertFalse(view._is_phone_identifier("0700123456"))
+        self.assertFalse(is_phone_identifier("0700123456"))
 
-        self.assertFalse(view._is_phone_identifier("wave"))
+        self.assertFalse(is_phone_identifier("wave"))
 
     @patch(
         "dj_waanverse_auth.views.signup_views.auth_config.authentication_identifiers",
-        ["email", "phone", "username"],
+        ["email", "phone"],
     )
     def test_identifier_type_email(
         self,
     ):
-        view = SignupView()
 
         self.assertEqual(
-            view.get_identifier_type("wave@example.com"),
+            get_identifier_type("wave@example.com"),
             "email",
         )
 
     @patch(
         "dj_waanverse_auth.views.signup_views.auth_config.authentication_identifiers",
-        ["email", "phone", "username"],
+        ["email", "phone"],
     )
     def test_identifier_type_phone(
         self,
     ):
-        view = SignupView()
 
         self.assertEqual(
-            view.get_identifier_type("+256700123456"),
+            get_identifier_type("+256700123456"),
             "phone",
         )
 
@@ -538,7 +526,7 @@ class SignupViewTests(TestCase):
 
     @patch(
         "dj_waanverse_auth.views.signup_views.auth_config.authentication_identifiers",
-        ["email", "phone", "username"],
+        ["email", "phone"],
     )
     def test_signup_rejects_whitespace_only_identifier(self):
         response = self.signup("    ")
@@ -633,22 +621,22 @@ class SignupViewTests(TestCase):
     # ------------------------------------------------------------------
 
     def test_normalize_phone_valid_number(self):
-        phone_number, phone_region = SignupView.normalize_phone("+256700123456")
+        phone_number, phone_region = normalize_phone("+256700123456")
 
         self.assertEqual(phone_number, "+256700123456")
         self.assertEqual(phone_region, "UG")
 
     def test_normalize_phone_missing_country_code(self):
         with self.assertRaises(ValueError):
-            SignupView.normalize_phone("0700123456")
+            normalize_phone("0700123456")
 
     def test_normalize_phone_malformed_number(self):
         with self.assertRaises(ValueError):
-            SignupView.normalize_phone("+abc")
+            normalize_phone("+abc")
 
     def test_normalize_phone_invalid_number(self):
         with self.assertRaises(ValueError):
-            SignupView.normalize_phone("+999123456789")
+            normalize_phone("+999123456789")
 
         with self.assertRaises(ValueError):
-            SignupView.normalize_phone("+1234")  # too short to be a real US/CA number
+            normalize_phone("+1234")  # too short to be a real US/CA number

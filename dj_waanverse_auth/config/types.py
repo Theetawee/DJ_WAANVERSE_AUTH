@@ -10,9 +10,20 @@ class AuthConfigSchema(TypedDict, total=False):
     TURNSTILE_ENABLED: bool
     TURNSTILE_SECRET_KEY: str
 
-    # The rest....
+    ACCOUNT_VERIFICATION_EMAIL_SUBJECT: str
+    SMS_SENDER: str
+    FRONTEND_URL: str
 
-    BLACKLISTED_USERNAMES: List[str]
+    VERIFICATION_CODE_LENGTH: int
+    VERIFICATION_CODE_TTL: timedelta
+    VERIFICATION_LINK_TTL: timedelta
+    VERIFICATION_MAX_ATTEMPTS: int
+
+    BLACKLISTED_EMAILS: List[str]
+    ALLOWED_EMAIL_DOMAINS: List[str]
+    BLACKLISTED_EMAIL_DOMAINS: List[str]
+
+    # The rest....
 
     # Key and Identity Configuration
     PUBLIC_KEY_PATH: str
@@ -33,11 +44,6 @@ class AuthConfigSchema(TypedDict, total=False):
     SIGNUP_CODE_EMAIL_SUBJECT: str
 
     BASIC_ACCOUNT_SERIALIZER: str
-
-    BLACKLISTED_EMAILS: List[str]
-    BLACKLISTED_PHONE_NUMBERS: List[str]
-    ALLOWED_EMAIL_DOMAINS: List[str]
-    BLACKLISTED_EMAIL_DOMAINS: List[str]
 
     # Admin Interface
     ENABLE_ADMIN_PANEL: bool
