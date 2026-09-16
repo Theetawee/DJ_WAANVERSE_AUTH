@@ -1,19 +1,20 @@
 from logging import getLogger
-import re
+
 import phonenumbers
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.db import IntegrityError, transaction
+from django.contrib.auth.password_validation import validate_password
 from phonenumbers import NumberParseException
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
-from django.contrib.auth.password_validation import validate_password
 
+# from dj_waanverse_auth.throttles import SignupIdentifierThrottle, SignupIPThrottle
 from dj_waanverse_auth import settings as auth_config
+from dj_waanverse_auth.utils.security.turnstile import verify_turnstile_token
 
 logger = getLogger(__name__)
 
@@ -23,38 +24,21 @@ MAX_IDENTIFIER_LENGTH = 255
 MAX_PASSWORD_LENGTH = 128
 
 
-class SignupThrottle(ScopedRateThrottle):
-    """
-    Scoped throttle for the signup endpoint.
-
-    Add a "signup" entry to DRF's DEFAULT_THROTTLE_RATES, e.g.:
-
-        REST_FRAMEWORK = {
-            "DEFAULT_THROTTLE_RATES": {
-                "signup": "5/hour",
-            },
-        }
-
-    This throttles by IP by default (AnonRateThrottle-style cache key).
-    Make sure Cloudflare (or whatever proxy sits in front of this
-    service) is configured so request.META["REMOTE_ADDR"] reflects the
-    real client IP and not the proxy's own address — otherwise every
-    request will share one throttle bucket.
-    """
-
-    scope = "signup"
-
-
 class SignupView(APIView):
     permission_classes = [AllowAny]
-    throttle_classes = [SignupThrottle]
+    # throttle_classes = [SignupIdentifierThrottle, SignupIPThrottle]
 
     def post(self, request):
         if auth_config.disable_signup:
             return Response(
-                {"msg": "Signup is disabled."},
+                {"msg": "Something went wrong. Please try again later."},
                 status=status.HTTP_403_FORBIDDEN,
             )
+
+        if auth_config.turnstile_enabled:
+            turnstile_error = self._validate_turnstile(request)
+            if turnstile_error is not None:
+                return turnstile_error
 
         parsed_payload = self._validate_signup_request(request)
         if isinstance(parsed_payload, Response):
@@ -66,7 +50,6 @@ class SignupView(APIView):
         handler = {
             "email": self.handle_signup_email,
             "phone": self.handle_signup_phone,
-            "username": self.handle_signup_username,
         }.get(identifier_type)
 
         if handler:
@@ -78,6 +61,28 @@ class SignupView(APIView):
             {"msg": "Please provide a valid identifier."},
             status=status.HTTP_400_BAD_REQUEST,
         )
+
+    def _validate_turnstile(self, request):
+        """
+        Verifies the Cloudflare Turnstile token when Turnstile is
+        enabled. Returns a Response on failure, or None to continue.
+        """
+
+        token = request.data.get("turnstile_token")
+
+        if not isinstance(token, str):
+            token = None
+
+        if not verify_turnstile_token(
+            token,
+            remote_ip=getattr(request, "client_ip", None),
+        ):
+            return Response(
+                {"msg": "Turnstile verification failed."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return None
 
     def _validate_signup_request(self, request):
         identifier = request.data.get("identifier")
@@ -130,20 +135,13 @@ class SignupView(APIView):
 
         enabled_identifiers = auth_config.authentication_identifiers
 
-        # Check email first.
         if "email" in enabled_identifiers:
             if self._is_email_identifier(identifier):
                 return "email"
 
-        # Check phone next.
         if "phone" in enabled_identifiers:
             if self._is_phone_identifier(identifier):
                 return "phone"
-
-        # Username is the fallback because usernames do not have
-        # a strict format like email addresses or phone numbers.
-        if "username" in enabled_identifiers:
-            return "username"
 
         return None
 
@@ -197,24 +195,21 @@ class SignupView(APIView):
             domain.lower() for domain in (auth_config.blacklisted_email_domains or [])
         ]
 
-        # Allowed domains
         if allowed_domains and domain not in allowed_domains:
             return Response(
                 {"msg": "Invalid email domain."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Blacklisted email
         if email in blacklisted_emails:
             return Response(
-                {"msg": ("This email address is blocked from registration.")},
+                {"msg": "This email address is blocked from registration."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Blacklisted domain
         if domain in blacklisted_domains:
             return Response(
-                {"msg": ("This email domain is blocked from registration.")},
+                {"msg": "This email domain is blocked from registration."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -243,7 +238,6 @@ class SignupView(APIView):
                     password=password,
                 )
         except IntegrityError:
-            # Two concurrent requests raced past the exists() check above.
             logger.info("Signup race: duplicate email at create_user.")
             return Response(
                 {"msg": "Account already exists."},
@@ -265,7 +259,6 @@ class SignupView(APIView):
 
         try:
             phone_number, phone_region = self.normalize_phone(phone)
-
         except ValueError as exc:
             return Response(
                 {"msg": str(exc)},
@@ -309,72 +302,6 @@ class SignupView(APIView):
             status=status.HTTP_201_CREATED,
         )
 
-    def handle_signup_username(self, username: str, password: str):
-        """Validates a username and creates a user."""
-        username = username.strip().lower()
-        if not username:
-            return Response(
-                {"msg": "Username is required."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        if len(username) < 3 or len(username) > 30:
-            return Response(
-                {"msg": "Username must be between 3 and 30 characters."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        # Usernames may only contain letters, numbers, and underscores.
-        if not re.fullmatch(r"[a-zA-Z0-9_]+", username):
-            return Response(
-                {
-                    "msg": (
-                        "Username can only contain letters, "
-                        "numbers, and underscores."
-                    )
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        # Check blacklisted usernames.
-        blacklisted_usernames = [
-            username.lower() for username in (auth_config.blacklisted_usernames or [])
-        ]
-        if username in blacklisted_usernames:
-            return Response(
-                {"msg": "This username is not available."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        Account = get_user_model()
-        # Check if username already exists.
-        if Account.objects.filter(username__iexact=username).exists():
-            return Response(
-                {"msg": "Account already exists."}, status=status.HTTP_400_BAD_REQUEST
-            )
-
-        password_errors = self.validate_password_strength(
-            password,
-            user=Account(username=username),
-        )
-        if password_errors:
-            return Response(
-                {"msg": " ".join(password_errors)},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        try:
-            with transaction.atomic():
-                Account.objects.create_user(
-                    username=username,
-                    password=password,
-                )
-        except IntegrityError:
-            logger.info("Signup race: duplicate username at create_user.")
-            return Response(
-                {"msg": "Account already exists."}, status=status.HTTP_400_BAD_REQUEST
-            )
-
-        return Response(
-            {"msg": "Account created successfully."}, status=status.HTTP_201_CREATED
-        )
-
     @staticmethod
     def normalize_phone(phone: str):
         """
@@ -390,7 +317,6 @@ class SignupView(APIView):
 
         try:
             parsed = phonenumbers.parse(phone, None)
-
         except NumberParseException:
             raise ValueError("Invalid phone number.")
 
@@ -411,7 +337,6 @@ class SignupView(APIView):
         try:
             validate_email(identifier)
             return True
-
         except ValidationError:
             return False
 
@@ -426,11 +351,7 @@ class SignupView(APIView):
             return False
 
         try:
-            parsed_phone = phonenumbers.parse(
-                identifier,
-                None,
-            )
-
+            parsed_phone = phonenumbers.parse(identifier, None)
         except NumberParseException:
             return False
 

@@ -3,10 +3,13 @@ from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from rest_framework import status
-
 from dj_waanverse_auth.views.signup_views import SignupView
 
 Account = get_user_model()
+
+TURNSTILE_ALWAYS_PASS_SECRET = "1x0000000000000000000000000000000AA"
+TURNSTILE_ALWAYS_FAIL_SECRET = "2x0000000000000000000000000000000AA"
+TURNSTILE_DUMMY_TOKEN = "XXXX.DUMMY.TOKEN.XXXX"
 
 
 class SignupViewTests(TestCase):
@@ -15,10 +18,11 @@ class SignupViewTests(TestCase):
     """
 
     def setUp(self):
+        super().setUp()
         self.url = reverse("dj_waanverse_auth_signup")
         self.password = "StrongPassword123!"
 
-    def signup(self, identifier, password=None):
+    def signup(self, identifier, password=None, turnstile_token=None):
         """
         Helper for making signup requests.
         """
@@ -27,6 +31,7 @@ class SignupViewTests(TestCase):
             {
                 "identifier": identifier,
                 "password": password or self.password,
+                "turnstile_token": turnstile_token or TURNSTILE_DUMMY_TOKEN,
             },
             content_type="application/json",
         )
@@ -331,91 +336,28 @@ class SignupViewTests(TestCase):
         )
 
     # ------------------------------------------------------------------
-    # Username signup
+    # Turnstile verification
     # ------------------------------------------------------------------
 
+    @patch("dj_waanverse_auth.views.signup_views.auth_config.turnstile_enabled", True)
     @patch(
-        "dj_waanverse_auth.views.signup_views.auth_config.authentication_identifiers",
-        ["username"],
+        "dj_waanverse_auth.views.signup_views.auth_config.turnstile_secret_key",
+        TURNSTILE_ALWAYS_PASS_SECRET,
     )
-    def test_signup_with_valid_username(
-        self,
-    ):
-        response = self.signup("wAve")
+    def test_successful_signup_with_turnstile_enabled(self):
+        response = self.signup("wave@example.com")
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        user = Account.objects.get(username="wave")
-
-        self.assertEqual(
-            user.username,
-            "wave",
-        )
-
-        self.assertFalse(user.is_active)
-        self.assertFalse(user.phone_verified)
-        self.assertFalse(user.email_verified)
-
-        self.assertTrue(user.check_password(self.password))
-
+    @patch("dj_waanverse_auth.views.signup_views.auth_config.turnstile_enabled", True)
     @patch(
-        "dj_waanverse_auth.views.signup_views.auth_config.authentication_identifiers",
-        ["username"],
+        "dj_waanverse_auth.views.signup_views.auth_config.turnstile_secret_key",
+        TURNSTILE_ALWAYS_FAIL_SECRET,
     )
-    def test_signup_normalizes_username_whitespace(
-        self,
-    ):
-        response = self.signup("  wave  ")
-
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-        self.assertTrue(Account.objects.filter(username="wave").exists())
-
-    @patch(
-        "dj_waanverse_auth.views.signup_views.auth_config.authentication_identifiers",
-        ["username"],
-    )
-    def test_signup_rejects_existing_username(
-        self,
-    ):
-        Account.objects.create_user(
-            username="wave",
-            email_address="wave@example.com",
-            password="ExistingPassword123!",
-        )
-
-        response = self.signup("wave")
+    def test_failed_signup_with_turnstile_enabled(self):
+        response = self.signup("wave@example.com")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(
-            response.data["msg"],
-            "Account already exists.",
-        )
-
-    @patch(
-        "dj_waanverse_auth.views.signup_views.auth_config.authentication_identifiers",
-        ["username"],
-    )
-    def test_signup_rejects_invalid_username(
-        self,
-    ):
-        invalid_usernames = [
-            "ab",
-            "a" * 31,
-            "invalid username",
-            "invalid-username",
-            "invalid.username",
-            "invalid@username",
-        ]
-
-        for username in invalid_usernames:
-            with self.subTest(username=username):
-                response = self.signup(username)
-
-                self.assertEqual(
-                    response.status_code,
-                    status.HTTP_400_BAD_REQUEST,
-                )
 
     # ------------------------------------------------------------------
     # Multiple authentication identifiers
@@ -459,17 +401,6 @@ class SignupViewTests(TestCase):
             "UG",
         )
         self.assertIsNone(user.email_address)
-
-    @patch(
-        "dj_waanverse_auth.views.signup_views.auth_config.authentication_identifiers",
-        ["email", "phone", "username"],
-    )
-    def test_username_is_selected_when_all_identifiers_are_enabled(self):
-        response = self.signup("wave")
-
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-        self.assertTrue(Account.objects.filter(username="wave").exists())
 
     # ------------------------------------------------------------------
     # Disabled authentication methods
@@ -520,7 +451,7 @@ class SignupViewTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(
             response.data["msg"],
-            "Signup is disabled.",
+            "Something went wrong. Please try again later.",
         )
 
     # ------------------------------------------------------------------
@@ -571,58 +502,6 @@ class SignupViewTests(TestCase):
             "phone",
         )
 
-    @patch(
-        "dj_waanverse_auth.views.signup_views.auth_config.authentication_identifiers",
-        ["email", "phone", "username"],
-    )
-    def test_identifier_type_username(
-        self,
-    ):
-        view = SignupView()
-
-        self.assertEqual(
-            view.get_identifier_type("wave"),
-            "username",
-        )
-
-    # ------------------------------------------------------------------
-    # Blacklisted usernames
-    # ------------------------------------------------------------------
-
-    @patch(
-        "dj_waanverse_auth.views.signup_views.auth_config.blacklisted_usernames",
-        ["admin"],
-    )
-    @patch(
-        "dj_waanverse_auth.views.signup_views.auth_config.authentication_identifiers",
-        ["username"],
-    )
-    def test_signup_rejects_blacklisted_username(self):
-        response = self.signup("admin")
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(
-            response.data["msg"],
-            "This username is not available.",
-        )
-
-    @patch(
-        "dj_waanverse_auth.views.signup_views.auth_config.blacklisted_usernames",
-        ["admin"],
-    )
-    @patch(
-        "dj_waanverse_auth.views.signup_views.auth_config.authentication_identifiers",
-        ["username"],
-    )
-    def test_signup_rejects_blacklisted_username_case_insensitive(self):
-        response = self.signup("ADMIN")
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(
-            response.data["msg"],
-            "This username is not available.",
-        )
-
     # ------------------------------------------------------------------
     # No matching / disabled identifier types
     # ------------------------------------------------------------------
@@ -653,21 +532,6 @@ class SignupViewTests(TestCase):
             "Please provide a valid identifier.",
         )
 
-    @patch(
-        "dj_waanverse_auth.views.signup_views.auth_config.authentication_identifiers",
-        ["username"],
-    )
-    def test_email_shaped_identifier_falls_through_to_username_and_is_rejected(self):
-        # Email/phone are disabled, so this falls to the username handler,
-        # which should reject it for containing invalid characters.
-        response = self.signup("wave@example.com")
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(
-            response.data["msg"],
-            "Username can only contain letters, numbers, and underscores.",
-        )
-
     # ------------------------------------------------------------------
     # Whitespace-only identifier
     # ------------------------------------------------------------------
@@ -680,24 +544,6 @@ class SignupViewTests(TestCase):
         response = self.signup("    ")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    # ------------------------------------------------------------------
-    # Field isolation on username signup
-    # ------------------------------------------------------------------
-
-    @patch(
-        "dj_waanverse_auth.views.signup_views.auth_config.authentication_identifiers",
-        ["username"],
-    )
-    def test_username_signup_leaves_other_fields_empty(self):
-        response = self.signup("wave")
-
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-        user = Account.objects.get(username="wave")
-
-        self.assertIsNone(user.email_address)
-        self.assertIsNone(user.phone_number)
 
     # ------------------------------------------------------------------
     # Case-insensitive duplicate checks
@@ -714,25 +560,6 @@ class SignupViewTests(TestCase):
         )
 
         response = self.signup("wave@example.com")
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(
-            response.data["msg"],
-            "Account already exists.",
-        )
-
-    @patch(
-        "dj_waanverse_auth.views.signup_views.auth_config.authentication_identifiers",
-        ["username"],
-    )
-    def test_signup_rejects_existing_username_different_case(self):
-        Account.objects.create_user(
-            username="Wave",
-            email_address="wave@example.com",
-            password="ExistingPassword123!",
-        )
-
-        response = self.signup("wave")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(

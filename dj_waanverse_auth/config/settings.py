@@ -17,9 +17,17 @@ class AuthConfig:
 
     def __init__(self, config_dict: AuthConfigSchema):
         # Security Settings
+        self.disable_signup = config_dict.get("DISABLE_SIGNUP", False)
+
         self.authentication_identifiers = config_dict.get(
-            "AUTHENTICATION_IDENTIFIERS", ["email", "username", "phone"]
+            "AUTHENTICATION_IDENTIFIERS", ["email", "phone"]
         )
+
+        self.turnstile_enabled = config_dict.get("TURNSTILE_ENABLED", False)
+        self.turnstile_secret_key = config_dict.get("TURNSTILE_SECRET_KEY", None)
+
+        # rest ...
+
         self.blacklisted_usernames = config_dict.get("BLACKLISTED_USERNAMES", [])
         self.public_key_path = config_dict.get("PUBLIC_KEY_PATH")
         self.private_key_path = config_dict.get("PRIVATE_KEY_PATH")
@@ -58,8 +66,6 @@ class AuthConfig:
 
         # Admin Interface
         self.enable_admin = config_dict.get("ENABLE_ADMIN_PANEL", False)
-
-        self.disable_signup = config_dict.get("DISABLE_SIGNUP", False)
 
         self.login_code_email_subject = config_dict.get(
             "LOGIN_CODE_EMAIL_SUBJECT", "Login code"

@@ -5,7 +5,13 @@ from typing import List, Optional, TypedDict
 class AuthConfigSchema(TypedDict, total=False):
     """TypedDict defining all possible authentication configuration options."""
 
+    DISABLE_SIGNUP: bool
     AUTHENTICATION_IDENTIFIERS: List[str]
+    TURNSTILE_ENABLED: bool
+    TURNSTILE_SECRET_KEY: str
+
+    # The rest....
+
     BLACKLISTED_USERNAMES: List[str]
 
     # Key and Identity Configuration
@@ -35,8 +41,6 @@ class AuthConfigSchema(TypedDict, total=False):
 
     # Admin Interface
     ENABLE_ADMIN_PANEL: bool
-
-    DISABLE_SIGNUP: bool
 
     IS_TESTING: bool
     TESTING_EMAIL_ADDRESSES: List[str]

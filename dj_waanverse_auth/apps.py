@@ -12,14 +12,6 @@ class WaanverseAuthConfig(AppConfig):
     verbose_name = "Waanverse Auth"
 
     def ready(self):
-        """
-        Validate middleware configuration when the app is ready.
-        This runs during Django's initialization process.
-        """
-        self.validate_required_settings()
-
-    def validate_required_settings(self):
-        """
-        Validates other required settings are properly configured
-        """
-        pass
+        from dj_waanverse_auth import (
+            checks,
+        )  # noqa: F401

@@ -6,6 +6,7 @@ cffi==2.1.1
 charset-normalizer==3.5.1
 coverage==7.16.0
 cryptography==50.0.1
+-e git+https://github.com/Theetawee/DJ_WAANVERSE_AUTH.git@d2714cdcbc6b5350cabf6fafbb59807ca4353b63#egg=dj_waanverse_auth
 Django==6.1.1
 django-cors-headers==4.9.0
 django-dotenv==1.4.2
@@ -13,6 +14,7 @@ djangorestframework==3.18.1
 dnspython==2.8.0
 email-validator==2.3.0
 flake8==7.3.0
+google-auth==2.58.0
 idna==3.19
 mailersend==2.0.3
 mccabe==0.7.0
