@@ -1,4 +1,6 @@
 from __future__ import annotations
+import uuid as uuid_lib
+
 
 import hashlib
 import hmac
@@ -94,3 +96,46 @@ class VerificationCode(models.Model):
 
         expires_at = self.code_expires_at if is_code else self.link_expires_at
         return timezone.now() < expires_at
+
+
+class Session(models.Model):
+    """
+    A logical login session, backing one refresh-token lineage and
+    representing one device/browser. Access tokens are stateless and
+    NOT tracked individually — recording every access-token issuance
+    would mean a DB write on every authenticated request, defeating
+    the point of using short-lived JWTs at all. A row is created at
+    login/verification, and updated on refresh and logout.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid_lib.uuid4, editable=False)
+    account = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="sessions"
+    )
+    refresh_token_hash = models.CharField(max_length=64)
+    user_agent = models.CharField(max_length=255, blank=True, default="")
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_used_at = models.DateTimeField(auto_now_add=True)
+    is_revoked = models.BooleanField(default=False)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-last_used_at"]
+
+    @staticmethod
+    def _hash(value: str) -> str:
+        return hashlib.sha256(value.encode()).hexdigest()
+
+    def set_refresh_token(self, raw_refresh_token: str) -> None:
+        self.refresh_token_hash = self._hash(raw_refresh_token)
+
+    def refresh_token_matches(self, raw_refresh_token: str) -> bool:
+        return hmac.compare_digest(
+            self._hash(raw_refresh_token), self.refresh_token_hash
+        )
+
+    def revoke(self) -> None:
+        self.is_revoked = True
+        self.revoked_at = timezone.now()
+        self.save(update_fields=["is_revoked", "revoked_at"])

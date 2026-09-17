@@ -23,23 +23,27 @@ class AuthConfigSchema(TypedDict, total=False):
     ALLOWED_EMAIL_DOMAINS: List[str]
     BLACKLISTED_EMAIL_DOMAINS: List[str]
 
-    # The rest....
-
-    # Key and Identity Configuration
     PUBLIC_KEY_PATH: str
     PRIVATE_KEY_PATH: str
-    PLATFORM_NAME: str
 
-    # Cookie Configuration
+    JWT_ISSUER: str
+    ACCESS_TOKEN_LIFETIME: timedelta
+    REFRESH_TOKEN_LIFETIME: timedelta
+
     ACCESS_TOKEN_COOKIE_NAME: str
     REFRESH_TOKEN_COOKIE_NAME: str
+
     COOKIE_PATH: str
     COOKIE_DOMAIN: Optional[str]
     COOKIE_SAMESITE_POLICY: str
     COOKIE_SECURE: bool
-    COOKIE_HTTP_ONLY: bool
-    ACCESS_TOKEN_COOKIE_MAX_AGE: timedelta
-    REFRESH_TOKEN_COOKIE_MAX_AGE: timedelta
+
+    # The rest....
+
+    # Key and Identity Configuration
+    PLATFORM_NAME: str
+
+    # Cookie Configuration
     LOGIN_CODE_EMAIL_SUBJECT: str
     SIGNUP_CODE_EMAIL_SUBJECT: str
 

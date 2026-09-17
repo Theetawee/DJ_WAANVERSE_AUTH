@@ -48,31 +48,33 @@ class AuthConfig:
             "BLACKLISTED_EMAIL_DOMAINS", []
         )
 
-        # rest ...
-
         self.public_key_path = config_dict.get("PUBLIC_KEY_PATH")
         self.private_key_path = config_dict.get("PRIVATE_KEY_PATH")
-        self.platform_name = config_dict.get("PLATFORM_NAME")
-
-        # Cookie Settings
-        self.access_token_cookie = config_dict.get(
+        self.jwt_issuer = config_dict.get("JWT_ISSUER", "dj_waanverse_auth")
+        self.access_token_lifetime = config_dict.get(
+            "ACCESS_TOKEN_LIFETIME", timedelta(minutes=30)
+        )
+        self.refresh_token_lifetime = config_dict.get(
+            "REFRESH_TOKEN_LIFETIME", timedelta(days=30)
+        )
+        self.access_token_cookie_name = config_dict.get(
             "ACCESS_TOKEN_COOKIE_NAME", "access_token"
         )
-        self.refresh_token_cookie = config_dict.get(
+        self.refresh_token_cookie_name = config_dict.get(
             "REFRESH_TOKEN_COOKIE_NAME", "refresh_token"
         )
+
         self.cookie_path = config_dict.get("COOKIE_PATH", "/")
         self.cookie_domain = config_dict.get("COOKIE_DOMAIN", None)
         self.cookie_samesite = config_dict.get("COOKIE_SAMESITE_POLICY", "Lax")
 
         self.cookie_secure = config_dict.get("COOKIE_SECURE", False)
-        self.cookie_httponly = config_dict.get("COOKIE_HTTP_ONLY", True)
-        self.access_token_cookie_max_age = config_dict.get(
-            "ACCESS_TOKEN_COOKIE_MAX_AGE", timedelta(minutes=30)
-        )
-        self.refresh_token_cookie_max_age = config_dict.get(
-            "REFRESH_TOKEN_COOKIE_MAX_AGE", timedelta(days=30)
-        )
+
+        # rest ...
+
+        self.platform_name = config_dict.get("PLATFORM_NAME")
+
+        # Cookie Settings
 
         self.basic_account_serializer_class = config_dict.get(
             "BASIC_ACCOUNT_SERIALIZER",
