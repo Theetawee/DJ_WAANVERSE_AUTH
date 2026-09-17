@@ -38,6 +38,10 @@ class AuthConfigSchema(TypedDict, total=False):
     COOKIE_SAMESITE_POLICY: str
     COOKIE_SECURE: bool
 
+    TRUST_CLOUDFLARE_ONLY: bool
+
+    SIGNUP_SERIALIZER: str
+
     # The rest....
 
     # Key and Identity Configuration

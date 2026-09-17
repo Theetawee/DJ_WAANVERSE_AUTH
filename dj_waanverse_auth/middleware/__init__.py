@@ -1,5 +1,5 @@
-from .client_ip import ClientIPMiddleware
+from .client_ip import IPAddressMiddleware
 
 __all__ = [
-    "ClientIPMiddleware",
+    "IPAddressMiddleware",
 ]

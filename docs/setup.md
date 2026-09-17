@@ -14,3 +14,8 @@
    "PLATFORM_NAME": "Barabara Safaris",
    }
 Check settings for more settings
+
+
+add middleware dj_waanverse_auth.middleware.IPAddressMiddleware
+
+adds request.ip_address to request

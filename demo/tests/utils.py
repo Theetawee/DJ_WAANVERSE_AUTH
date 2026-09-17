@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from pathlib import Path
-
+from dj_waanverse_auth.serializers import SignupSerializer
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
+from rest_framework import serializers
 
 
 def generate_rsa_keypair_files(directory: Path) -> tuple[str, str]:
@@ -46,5 +47,19 @@ def tamper_jwt_signature(token: str) -> str:
     header, payload, signature = token.split(".")
     mid = len(signature) // 2
     tampered_char = "A" if signature[mid] != "A" else "B"
-    tampered_signature = signature[:mid] + tampered_char + signature[mid + 1:]
+    tampered_signature = (
+        signature[:mid] + tampered_char + signature[mid + 1 :])  # noqa E203
     return f"{header}.{payload}.{tampered_signature}"
+
+
+class CustomProfileSerializer(SignupSerializer):
+    name = serializers.CharField(required=True)
+
+    def additional_validation(self, data):
+        # Custom validation logic for the 'name' field
+        name = data.get("name")
+        if not name or len(name) < 3:
+            raise serializers.ValidationError(
+                {"name": "Name must be at least 3 characters long."}
+            )
+        return {"name": name}

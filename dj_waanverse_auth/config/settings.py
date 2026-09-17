@@ -70,6 +70,14 @@ class AuthConfig:
 
         self.cookie_secure = config_dict.get("COOKIE_SECURE", False)
 
+        self.trust_cloudflare_only = config_dict.get(
+            "TRUST_CLOUDFLARE_ONLY", not settings.DEBUG
+        )
+
+        self.signup_serializer_class = config_dict.get(
+            "SIGNUP_SERIALIZER", "dj_waanverse_auth.serializers.SignupSerializer"
+        )
+
         # rest ...
 
         self.platform_name = config_dict.get("PLATFORM_NAME")
