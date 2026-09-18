@@ -8,3 +8,4 @@ mailersend
 phonenumbers
 PyJWT
 setuptools
+cryptography
