@@ -1,6 +1,13 @@
 include LICENSE
 include README.md
+
+# Include templates and static files required by the app
 recursive-include dj_waanverse_auth/templates *
-recursive-exclude tests *
-include requirements.txt
-recursive-exclude demo *
+
+# Explicitly exclude local development and configuration files
+exclude requirements.txt
+exclude requirements.dev.txt
+
+# Prune development directories entirely from the source distribution
+prune tests
+prune demo
