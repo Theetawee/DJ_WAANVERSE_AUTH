@@ -75,7 +75,7 @@ class AuthConfig:
         )
 
         self.signup_serializer_class = config_dict.get(
-            "SIGNUP_SERIALIZER", "dj_waanverse_auth.serializers.SignupSerializer"
+            "SIGNUP_SERIALIZER_CLASS", "dj_waanverse_auth.serializers.SignupSerializer"
         )
 
         # rest ...

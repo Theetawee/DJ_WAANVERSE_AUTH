@@ -40,7 +40,7 @@ class AuthConfigSchema(TypedDict, total=False):
 
     TRUST_CLOUDFLARE_ONLY: bool
 
-    SIGNUP_SERIALIZER: str
+    SIGNUP_SERIALIZER_CLASS: str
 
     # The rest....
 

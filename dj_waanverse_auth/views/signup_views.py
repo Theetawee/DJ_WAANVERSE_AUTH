@@ -25,9 +25,13 @@ class SignupView(APIView):
         serializer = SerializerClass(data=request.data, context={"request": request})
 
         if serializer.is_valid():
-            serializer.save()
+            resp = serializer.save()
+            registration_type = resp["registration_type"]
             return Response(
-                {"msg": "Account created successfully."},
+                {
+                    "msg": "Account created successfully.",
+                    "registration_type": registration_type,
+                },
                 status=status.HTTP_201_CREATED,
             )
 

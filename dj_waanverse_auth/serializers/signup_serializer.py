@@ -153,7 +153,7 @@ class SignupSerializer(serializers.Serializer):
                     password=password,
                     **validated_data,
                 )
-                return user
+                return {"user": user, "registration_type": registration_type}
 
         except IntegrityError:
             logger.info(f"Signup race: duplicate {registration_type} at create_user.")

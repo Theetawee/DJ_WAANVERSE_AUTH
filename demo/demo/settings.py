@@ -114,7 +114,7 @@ if TESTING:
     EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 
 WAANVERSE_AUTH_CONFIG = {
-    # ...
+    # none
 }
 
 REST_FRAMEWORK = {
