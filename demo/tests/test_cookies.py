@@ -15,6 +15,12 @@ from dj_waanverse_auth.utils.security.cookies import (
 )
 from dj_waanverse_auth.utils.security.tokens import IssuedTokens
 
+
+from dj_waanverse_auth.utils.security.csrf import CSRF_COOKIE_NAME
+
+COOKIES_MODULE_UTILS = "dj_waanverse_auth.utils.security.cookies"
+
+
 factory = APIRequestFactory()
 COOKIES_MODULE = "dj_waanverse_auth.utils.security.cookies.auth_config"
 
@@ -111,3 +117,63 @@ class BuildAuthResponseTests(TestCase):
             _drf_request(), _fake_tokens(), {"msg": "ok"}, 201
         )
         self.assertEqual(response.status_code, 201)
+
+
+class SetAuthCookiesCsrfTests(TestCase):
+    def test_sets_csrf_cookie(self):
+        response = Response({})
+        set_auth_cookies(response, _fake_tokens())
+        self.assertIn(CSRF_COOKIE_NAME, response.cookies)
+
+    def test_csrf_cookie_is_not_httponly(self):
+        """
+        Unlike access_token/refresh_token, this one MUST be readable
+        by JS — that's the entire double-submit mechanism. httponly
+        here would silently break CSRF for every web client.
+        """
+        response = Response({})
+        set_auth_cookies(response, _fake_tokens())
+        self.assertFalse(response.cookies[CSRF_COOKIE_NAME]["httponly"])
+
+    def test_two_calls_produce_different_csrf_tokens(self):
+        response_a = Response({})
+        response_b = Response({})
+        set_auth_cookies(response_a, _fake_tokens())
+        set_auth_cookies(response_b, _fake_tokens())
+
+        self.assertNotEqual(
+            response_a.cookies[CSRF_COOKIE_NAME].value,
+            response_b.cookies[CSRF_COOKIE_NAME].value,
+        )
+
+    def test_csrf_cookie_actually_comes_from_generate_csrf_token(self):
+        """
+        Confirms the value is wired to the real token generator, not
+        a hardcoded or otherwise-derived string that happened to look
+        different across the two calls above.
+        """
+        with patch(
+            f"{COOKIES_MODULE_UTILS}.generate_csrf_token", return_value="fixed-token"
+        ) as mock_gen:
+            response = Response({})
+            set_auth_cookies(response, _fake_tokens())
+
+        mock_gen.assert_called_once()
+        self.assertEqual(response.cookies[CSRF_COOKIE_NAME].value, "fixed-token")
+
+    def test_csrf_cookie_respects_secure_and_samesite_settings(self):
+        response = Response({})
+        with override_settings(DEBUG=True):
+            set_auth_cookies(response, _fake_tokens())
+
+        self.assertFalse(response.cookies[CSRF_COOKIE_NAME]["secure"])
+        self.assertEqual(response.cookies[CSRF_COOKIE_NAME]["samesite"], "Lax")
+
+
+class ClearAuthCookiesCsrfTests(TestCase):
+    def test_deletes_csrf_cookie_alongside_the_other_two(self):
+        response = Response({})
+        clear_auth_cookies(response)
+
+        self.assertIn(CSRF_COOKIE_NAME, response.cookies)
+        self.assertEqual(response.cookies[CSRF_COOKIE_NAME].value, "")

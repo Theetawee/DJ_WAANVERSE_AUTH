@@ -8,7 +8,10 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from dj_waanverse_auth.authentication import get_refresh_token
+from dj_waanverse_auth.authentication import (
+    get_refresh_token,
+    enforce_csrf_if_cookie_sourced,
+)
 from dj_waanverse_auth.utils.security.cookies import (
     build_auth_response,
     clear_auth_cookies,
@@ -21,23 +24,20 @@ GENERIC_REFRESH_ERROR = "Invalid or expired session. Please log in again."
 
 
 class RefreshView(APIView):
-    """
-    Rotates a refresh token: issues a fresh access/refresh pair for
-    the same session, invalidating the one presented. AllowAny — this
-    endpoint authenticates via the refresh token itself, not via
-    JWTAuthentication (which only ever looks at access tokens).
-    """
-
     permission_classes = [AllowAny]
 
     def post(self, request):
-        raw_refresh_token = get_refresh_token(request)
+        raw_refresh_token, source = get_refresh_token(request)
 
         if not raw_refresh_token:
             return Response(
                 {"msg": "Refresh token is required."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        enforce_csrf_if_cookie_sourced(
+            request, source
+        )  # raises PermissionDenied -> 403
 
         try:
             tokens = rotate_refresh_token(raw_refresh_token)

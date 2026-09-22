@@ -1,5 +1,6 @@
 # dj_waanverse_auth/utils/cookies.py
 from __future__ import annotations
+from dj_waanverse_auth.utils.security.csrf import CSRF_COOKIE_NAME, generate_csrf_token
 
 from typing import TYPE_CHECKING
 
@@ -32,14 +33,7 @@ def is_mobile_client(request: "Request") -> bool:
     return request.META.get(MOBILE_CLIENT_HEADER, "").lower() == "mobile"
 
 
-def set_auth_cookies(response: "Response", tokens: "IssuedTokens") -> "Response":
-    """
-    Sets httponly cookies carrying the access/refresh tokens. Always
-    called regardless of client type — harmless for a mobile client
-    that ignores cookies, and it's how web clients actually receive
-    their tokens (never via the JSON body — see build_auth_response).
-    """
-
+def set_auth_cookies(response, tokens):
     settings_ = _cookie_settings()
     now = timezone.now()
 
@@ -63,6 +57,18 @@ def set_auth_cookies(response: "Response", tokens: "IssuedTokens") -> "Response"
         domain=settings_["domain"],
         path=settings_["path"],
     )
+    response.set_cookie(
+        CSRF_COOKIE_NAME,
+        generate_csrf_token(),
+        max_age=int(
+            (tokens.refresh_expires_at - now).total_seconds()
+        ),  # lives as long as the session can
+        httponly=False,  # deliberately readable by JS — that's the whole mechanism
+        secure=settings_["secure"],
+        samesite=settings_["samesite"],
+        domain=settings_["domain"],
+        path=settings_["path"],
+    )
 
     return response
 
@@ -76,6 +82,9 @@ def clear_auth_cookies(response: "Response") -> "Response":
     )
     response.delete_cookie(
         settings_["refresh_name"], domain=settings_["domain"], path=settings_["path"]
+    )
+    response.delete_cookie(
+        CSRF_COOKIE_NAME, domain=settings_["domain"], path=settings_["path"]
     )
     return response
 

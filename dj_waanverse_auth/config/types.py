@@ -42,6 +42,8 @@ class AuthConfigSchema(TypedDict, total=False):
 
     SIGNUP_SERIALIZER_CLASS: str
 
+    CSRF_COOKIE_NAME: str
+
     # The rest....
 
     # Key and Identity Configuration

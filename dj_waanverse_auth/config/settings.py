@@ -78,6 +78,8 @@ class AuthConfig:
             "SIGNUP_SERIALIZER_CLASS", "dj_waanverse_auth.serializers.SignupSerializer"
         )
 
+        self.csrf_cookie_name = config_dict.get("CSRF_COOKIE_NAME", "csrftoken")
+
         # rest ...
 
         self.platform_name = config_dict.get("PLATFORM_NAME")
