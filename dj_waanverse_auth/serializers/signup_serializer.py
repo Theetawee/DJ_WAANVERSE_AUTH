@@ -99,7 +99,7 @@ class SignupSerializer(serializers.Serializer):
             )
 
         if User.objects.filter(email_address__iexact=email).exists():
-            raise serializers.ValidationError({"identifier": "Account already exists."})
+            raise serializers.ValidationError({"identifier": "Account with this email already exists."})
 
         # Password rules
         self._validate_password_strength(password, user=User(email_address=email))
@@ -113,7 +113,7 @@ class SignupSerializer(serializers.Serializer):
             raise serializers.ValidationError({"identifier": str(exc)})
 
         if User.objects.filter(phone_number=phone_number).exists():
-            raise serializers.ValidationError({"identifier": "Account already exists."})
+            raise serializers.ValidationError({"identifier": "Account with this phone already exists."})
 
         self._validate_password_strength(password, user=User(phone_number=phone_number))
 

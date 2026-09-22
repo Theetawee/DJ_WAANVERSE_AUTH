@@ -1,130 +1,84 @@
-import logging
-from typing import Optional, Tuple
+# dj_waanverse_auth/authentication.py
+from __future__ import annotations
 
 from django.contrib.auth import get_user_model
-from rest_framework import authentication, exceptions
-from rest_framework.request import Request
-from rest_framework.response import Response
+from rest_framework.authentication import BaseAuthentication
+from rest_framework.exceptions import AuthenticationFailed
 
-from dj_waanverse_auth.config.settings import auth_config
-from dj_waanverse_auth.utils.session_utils import validate_session
-from dj_waanverse_auth.utils.token_utils import decode_token
+from dj_waanverse_auth import settings as auth_config
+from dj_waanverse_auth.utils.security.jwt import ACCESS, TokenError, decode_token
 
-logger = logging.getLogger(__name__)
-User = get_user_model()
+Account = get_user_model()
 
 
-class JWTAuthentication(authentication.BaseAuthentication):
+def extract_bearer_token(request) -> str | None:
+    header = request.META.get("HTTP_AUTHORIZATION", "")
+    if not header.startswith("Bearer "):
+        return None
+    token = header[len("Bearer ") :].strip()  # noqa
+    return token or None
+
+
+def get_access_token(request) -> str | None:
     """
-    Production-ready JWT authentication class for Django REST Framework.
-    Supports header and cookie-based tokens with caching, logging, and security features.
+    Cookie first, then Authorization: Bearer header — so a web
+    client (httponly cookie, no header) and a mobile/API client (no
+    cookie jar, sends the header) both authenticate through the
+    same lookup, without either needing to know about the other.
+    """
+    cookie_name = auth_config.access_token_cookie_name
+    token = request.COOKIES.get(cookie_name)
+    return token or extract_bearer_token(request)
+
+
+def get_refresh_token(request) -> str | None:
+    """Same cookie-then-header pattern, for the refresh endpoint."""
+    cookie_name = auth_config.refresh_token_cookie_name
+    token = request.COOKIES.get(cookie_name)
+    return token or extract_bearer_token(request)
+
+
+class JWTAuthentication(BaseAuthentication):
+    """
+    Authenticates a request using a short-lived access token, read
+    from a cookie first and falling back to an Authorization: Bearer
+    header if no cookie is present.
+
+    Returns None (does not raise) when no token was supplied at
+    all — DRF's convention for "this scheme wasn't attempted",
+    leaving it to permission classes to decide what happens next
+    (e.g. AllowAny views stay accessible). Raises AuthenticationFailed
+    for any token that WAS supplied but is invalid, expired, the
+    wrong type, or points at a missing/inactive account — a bad
+    token must never be silently treated the same as no token.
     """
 
-    COOKIE_NAME = auth_config.access_token_cookie
-
-    def authenticate(self, request: Request) -> Optional[Tuple]:
-        pass
-
-        token = self._get_token_from_request(request)
-
+    def authenticate(self, request):
+        token = get_access_token(request)
         if not token:
             return None
 
         try:
-            payload = self._decode_token(token)
+            payload = decode_token(token, expected_type=ACCESS)
+        except TokenError as exc:
+            raise AuthenticationFailed(str(exc)) from exc
 
-            if not validate_session(payload.get("sid")):
-                self._mark_cookie_for_deletion(request)
-                raise exceptions.AuthenticationFailed("identity_error")
+        account = self._get_account(payload)
+        if account is None:
+            raise AuthenticationFailed("Account not found.")
 
-            user = self._get_user_from_payload(payload=payload, request=request)
-            return user, token
+        if not account.is_active:
+            raise AuthenticationFailed("Account is inactive.")
 
-        except exceptions.AuthenticationFailed as e:
-            logger.warning(f"Authentication failed: {str(e)}")
-            self._mark_cookie_for_deletion(request)
-            raise
-        except Exception as e:
-            logger.error(f"Unexpected error during authentication: {str(e)}")
-            self._mark_cookie_for_deletion(request)
-            raise exceptions.AuthenticationFailed("Authentication failed")
-
-    def _mark_cookie_for_deletion(self, request) -> None:
-        """
-        Mark auth cookies for deletion via request.META
-        """
-        cookies_to_delete = [
-            auth_config.access_token_cookie,
-            auth_config.refresh_token_cookie,
-        ]
-        request.META["HTTP_X_COOKIES_TO_DELETE"] = ",".join(cookies_to_delete)
-
-    @staticmethod
-    def delete_marked_cookies(response: Response, request: Request) -> Response:
-        """
-        Delete any cookies marked during authentication
-        """
-        cookies_header = request.META.get("HTTP_X_COOKIES_TO_DELETE", "")
-        cookies_to_delete = cookies_header.split(",") if cookies_header else []
-
-        for cookie_name in cookies_to_delete:
-            response.delete_cookie(
-                cookie_name,
-                domain=auth_config.cookie_domain,
-                path=auth_config.cookie_path,
-                samesite=auth_config.cookie_samesite,
-            )
-
-        return response
-
-    def _get_token_from_request(self, request) -> Optional[str]:
-        """
-        Extract token from Authorization header or cookies
-        """
-        token = None
-
-        # Header first
-        auth_header = request.headers.get("Authorization")
-        if auth_header and auth_header.startswith("Bearer "):
-            token = auth_header.split(" ")[1]
-
-        # Fallback to cookie
-        if not token and self.COOKIE_NAME in request.COOKIES:
-            token = request.COOKIES.get(self.COOKIE_NAME)
-
-        # Sanitize
-        if token:
-            token = self._sanitize_token(token)
-
-        return token
-
-    def _sanitize_token(self, token: str) -> str:
-        if not isinstance(token, str):
-            raise exceptions.AuthenticationFailed("Invalid token format")
-        token = token.strip()
-        if len(token) > 2000:
-            raise exceptions.AuthenticationFailed("Token exceeds maximum length")
-        return token
-
-    def _decode_token(self, token: str) -> dict:
-        return decode_token(token)
-
-    def _get_user_from_payload(self, payload: dict, request: Request):
-        """
-        Retrieve and validate user from token payload
-        """
-        user_id = payload.get("id")
-        if not user_id:
-            raise exceptions.AuthenticationFailed("Invalid token payload")
-
-        try:
-            user = User.objects.get(id=user_id, is_active=True)
-            return user
-        except User.DoesNotExist:
-            logger.warning(f"User {user_id} from token not found or inactive")
-            raise exceptions.AuthenticationFailed(
-                "user_not_found", code="user_not_found"
-            )
+        return (account, payload)
 
     def authenticate_header(self, request):
-        return 'Bearer realm="api"'
+        # Sent back via WWW-Authenticate on a 401 — standard DRF convention.
+        return "Bearer"
+
+    @staticmethod
+    def _get_account(payload):
+        try:
+            return Account.objects.get(pk=payload["sub"])
+        except (Account.DoesNotExist, ValueError, TypeError):
+            return None

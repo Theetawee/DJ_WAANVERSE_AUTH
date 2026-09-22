@@ -2,7 +2,7 @@ import os
 import shutil
 
 # Define paths
-base_folder = r"D:\PACKAGES\DJ_WAANVERSE_AUTH"
+base_folder = r"D:\PACKAGES\DJ_WAANVERSE_AUTH\DJ_WAANVERSE_AUTH_BACKEND"
 folders_to_delete = [
     os.path.join(base_folder, "dist"),
     os.path.join(base_folder, "build"),
