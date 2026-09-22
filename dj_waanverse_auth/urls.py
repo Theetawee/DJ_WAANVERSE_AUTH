@@ -4,6 +4,7 @@ from dj_waanverse_auth.url_paths import (
     verify_urls,
     login_urls,
     refresh_urls,
+    logout_urls,
 )
 
 urlpatterns = [
@@ -11,4 +12,5 @@ urlpatterns = [
     path("verify/", include(verify_urls.urlpatterns)),
     path("login/", include(login_urls.url_patterns)),
     path("refresh/", include(refresh_urls.url_patterns)),
+    path("logout/", include(logout_urls.url_patterns)),
 ]

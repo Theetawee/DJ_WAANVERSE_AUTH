@@ -11,6 +11,8 @@ from rest_framework.views import APIView
 from dj_waanverse_auth.utils import identifiers as identifier_utils
 from dj_waanverse_auth.utils.security.cookies import build_auth_response
 from dj_waanverse_auth.utils.security.tokens import issue_tokens_for_account
+from dj_waanverse_auth.utils.security.turnstile import verify_turnstile_token
+from dj_waanverse_auth import settings as auth_config
 
 logger = getLogger(__name__)
 
@@ -19,6 +21,9 @@ Account = get_user_model()
 GENERIC_LOGIN_ERROR = "Invalid identifier or password."
 MAX_IDENTIFIER_LENGTH = 255
 MAX_PASSWORD_LENGTH = 128
+
+
+# dj_waanverse_auth/views/login_views.py
 
 
 class LoginView(APIView):
@@ -42,9 +47,13 @@ class LoginView(APIView):
             or len(password) > MAX_PASSWORD_LENGTH
         ):
             return Response(
-                {"msg": "Invalid credentials provided."},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"msg": "Invalid request payload."}, status=status.HTTP_400_BAD_REQUEST
             )
+
+        if auth_config.turnstile_enabled:
+            turnstile_error = self._validate_turnstile(request)
+            if turnstile_error is not None:
+                return turnstile_error
 
         identifier = identifier.strip()
 
@@ -71,10 +80,7 @@ class LoginView(APIView):
 
         if not account.is_active:
             return Response(
-                {
-                    "msg": "Please verify your account before logging in.",
-                    "action": "verify",
-                },
+                {"msg": "Please verify your account before logging in."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -87,17 +93,31 @@ class LoginView(APIView):
             status_code=status.HTTP_200_OK,
         )
 
-    def _get_account(self, identifier_type: str, identifier: str):
-        if identifier_type == "email":
-            return Account.objects.filter(
-                email_address__iexact=identifier.lower()
-            ).first()
+    def _validate_turnstile(self, request):
+        token = request.data.get("turnstile_token")
+        if not isinstance(token, str):
+            token = None
 
+        if not verify_turnstile_token(
+            token, remote_ip=getattr(request, "ip_address", None)
+        ):
+            return Response(
+                {"msg": "Turnstile verification failed."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return None
+
+    def _get_account(self, identifier_type, identifier):
         if identifier_type == "phone":
             try:
                 phone_number, _ = identifier_utils.normalize_phone(identifier)
             except ValueError:
                 return None
             return Account.objects.filter(phone_number=phone_number).first()
+
+        if identifier_type == "email":
+            return Account.objects.filter(
+                email_address__iexact=identifier.lower()
+            ).first()
 
         return None
