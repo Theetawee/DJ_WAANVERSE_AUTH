@@ -35,7 +35,7 @@ setuptools==74.1.2
 sqlparse==0.5.1
 twine==6.0.1
 tzdata==2024.1
-ua-parser==0.18.0
+ua-parser==1.0.2
 urllib3==2.2.2
 user-agents==2.2.0
 wheel==0.45.1
