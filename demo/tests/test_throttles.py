@@ -6,6 +6,7 @@ from django.test import TestCase
 from rest_framework.request import Request
 from rest_framework.test import APIRequestFactory
 from rest_framework.throttling import SimpleRateThrottle
+from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
 
 from dj_waanverse_auth.throttles import BaseIdentifierThrottle, BaseIPThrottle
 
@@ -64,7 +65,10 @@ def _drf_request(data=None, ip_address=None):
     if ip_address is not None:
         django_request.ip_address = ip_address
 
-    return Request(django_request)
+    return Request(
+        django_request,
+        parsers=[JSONParser(), FormParser(), MultiPartParser()],
+    )
 
 
 class BaseIPThrottleTests(ThrottleTestCase):

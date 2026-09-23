@@ -120,6 +120,20 @@ REST_FRAMEWORK = {
         # "dj_waanverse_auth.authentication.JWTAuthentication",
     ),
     "TEST_REQUEST_DEFAULT_FORMAT": "json",
+    "DEFAULT_THROTTLE_RATES": {
+        "signup-ip": None,  # 10/hour
+        "signup-identifier": None,  # "5/hour",
+        "login-ip": None,
+        "login-identifier": None,
+        "verification-request-ip": None,
+        "verification-request-identifier": None,
+        "verify-account-ip": None,
+        "password-reset-request-ip": None,
+        "password-reset-request-identifier": None,
+        "password-reset-confirm-ip": None,
+        "refresh-ip": None,
+        "session-actions": None,
+    },
 }
 
 if TESTING:
