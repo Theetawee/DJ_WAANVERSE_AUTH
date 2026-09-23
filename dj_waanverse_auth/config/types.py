@@ -43,31 +43,4 @@ class AuthConfigSchema(TypedDict, total=False):
     SIGNUP_SERIALIZER_CLASS: str
 
     CSRF_COOKIE_NAME: str
-
-    # The rest....
-
-    # Key and Identity Configuration
-    PLATFORM_NAME: str
-
-    # Cookie Configuration
-    LOGIN_CODE_EMAIL_SUBJECT: str
-    SIGNUP_CODE_EMAIL_SUBJECT: str
-
-    BASIC_ACCOUNT_SERIALIZER: str
-
-    # Admin Interface
     ENABLE_ADMIN_PANEL: bool
-
-    IS_TESTING: bool
-    TESTING_EMAIL_ADDRESSES: List[str]
-
-    WEBAUTHN_DOMAIN: str
-    WEBAUTHN_RP_NAME: str
-    WEBAUTHN_ORIGIN: str
-
-    GOOGLE_CLIENT_ID: str
-    GOOGLE_CLIENT_SECRET: str
-
-    GOOGLE_REDIRECT_URI: str
-
-    AUTH_FRONTEND_URL: str

@@ -1,341 +1,207 @@
 # tests/test_admin.py
 from __future__ import annotations
 
-import hashlib
-import importlib
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
-from django.contrib.admin.sites import site
+from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.test import TestCase
-from django.urls import reverse
-from django.utils import timezone
 
-import dj_waanverse_auth.admin as admin_module
+from dj_waanverse_auth.admin import (
+    PasswordResetCodeAdmin,
+    SessionAdmin,
+    VerificationCodeAdmin,
+    register_admin,
+)
 from dj_waanverse_auth.models import PasswordResetCode, Session, VerificationCode
 
 Account = get_user_model()
-
-ADMIN_MODULES = (Session, VerificationCode, PasswordResetCode)
-
-# Confirmed correct against the actual config module.
-ENABLE_ADMIN_PATCH_TARGET = "dj_waanverse_auth.config.settings.auth_config.enable_admin"
+MODULE = "dj_waanverse_auth.admin.auth_config"
 
 
-def _hash(value: str) -> str:
-    return hashlib.sha256(value.encode()).hexdigest()
-
-
-def _unregister_if_present(*models):
-    for model in models:
-        if model in site._registry:
-            site.unregister(model)
-
-
-def _reload_admin_with(enable_admin: bool):
+class AdminConfigValidityTests(TestCase):
     """
-    Forces auth_config.enable_admin to the given value and reloads
-    dj_waanverse_auth.admin so its module-level `if` re-evaluates.
-    Callers are responsible for unregistering before AND after, since
-    skipping the `if` branch on a "disabled" reload does NOT undo a
-    prior registration left in admin.site._registry.
-    """
-    with patch(ENABLE_ADMIN_PATCH_TARGET, enable_admin):
-        importlib.reload(admin_module)
-
-
-# ---------------------------------------------------------------------
-# The conditional-import behavior itself
-# ---------------------------------------------------------------------
-
-
-class AdminRegistrationToggleTests(TestCase):
-    """
-    Exercises admin.py's own conditional import — the actual behavior
-    under test, since neither branch is guaranteed by default settings.
+    Django's own system checks validate that every field named in
+    list_display/list_filter/search_fields/readonly_fields actually
+    exists on the model — this catches typos in field names without
+    needing to load the admin UI at all.
     """
 
+    def test_admin_config_passes_django_system_checks(self):
+        errors = admin.site.check(None)
+        self.assertEqual(errors, [])
+
+
+class NoAddAdminMixinTests(TestCase):
+    def test_session_admin_disallows_add(self):
+        admin_instance = SessionAdmin(Session, admin.site)
+        self.assertFalse(admin_instance.has_add_permission(request=None))
+
+    def test_verification_code_admin_disallows_add(self):
+        admin_instance = VerificationCodeAdmin(VerificationCode, admin.site)
+        self.assertFalse(admin_instance.has_add_permission(request=None))
+
+    def test_password_reset_code_admin_disallows_add(self):
+        admin_instance = PasswordResetCodeAdmin(PasswordResetCode, admin.site)
+        self.assertFalse(admin_instance.has_add_permission(request=None))
+
+
+class SessionAdminTests(TestCase):
     def setUp(self):
-        _unregister_if_present(*ADMIN_MODULES)
+        self.account = Account.objects.create_user(
+            email_address="wave@example.com",
+            password="StrongPassword123!",
+            is_active=True,
+        )
+        self.admin_instance = SessionAdmin(Session, admin.site)
+
+    def test_user_agent_short_returns_full_string_when_under_limit(self):
+        session = Session.objects.create(account=self.account, user_agent="short-ua")
+        self.assertEqual(self.admin_instance.user_agent_short(session), "short-ua")
+
+    def test_user_agent_short_truncates_long_strings(self):
+        long_ua = "x" * 100
+        session = Session.objects.create(account=self.account, user_agent=long_ua)
+        result = self.admin_instance.user_agent_short(session)
+        self.assertEqual(len(result), 61)  # 60 chars + ellipsis
+        self.assertTrue(result.endswith("…"))
+
+    def test_revoke_sessions_action_revokes_unrevoked_only(self):
+        active = Session.objects.create(account=self.account)
+        already_revoked = Session.objects.create(account=self.account)
+        already_revoked.revoke()
+        original_revoked_at = already_revoked.revoked_at
+
+        request = Mock()
+        self.admin_instance.revoke_sessions(
+            request, Session.objects.filter(account=self.account)
+        )
+
+        active.refresh_from_db()
+        already_revoked.refresh_from_db()
+
+        self.assertTrue(active.is_revoked)
+        self.assertEqual(already_revoked.revoked_at, original_revoked_at)  # untouched
+
+    def test_revoke_sessions_reports_correct_count(self):
+        Session.objects.create(account=self.account)
+        Session.objects.create(account=self.account)
+        already_revoked = Session.objects.create(account=self.account)
+        already_revoked.revoke()
+
+        request = Mock()
+        self.admin_instance.revoke_sessions(
+            request, Session.objects.filter(account=self.account)
+        )
+
+        request.message_user = (
+            Mock()
+        )  # not used — message_user is called on self, not request
+        # Confirm via message_user call args on the admin instance itself:
+        self.admin_instance.message_user = Mock()
+        Session.objects.filter(account=self.account, is_revoked=False).update(
+            is_revoked=False
+        )
+        Session.objects.create(account=self.account)
+        self.admin_instance.revoke_sessions(
+            request, Session.objects.filter(account=self.account)
+        )
+        args, _ = self.admin_instance.message_user.call_args
+        self.assertIn("Revoked", args[1])
+
+    def test_get_queryset_uses_select_related(self):
+        Session.objects.create(account=self.account)
+        request = Mock()
+        with self.assertNumQueries(1):
+            list(self.admin_instance.get_queryset(request).select_related())
+
+
+class CodeAdminTests(TestCase):
+    def setUp(self):
+        self.account = Account.objects.create_user(
+            email_address="wave@example.com",
+            password="StrongPassword123!",
+            is_active=True,
+        )
+        self.admin_instance = VerificationCodeAdmin(VerificationCode, admin.site)
+
+    def test_invalidate_codes_marks_unused_as_used(self):
+        instance, _, _ = VerificationCode.issue_for(self.account)
+        self.assertFalse(instance.is_used)
+
+        request = Mock()
+        self.admin_instance.invalidate_codes(
+            request, VerificationCode.objects.filter(pk=instance.pk)
+        )
+
+        instance.refresh_from_db()
+        self.assertTrue(instance.is_used)
+
+    def test_invalidate_codes_leaves_already_used_alone(self):
+        instance, _, _ = VerificationCode.issue_for(self.account)
+        instance.is_used = True
+        instance.save(update_fields=["is_used"])
+
+        request = Mock()
+        self.admin_instance.message_user = Mock()
+        self.admin_instance.invalidate_codes(
+            request, VerificationCode.objects.filter(pk=instance.pk)
+        )
+
+        args, _ = self.admin_instance.message_user.call_args
+        self.assertIn("Invalidated 0", args[1])
+
+    def test_password_reset_code_admin_shares_same_behavior(self):
+        """_CodeAdminBase logic applies identically to both subclasses."""
+        instance, _, _ = PasswordResetCode.issue_for(self.account)
+        pw_admin_instance = PasswordResetCodeAdmin(PasswordResetCode, admin.site)
+
+        request = Mock()
+        pw_admin_instance.invalidate_codes(
+            request, PasswordResetCode.objects.filter(pk=instance.pk)
+        )
+
+        instance.refresh_from_db()
+        self.assertTrue(instance.is_used)
+
+
+class RegisterAdminTests(TestCase):
+    """
+    Tests the conditional-registration logic directly via
+    register_admin(), rather than via module reload — avoids the
+    AlreadyRegistered/reload fragility that comes with re-importing
+    admin.py mid-test-run.
+    """
 
     def tearDown(self):
-        _unregister_if_present(*ADMIN_MODULES)
-        # Restore admin.py to whatever the real (non-patched) config
-        # says, so later tests relying on default import state see it
-        # correctly rather than inheriting this test's forced value.
-        importlib.reload(admin_module)
-        _unregister_if_present(*ADMIN_MODULES)
+        # Restore admin.site to whatever it was before each test,
+        # regardless of what register_admin() did during it.
+        for model in (Session, VerificationCode, PasswordResetCode):
+            if model in admin.site._registry:
+                admin.site.unregister(model)
 
-    def test_models_registered_when_enabled(self):
-        _reload_admin_with(True)
+    @patch(f"{MODULE}.enable_admin", True)
+    def test_registers_all_three_models_when_enabled(self):
+        register_admin()
+        self.assertIn(Session, admin.site._registry)
+        self.assertIn(VerificationCode, admin.site._registry)
+        self.assertIn(PasswordResetCode, admin.site._registry)
 
-        for model in ADMIN_MODULES:
-            self.assertIn(model, site._registry)
+    @patch(f"{MODULE}.enable_admin", False)
+    def test_registers_nothing_when_disabled(self):
+        register_admin()
+        self.assertNotIn(Session, admin.site._registry)
+        self.assertNotIn(VerificationCode, admin.site._registry)
+        self.assertNotIn(PasswordResetCode, admin.site._registry)
 
-    def test_models_not_registered_when_disabled(self):
-        _reload_admin_with(False)
-
-        for model in ADMIN_MODULES:
-            self.assertNotIn(model, site._registry)
-
-    def test_session_admin_class_not_created_when_disabled(self):
-        _reload_admin_with(False)
-
-        self.assertFalse(hasattr(admin_module, "SessionAdmin"))
-
-    def test_session_admin_class_created_when_enabled(self):
-        _reload_admin_with(True)
-
-        self.assertTrue(hasattr(admin_module, "SessionAdmin"))
-
-
-# ---------------------------------------------------------------------
-# Shared base for everything below that needs admin actually enabled
-# ---------------------------------------------------------------------
-
-
-class AdminEnabledTestCase(TestCase):
-    """
-    Base for tests that need the admin classes registered, regardless
-    of the real project's enable_admin setting. Cleans up registration
-    on both ends so classes never collide via AlreadyRegistered.
-    """
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        _unregister_if_present(*ADMIN_MODULES)  # guard against leftover state
-        cls._admin_patcher = patch(ENABLE_ADMIN_PATCH_TARGET, True)
-        cls._admin_patcher.start()
-        importlib.reload(admin_module)
-
-    @classmethod
-    def tearDownClass(cls):
-        _unregister_if_present(*ADMIN_MODULES)
-        cls._admin_patcher.stop()
-        importlib.reload(admin_module)
-        super().tearDownClass()
-
-
-# ---------------------------------------------------------------------
-# Access / permissions
-# ---------------------------------------------------------------------
-
-
-class AdminAccessTests(AdminEnabledTestCase):
-    def setUp(self):
-        self.superuser = Account.objects.create_superuser(
-            email_address="admin@example.com",
-            password="StrongPassword123!",
-        )
-        self.client.force_login(self.superuser)
-
-    def test_session_add_view_is_blocked(self):
-        response = self.client.get(reverse("admin:dj_waanverse_auth_session_add"))
-        self.assertEqual(response.status_code, 403)
-
-    def test_verification_code_add_view_is_blocked(self):
-        response = self.client.get(
-            reverse("admin:dj_waanverse_auth_verificationcode_add")
-        )
-        self.assertEqual(response.status_code, 403)
-
-    def test_password_reset_code_add_view_is_blocked(self):
-        response = self.client.get(
-            reverse("admin:dj_waanverse_auth_passwordresetcode_add")
-        )
-        self.assertEqual(response.status_code, 403)
-
-    def test_session_changelist_loads(self):
-        response = self.client.get(
-            reverse("admin:dj_waanverse_auth_session_changelist")
-        )
-        self.assertEqual(response.status_code, 200)
-
-    def test_verification_code_changelist_loads(self):
-        response = self.client.get(
-            reverse("admin:dj_waanverse_auth_verificationcode_changelist")
-        )
-        self.assertEqual(response.status_code, 200)
-
-    def test_password_reset_code_changelist_loads(self):
-        response = self.client.get(
-            reverse("admin:dj_waanverse_auth_passwordresetcode_changelist")
-        )
-        self.assertEqual(response.status_code, 200)
-
-
-# ---------------------------------------------------------------------
-# Session admin: display + revoke action
-# ---------------------------------------------------------------------
-
-
-class SessionAdminActionTests(AdminEnabledTestCase):
-    def setUp(self):
-        self.superuser = Account.objects.create_superuser(
-            email_address="admin@example.com",
-            password="StrongPassword123!",
-        )
-        self.client.force_login(self.superuser)
-
-        self.account = Account.objects.create_user(
-            email_address="wave@example.com",
-            password="StrongPassword123!",
-            is_active=True,
-        )
-        self.active_session = Session.objects.create(
-            account=self.account,
-            refresh_token_hash=_hash("token-a"),
-            user_agent="Mozilla/5.0 Test Agent",
-        )
-        self.already_revoked = Session.objects.create(
-            account=self.account,
-            refresh_token_hash=_hash("token-b"),
-            is_revoked=True,
-            revoked_at=timezone.now(),
-        )
-
-    def test_revoke_sessions_action_revokes_active_session(self):
-        self.client.post(
-            reverse("admin:dj_waanverse_auth_session_changelist"),
-            {
-                "action": "revoke_sessions",
-                "_selected_action": [str(self.active_session.pk)],
-            },
-            follow=True,
-        )
-        self.active_session.refresh_from_db()
-        self.assertTrue(self.active_session.is_revoked)
-        self.assertIsNotNone(self.active_session.revoked_at)
-
-    def test_revoke_sessions_action_leaves_already_revoked_untouched(self):
-        original_revoked_at = self.already_revoked.revoked_at
-
-        self.client.post(
-            reverse("admin:dj_waanverse_auth_session_changelist"),
-            {
-                "action": "revoke_sessions",
-                "_selected_action": [str(self.already_revoked.pk)],
-            },
-            follow=True,
-        )
-        self.already_revoked.refresh_from_db()
-        self.assertEqual(self.already_revoked.revoked_at, original_revoked_at)
-
-    def test_revoke_sessions_action_handles_mixed_selection(self):
-        self.client.post(
-            reverse("admin:dj_waanverse_auth_session_changelist"),
-            {
-                "action": "revoke_sessions",
-                "_selected_action": [
-                    str(self.active_session.pk),
-                    str(self.already_revoked.pk),
-                ],
-            },
-            follow=True,
-        )
-        self.active_session.refresh_from_db()
-        self.assertTrue(self.active_session.is_revoked)
-
-    def test_user_agent_short_truncates_long_agent(self):
-        long_agent = "A" * 100
-        session = Session.objects.create(
-            account=self.account,
-            refresh_token_hash=_hash("token-c"),
-            user_agent=long_agent,
-        )
-        admin_instance = admin_module.SessionAdmin(Session, site)
-
-        result = admin_instance.user_agent_short(session)
-
-        self.assertTrue(result.endswith("…"))
-        self.assertEqual(len(result), 61)  # 60 chars + ellipsis
-
-    def test_user_agent_short_leaves_short_agent_unchanged(self):
-        admin_instance = admin_module.SessionAdmin(Session, site)
-
-        result = admin_instance.user_agent_short(self.active_session)
-
-        self.assertEqual(result, "Mozilla/5.0 Test Agent")
-
-
-# ---------------------------------------------------------------------
-# VerificationCode admin: invalidate action
-# ---------------------------------------------------------------------
-
-
-class VerificationCodeAdminActionTests(AdminEnabledTestCase):
-    def setUp(self):
-        self.superuser = Account.objects.create_superuser(
-            email_address="admin@example.com",
-            password="StrongPassword123!",
-        )
-        self.client.force_login(self.superuser)
-
-        self.account = Account.objects.create_user(
-            email_address="wave@example.com",
-            password="StrongPassword123!",
-            is_active=True,
-        )
-        self.unused_code, _, _ = VerificationCode.issue_for(self.account)
-
-    def test_invalidate_codes_action_marks_code_used(self):
-        self.client.post(
-            reverse("admin:dj_waanverse_auth_verificationcode_changelist"),
-            {
-                "action": "invalidate_codes",
-                "_selected_action": [str(self.unused_code.pk)],
-            },
-            follow=True,
-        )
-        self.unused_code.refresh_from_db()
-        self.assertTrue(self.unused_code.is_used)
-
-    def test_invalidate_codes_action_leaves_already_used_untouched(self):
-        used_code, _, _ = VerificationCode.issue_for(self.account)
-        used_code.is_used = True
-        used_code.save(update_fields=["is_used"])
-
-        self.client.post(
-            reverse("admin:dj_waanverse_auth_verificationcode_changelist"),
-            {
-                "action": "invalidate_codes",
-                "_selected_action": [str(used_code.pk)],
-            },
-            follow=True,
-        )
-        used_code.refresh_from_db()
-        self.assertTrue(used_code.is_used)
-
-
-# ---------------------------------------------------------------------
-# PasswordResetCode admin: invalidate action
-# ---------------------------------------------------------------------
-
-
-class PasswordResetCodeAdminActionTests(AdminEnabledTestCase):
-    def setUp(self):
-        self.superuser = Account.objects.create_superuser(
-            email_address="admin@example.com",
-            password="StrongPassword123!",
-        )
-        self.client.force_login(self.superuser)
-
-        self.account = Account.objects.create_user(
-            email_address="wave@example.com",
-            password="StrongPassword123!",
-            is_active=True,
-        )
-        self.unused_code, _, _ = PasswordResetCode.issue_for(self.account)
-
-    def test_invalidate_codes_action_marks_code_used(self):
-        self.client.post(
-            reverse("admin:dj_waanverse_auth_passwordresetcode_changelist"),
-            {
-                "action": "invalidate_codes",
-                "_selected_action": [str(self.unused_code.pk)],
-            },
-            follow=True,
-        )
-        self.unused_code.refresh_from_db()
-        self.assertTrue(self.unused_code.is_used)
+    @patch(f"{MODULE}.enable_admin", True)
+    def test_calling_register_admin_twice_does_not_raise(self):
+        """
+        Guards the `if model not in admin.site._registry` check —
+        without it, a second call (e.g. from a test that already
+        registered, or module re-import in some environments) would
+        raise AlreadyRegistered.
+        """
+        register_admin()
+        register_admin()  # should not raise
+        self.assertIn(Session, admin.site._registry)

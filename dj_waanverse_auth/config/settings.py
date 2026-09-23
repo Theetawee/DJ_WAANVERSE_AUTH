@@ -79,40 +79,7 @@ class AuthConfig:
         )
 
         self.csrf_cookie_name = config_dict.get("CSRF_COOKIE_NAME", "csrftoken")
-
-        # rest ...
-
-        self.platform_name = config_dict.get("PLATFORM_NAME")
-
-        # Cookie Settings
-
-        self.basic_account_serializer_class = config_dict.get(
-            "BASIC_ACCOUNT_SERIALIZER",
-            "dj_waanverse_auth.serializers.BasicAccountSerializer",
-        )
-
-        # Admin Interface
         self.enable_admin = config_dict.get("ENABLE_ADMIN_PANEL", False)
-
-        self.login_code_email_subject = config_dict.get(
-            "LOGIN_CODE_EMAIL_SUBJECT", "Login code"
-        )
-        self.signup_code_email_subject = config_dict.get(
-            "SIGNUP_CODE_EMAIL_SUBJECT", "Signup code"
-        )
-
-        self.webauthn_domain = config_dict.get("WEBAUTHN_DOMAIN", None)
-        self.webauthn_rp_name = config_dict.get("WEBAUTHN_RP_NAME", None)
-        self.webauthn_origin = config_dict.get("WEBAUTHN_ORIGIN", None)
-
-        self.is_testing = config_dict.get("IS_TESTING", False)
-        self.testing_email_addresses = config_dict.get("TESTING_EMAIL_ADDRESSES", [])
-
-        self.google_client_id = config_dict.get("GOOGLE_CLIENT_ID", None)
-        self.google_client_secret = config_dict.get("GOOGLE_CLIENT_SECRET", None)
-        self.google_redirect_uri = config_dict.get("GOOGLE_REDIRECT_URI", None)
-
-        self.auth_frontend_url = config_dict.get("AUTH_FRONTEND_URL", None)
 
 
 AUTH_CONFIG = getattr(settings, "WAANVERSE_AUTH_CONFIG", {})
