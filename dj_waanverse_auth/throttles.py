@@ -6,14 +6,12 @@ from rest_framework.throttling import SimpleRateThrottle, UserRateThrottle
 
 
 class BaseIPThrottle(SimpleRateThrottle):
-    """
-    Generic per-IP throttle. Subclasses set `scope` to a key matching
-    DEFAULT_THROTTLE_RATES. Depends on IPAddressMiddleware having set
-    request.ip_address — NOT request.client_ip, which no longer
-    exists since ClientIPMiddleware was removed.
-    """
-
     scope: str
+
+    def get_rate(self):
+        if not getattr(self, "scope", None):
+            return None
+        return self.THROTTLE_RATES.get(self.scope)
 
     def get_cache_key(self, request, view):
         client_ip = getattr(request, "ip_address", None)
@@ -28,16 +26,13 @@ class BaseIPThrottle(SimpleRateThrottle):
 
 
 class BaseIdentifierThrottle(SimpleRateThrottle):
-    """
-    Generic per-identifier throttle, keyed off request.data["identifier"],
-    normalized (stripped + lowercased) so case/whitespace variants of
-    the same identifier share one bucket. Returns None (DRF's "skip
-    this throttle" signal) when no identifier was submitted — that's
-    the view's own validation's job to reject, not this throttle's.
-    """
-
     scope: str
     IDENTIFIER_FIELD = "identifier"
+
+    def get_rate(self):
+        if not getattr(self, "scope", None):
+            return None
+        return self.THROTTLE_RATES.get(self.scope)
 
     def get_cache_key(self, request, view):
         identifier = self.get_identifier(request)

@@ -222,3 +222,12 @@ class BaseIdentifierThrottleTests(ThrottleTestCase):
                 view=None,
             )
         )
+
+
+class _UnconfiguredThrottle(BaseIPThrottle):
+    scope = "no-such-scope"
+
+    def test_unconfigured_scope_never_throttles(self):
+        throttle = _UnconfiguredThrottle()
+        request = _drf_request(ip_address="203.0.113.5")
+        self.assertTrue(throttle.allow_request(request, view=None))
