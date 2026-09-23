@@ -64,7 +64,6 @@ class LoginView(APIView):
 
         if identifier_type is None:
             Account().set_password(password)
-            print("here1")
             return Response(
                 {"msg": GENERIC_LOGIN_ERROR}, status=status.HTTP_400_BAD_REQUEST
             )
@@ -73,13 +72,11 @@ class LoginView(APIView):
 
         if account is None:
             Account().set_password(password)
-            print("here2")
             return Response(
                 {"msg": GENERIC_LOGIN_ERROR}, status=status.HTTP_400_BAD_REQUEST
             )
 
         if not account.check_password(password):
-            print("here3")
             return Response(
                 {"msg": GENERIC_LOGIN_ERROR}, status=status.HTTP_400_BAD_REQUEST
             )
