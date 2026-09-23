@@ -9,7 +9,7 @@ on:
 # Cancel a still-running workflow from an older push on the same
 # branch/PR when a new one lands, instead of letting both finish.
 concurrency:
-  group: \({{ github.workflow }}-\){{ github.ref }}
+  group: github.workflow -{{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -112,6 +112,6 @@ jobs:
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-py\({{ matrix.python-version }}-dj\){{ matrix.django-version }}
+          name: coverage-py matrix.python-version -dj{{ matrix.django-version }}
           path: demo/coverage.xml
           retention-days: 14
