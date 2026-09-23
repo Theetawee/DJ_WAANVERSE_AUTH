@@ -38,13 +38,22 @@ class LogoutView(APIView):
     """
 
     permission_classes = [AllowAny]
+    authentication_classes = []
 
     def post(self, request):
         raw_refresh_token, source = get_refresh_token(request)
 
         if raw_refresh_token:
-            enforce_csrf_if_cookie_sourced(request, source)
-            self._revoke_if_valid(raw_refresh_token)
+            enforce_csrf_if_cookie_sourced(
+                request, source
+            )  # deliberate rejection — still allowed to raise
+            try:
+                self._revoke_if_valid(raw_refresh_token)
+            except Exception:
+                logger.exception(
+                    "Unexpected error while revoking session during logout."
+                )
+                # swallow it — logout must still report success and clear cookies below
 
         response = Response({"msg": "Logged out."}, status=status.HTTP_200_OK)
         return clear_auth_cookies(response)

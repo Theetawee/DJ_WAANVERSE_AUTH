@@ -2,13 +2,15 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
+from dj_waanverse_auth.throttles import SignupIdentifierThrottle, SignupIPThrottle
 from dj_waanverse_auth import settings as auth_config
 from django.utils.module_loading import import_string
 
 
 class SignupView(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = []
+    throttle_classes = [SignupIdentifierThrottle, SignupIPThrottle]
 
     # throttle_classes = [SignupIdentifierThrottle, SignupIPThrottle]
     def get_serializer_class(self):

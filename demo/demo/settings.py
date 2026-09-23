@@ -113,9 +113,7 @@ EMAIL_USE_TLS = True
 if TESTING:
     EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 
-WAANVERSE_AUTH_CONFIG = {
-    # none
-}
+WAANVERSE_AUTH_CONFIG = {"ACTIVATION_FRONTEND_URL": "http://localhost:8000/activate"}
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -131,3 +129,32 @@ if TESTING:
         "handlers": {"null": {"class": "logging.NullHandler"}},
         "root": {"handlers": ["null"]},
     }
+
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "dj-waanverse-auth-tests",
+        }
+    }
+
+
+# REST_FRAMEWORK = {
+#     "DEFAULT_AUTHENTICATION_CLASSES": (
+#         "dj_waanverse_auth.authentication.JWTAuthentication",
+#     ),
+#     "TEST_REQUEST_DEFAULT_FORMAT": "json",
+#     "DEFAULT_THROTTLE_RATES": {
+#         "signup-ip": None,  # 10/hour
+#         "signup-identifier": None,  # "5/hour",
+#         "login-ip": "20/hour",
+#         "login-identifier": "8/hour",
+#         "verification-request-ip": "10/hour",
+#         "verification-request-identifier": "5/hour",
+#         "verify-account-ip": "30/hour",
+#         "password-reset-request-ip": "10/hour",
+#         "password-reset-request-identifier": "5/hour",
+#         "password-reset-confirm-ip": "30/hour",
+#         "refresh-ip": "60/hour",
+#         "session-actions": "100/hour",
+#     },
+# }

@@ -17,6 +17,11 @@ from dj_waanverse_auth.models import VerificationCode
 from dj_waanverse_auth.utils import identifiers as identifier_utils
 from dj_waanverse_auth.utils.security.tokens import issue_tokens_for_account
 from dj_waanverse_auth.utils.security.cookies import build_auth_response
+from dj_waanverse_auth.throttles import (
+    VerificationRequestIdentifierThrottle,
+    VerificationRequestIPThrottle,
+    VerifyAccountIPThrottle,
+)
 
 logger = getLogger(__name__)
 
@@ -31,6 +36,11 @@ GENERIC_SENT_MESSAGE = (
 
 class RequestVerificationView(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = []
+    throttle_classes = [
+        VerificationRequestIdentifierThrottle,
+        VerificationRequestIPThrottle,
+    ]
 
     def post(self, request):
         identifier = request.data.get("identifier")
@@ -120,11 +130,59 @@ class RequestVerificationView(APIView):
 
 class VerifyAccountView(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = []
+    throttle_classes = [VerifyAccountIPThrottle]
 
     def post(self, request):
         identifier = request.data.get("identifier")
         access = request.data.get("access")
 
+        validation_error = self._validate_input(identifier, access)
+        if validation_error is not None:
+            return validation_error
+
+        identifier = identifier.strip()
+        access = access.strip()
+        is_code = self._is_code(access)
+
+        identifier_type = identifier_utils.get_identifier_type(identifier)
+        request_error = self._validate_request(identifier_type, is_code)
+        if request_error is not None:
+            return request_error
+
+        account = self._get_pending_account(identifier_type, identifier)
+        if account is None:
+            return self._invalid_request_response()
+
+        verification = self._latest_verification(account)
+        if verification is None or not verification.is_valid_for(is_code=is_code):
+            return self._invalid_code_response()
+
+        if not verification.matches(access, is_code=is_code):
+            self._record_failed_attempt(verification)
+            return self._invalid_code_response()
+
+        self._activate_account(account, verification, identifier_type)
+        try:
+            tokens = issue_tokens_for_account(account, request=request)
+        except Exception:
+            logger.exception(
+                "Verification succeeded but token issuance failed for account_id=%s",
+                account.pk,
+            )
+            return Response(
+                {"msg": "Account verified successfully.", "action": "login"},
+                status=status.HTTP_200_OK,
+            )
+        return build_auth_response(
+            request,
+            tokens,
+            data={"msg": "Account verified successfully."},
+            status_code=status.HTTP_200_OK,
+        )
+
+    @staticmethod
+    def _validate_input(identifier, access):
         if not isinstance(identifier, str) or not identifier.strip():
             return Response(
                 {"msg": "Identifier is required."}, status=status.HTTP_400_BAD_REQUEST
@@ -134,49 +192,47 @@ class VerifyAccountView(APIView):
                 {"msg": "Verification code or link is required."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        return None
 
-        identifier = identifier.strip()
-        access = access.strip()
-        is_code = self._is_code(access)
-
-        identifier_type = identifier_utils.get_identifier_type(identifier)
+    @staticmethod
+    def _validate_request(identifier_type, is_code):
         if identifier_type is None:
-            return Response(
-                {"msg": "Invalid verification request."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
+            return VerifyAccountView._invalid_request_response()
         if identifier_type == "phone" and not is_code:
             return Response(
                 {"msg": "Phone verification requires a code, not a link."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        return None
 
-        account = self._get_pending_account(identifier_type, identifier)
-        if account is None:
-            return Response(
-                {"msg": "Invalid verification request."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+    @staticmethod
+    def _invalid_request_response():
+        return Response(
+            {"msg": "Invalid verification request."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
-        verification = (
+    @staticmethod
+    def _invalid_code_response():
+        return Response(
+            {"msg": GENERIC_VERIFY_ERROR}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    @staticmethod
+    def _latest_verification(account):
+        return (
             account.verification_codes.filter(is_used=False)
             .order_by("-created_at")
             .first()
         )
 
-        if verification is None or not verification.is_valid_for(is_code=is_code):
-            return Response(
-                {"msg": GENERIC_VERIFY_ERROR}, status=status.HTTP_400_BAD_REQUEST
-            )
+    @staticmethod
+    def _record_failed_attempt(verification):
+        verification.attempts += 1
+        verification.save(update_fields=["attempts"])
 
-        if not verification.matches(access, is_code=is_code):
-            verification.attempts += 1
-            verification.save(update_fields=["attempts"])
-            return Response(
-                {"msg": GENERIC_VERIFY_ERROR}, status=status.HTTP_400_BAD_REQUEST
-            )
-
+    @staticmethod
+    def _activate_account(account, verification, identifier_type):
         with transaction.atomic():
             verification.is_used = True
             verification.save(update_fields=["is_used"])
@@ -189,15 +245,6 @@ class VerifyAccountView(APIView):
             account.save(
                 update_fields=["is_active", "email_verified", "phone_verified"]
             )
-
-        tokens = issue_tokens_for_account(account, request=request)
-
-        return build_auth_response(
-            request,
-            tokens,
-            data={"msg": "Account verified successfully."},
-            status_code=status.HTTP_200_OK,
-        )
 
     @staticmethod
     def _is_code(access: str) -> bool:

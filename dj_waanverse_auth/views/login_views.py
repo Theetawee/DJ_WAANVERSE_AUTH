@@ -13,6 +13,7 @@ from dj_waanverse_auth.utils.security.cookies import build_auth_response
 from dj_waanverse_auth.utils.security.tokens import issue_tokens_for_account
 from dj_waanverse_auth.utils.security.turnstile import verify_turnstile_token
 from dj_waanverse_auth import settings as auth_config
+from dj_waanverse_auth.throttles import LoginIdentifierThrottle, LoginIPThrottle
 
 logger = getLogger(__name__)
 
@@ -28,6 +29,8 @@ MAX_PASSWORD_LENGTH = 128
 
 class LoginView(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = []
+    throttle_classes = [LoginIdentifierThrottle, LoginIPThrottle]
 
     def post(self, request):
         identifier = request.data.get("identifier")
@@ -80,7 +83,10 @@ class LoginView(APIView):
 
         if not account.is_active:
             return Response(
-                {"msg": "Please verify your account before logging in."},
+                {
+                    "msg": "Please verify your account before logging in.",
+                    "action": "verify",
+                },
                 status=status.HTTP_403_FORBIDDEN,
             )
 

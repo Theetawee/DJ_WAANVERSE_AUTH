@@ -5,6 +5,8 @@ from dj_waanverse_auth.url_paths import (
     login_urls,
     refresh_urls,
     logout_urls,
+    password_reset_urls,
+    session_urls,
 )
 
 urlpatterns = [
@@ -13,4 +15,6 @@ urlpatterns = [
     path("login/", include(login_urls.url_patterns)),
     path("refresh/", include(refresh_urls.url_patterns)),
     path("logout/", include(logout_urls.url_patterns)),
+    path("password-reset/", include(password_reset_urls.url_patterns)),
+    path("sessions/", include(session_urls.urlpatterns)),
 ]

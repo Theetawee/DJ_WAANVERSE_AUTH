@@ -31,7 +31,7 @@ class AuthConfig:
         )
 
         self.sms_sender = config_dict.get("SMS_SENDER", None)
-        self.frontend_url = config_dict.get("FRONTEND_URL", None)
+        self.activation_frontend_url = config_dict.get("ACTIVATION_FRONTEND_URL", None)
 
         self.verification_code_length = config_dict.get("VERIFICATION_CODE_LENGTH", 6)
         self.verification_code_ttl = config_dict.get(

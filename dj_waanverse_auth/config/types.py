@@ -12,7 +12,7 @@ class AuthConfigSchema(TypedDict, total=False):
 
     ACCOUNT_VERIFICATION_EMAIL_SUBJECT: str
     SMS_SENDER: str
-    FRONTEND_URL: str
+    ACTIVATION_FRONTEND_URL: str
 
     VERIFICATION_CODE_LENGTH: int
     VERIFICATION_CODE_TTL: timedelta

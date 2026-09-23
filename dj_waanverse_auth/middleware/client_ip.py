@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from ipaddress import ip_address as parse_ip, ip_network
 from typing import TYPE_CHECKING
-
+from django.conf import settings as django_settings
 from django.core.exceptions import ImproperlyConfigured
 
 from dj_waanverse_auth import settings as auth_config
@@ -53,7 +53,12 @@ class IPAddressMiddleware:
 
     def __init__(self, get_response):
         self.get_response = get_response
-        self.cloudflare_only = auth_config.trust_cloudflare_only
+
+        configured = getattr(auth_config, "trust_cloudflare_only", None)
+        self.cloudflare_only = (
+            (not django_settings.DEBUG) if configured is None else configured
+        )
+
         self.cloudflare_networks = self._load_networks(CLOUDFLARE_IP_RANGES)
         self.localhost_networks = (
             () if self.cloudflare_only else self._load_networks(LOCALHOST_RANGES)

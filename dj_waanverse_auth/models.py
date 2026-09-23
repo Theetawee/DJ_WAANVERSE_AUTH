@@ -139,3 +139,54 @@ class Session(models.Model):
         self.is_revoked = True
         self.revoked_at = timezone.now()
         self.save(update_fields=["is_revoked", "revoked_at"])
+
+
+class PasswordResetCode(models.Model):
+    """
+    Same shape as VerificationCode (hashed code + link token, dual
+    expiry, attempt lockout) but kept as its own table deliberately —
+    sharing one table would mean a password-reset request and a
+    pending signup-verification code could invalidate each other via
+    issue_for's "supersede prior unused codes" behavior, which is
+    correct WITHIN one purpose but wrong ACROSS two different ones.
+    """
+
+    account = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="password_reset_codes",
+    )
+    code_hash = models.CharField(max_length=64, db_index=True)
+    token_hash = models.CharField(max_length=64, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    code_expires_at = models.DateTimeField()
+    link_expires_at = models.DateTimeField()
+    attempts = models.PositiveSmallIntegerField(default=0)
+    is_used = models.BooleanField(default=False)
+
+    @classmethod
+    def issue_for(cls, account) -> tuple["PasswordResetCode", str, str]:
+        cls.objects.filter(account=account, is_used=False).update(is_used=True)
+
+        code = _generate_code()
+        token = _generate_token()
+        now = timezone.now()
+
+        instance = cls.objects.create(
+            account=account,
+            code_hash=_hash(code),
+            token_hash=_hash(token),
+            code_expires_at=now + CODE_TTL,
+            link_expires_at=now + LINK_TTL,
+        )
+        return instance, code, token
+
+    def matches(self, access: str, *, is_code: bool) -> bool:
+        expected_hash = self.code_hash if is_code else self.token_hash
+        return hmac.compare_digest(_hash(access), expected_hash)
+
+    def is_valid_for(self, *, is_code: bool) -> bool:
+        if self.is_used or self.attempts >= MAX_ATTEMPTS:
+            return False
+        expires_at = self.code_expires_at if is_code else self.link_expires_at
+        return timezone.now() < expires_at

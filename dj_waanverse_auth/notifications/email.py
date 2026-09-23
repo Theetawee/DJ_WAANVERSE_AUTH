@@ -6,6 +6,7 @@ from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
+from urllib.parse import quote
 
 from dj_waanverse_auth import settings as auth_config
 
@@ -42,7 +43,9 @@ def send_verification_code_email(account, code: str) -> None:
 
 
 def send_verification_link_email(account, token: str) -> None:
-    verify_url = f"{auth_config.frontend_url}/verify?token={token}"
+    if not auth_config.activation_frontend_url:
+        raise ValueError("ACTIVATION_FRONTEND_URL is not set")
+    verify_url = f"{auth_config.activation_frontend_url}?token={quote(token, safe='')}"
     html_content = render_to_string(
         "emails/account_verification_link.html",
         {"verify_url": verify_url, "account": account},

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from logging import getLogger
-
+from dj_waanverse_auth.throttles import RefreshIPThrottle
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -25,6 +25,8 @@ GENERIC_REFRESH_ERROR = "Invalid or expired session. Please log in again."
 
 class RefreshView(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = []
+    throttle_classes = [RefreshIPThrottle]
 
     def post(self, request):
         raw_refresh_token, source = get_refresh_token(request)
