@@ -231,3 +231,59 @@ class _UnconfiguredThrottle(BaseIPThrottle):
         throttle = _UnconfiguredThrottle()
         request = _drf_request(ip_address="203.0.113.5")
         self.assertTrue(throttle.allow_request(request, view=None))
+
+
+class _UnconfiguredScopeIPThrottle(BaseIPThrottle):
+    scope = "unconfigured-ip-scope"  # deliberately NOT in TEST_THROTTLE_RATES
+
+
+class _NoScopeIPThrottle(BaseIPThrottle):
+    pass  # scope never assigned at all
+
+
+class BaseIPThrottleOptionalRateTests(ThrottleTestCase):
+
+    def test_get_rate_returns_none_for_unconfigured_scope(self):
+        throttle = _UnconfiguredScopeIPThrottle()
+
+        self.assertIsNone(throttle.get_rate())
+
+    def test_get_rate_returns_none_when_scope_not_set(self):
+        throttle = _NoScopeIPThrottle()
+
+        self.assertIsNone(throttle.get_rate())
+
+    def test_get_rate_still_returns_configured_rate(self):
+        throttle = _TestIPThrottle()
+
+        self.assertEqual(throttle.get_rate(), TEST_THROTTLE_RATES["test-ip-scope"])
+
+    def test_allow_request_never_throttles_when_scope_unconfigured(self):
+        throttle = _UnconfiguredScopeIPThrottle()
+        request = _drf_request(ip_address="203.0.113.5")
+
+        # Well past the configured limit on other scopes (10/hour) —
+        # an unconfigured scope should never block, no matter the count.
+        for _ in range(25):
+            self.assertTrue(throttle.allow_request(request, view=None))
+
+    def test_allow_request_still_throttles_when_scope_configured(self):
+        throttle = _TestIPThrottle()
+        request = _drf_request(ip_address="203.0.113.5")
+
+        for _ in range(10):
+            self.assertTrue(throttle.allow_request(request, view=None))
+
+        self.assertFalse(throttle.allow_request(request, view=None))
+
+    def test_get_cache_key_still_raises_on_missing_ip_when_scope_unconfigured(self):
+        """
+        The optional-rate behavior only affects get_rate()/allow_request();
+        get_cache_key()'s own ImproperlyConfigured (missing IPAddressMiddleware)
+        must still fire regardless of whether the scope has a rate.
+        """
+        throttle = _UnconfiguredScopeIPThrottle()
+        request = _drf_request()
+
+        with self.assertRaises(ImproperlyConfigured):
+            throttle.get_cache_key(request, view=None)

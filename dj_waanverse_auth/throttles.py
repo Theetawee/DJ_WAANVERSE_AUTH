@@ -5,6 +5,15 @@ from django.core.exceptions import ImproperlyConfigured
 from rest_framework.throttling import SimpleRateThrottle, UserRateThrottle
 
 
+class OptionalRateMixin:
+    """Returns None instead of raising when scope has no configured rate."""
+
+    def get_rate(self):
+        if not getattr(self, "scope", None):
+            return None
+        return self.THROTTLE_RATES.get(self.scope)
+
+
 class BaseIPThrottle(SimpleRateThrottle):
     scope: str
 
@@ -128,5 +137,5 @@ class RefreshIPThrottle(BaseIPThrottle):
     scope = "refresh-ip"
 
 
-class SessionActionsThrottle(UserRateThrottle):
+class SessionActionsThrottle(OptionalRateMixin, UserRateThrottle):
     scope = "session-actions"
