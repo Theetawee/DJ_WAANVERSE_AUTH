@@ -1,6 +1,6 @@
 # dj_waanverse_auth
 ![Coverage Badge](https://img.shields.io/badge/coverage-81%25-brightgreen)
-
+[![CI](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/ci.yml)
 Welcome to **dj_waanverse_auth**!
 
 **dj_waanverse_auth** is a comprehensive internal authentication and authorization package designed for **Django REST Framework (DRF)** APIs. Developed and maintained by **Waanverse Labs Inc.**, this package is tailored to meet the authentication needs of enterprise-grade applications. It combines security, scalability, and ease of use to ensure a seamless integration into your Django projects.
