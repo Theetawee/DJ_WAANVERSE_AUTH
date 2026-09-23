@@ -1,0 +1,128 @@
+name: CI
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
+
+# Cancel a still-running workflow from an older push on the same
+# branch/PR when a new one lands, instead of letting both finish.
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    lint:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-python@v5
+              with:
+                  python-version: "3.12"
+                  cache: "pip"
+
+            - name: Install flake8
+              run: pip install flake8
+
+            - name: Run flake8
+              run: flake8 .
+
+    security:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-python@v5
+              with:
+                  python-version: "3.14"
+                  cache: "pip"
+
+            - name: Install the package + demo requirements
+              run: |
+                  python -m pip install --upgrade pip
+                  pip install -e .
+                  pip install -r requirements.txt
+
+            - name: Check dependencies for known vulnerabilities
+              run: |
+                  pip install pip-audit
+                  # Don't fail the whole run on a known, unfixed advisory in a
+                  # transitive dep — report it, but require a human to notice
+                  # and decide, rather than blocking every PR on something
+                  # outside this repo's control. Tighten to a hard failure
+                  # once the dependency set has settled.
+                  pip-audit || true
+
+            - name: Static security scan (bandit)
+              run: |
+                  pip install bandit
+                  # Scan the package itself, not the demo project or tests —
+                  # test fixtures deliberately do things (hardcoded throwaway
+                  # keys/passwords) that would otherwise trip bandit's rules.
+                  bandit -r dj_waanverse_auth -ll
+
+    test:
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+                django-version: ["4.2", "5.0", "6.0"]
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Set up Python ${{ matrix.python-version }}
+              uses: actions/setup-python@v5
+              with:
+                  python-version: ${{ matrix.python-version }}
+                  cache: "pip"
+
+            - name: Install dependencies
+              run: |
+                  python -m pip install --upgrade pip
+                  pip install "Django~=${{ matrix.django-version }}.0"
+                  # The package itself, editable, so `import dj_waanverse_auth`
+                  # resolves to the repo checkout rather than a stale PyPI build.
+                  pip install -e .
+                  pip install -r requirements.txt
+                  pip install coverage
+
+            - name: Django system checks
+              working-directory: demo
+              run: python manage.py check
+              # Runs Django's own checks AND this package's custom ones
+              # (dj_waanverse_auth.E001-E003 — Turnstile misconfiguration,
+              # no/invalid AUTHENTICATION_IDENTIFIERS). Kept as its own step
+              # so a config error shows up clearly, distinct from a test
+              # failure — a red "check" step means "fix settings," a red
+              # "test" step means "fix code."
+
+            - name: Check for missing migrations
+              working-directory: demo
+              run: python manage.py makemigrations --check --dry-run
+              # Catches the exact gap flagged earlier: a model changed
+              # without a matching migration file committed. Fails loudly
+              # in CI instead of silently working locally (where Django can
+              # paper over it) and breaking the first `manage.py migrate`
+              # someone else runs.
+
+            - name: Run migrations
+              working-directory: demo
+              run: python manage.py migrate
+
+            - name: Run tests with coverage
+              working-directory: demo
+              run: |
+                  coverage run --source=../dj_waanverse_auth manage.py test
+                  coverage report -m
+                  coverage xml
+
+            - name: Upload coverage report
+              uses: actions/upload-artifact@v4
+              with:
+                  name: coverage-py${{ matrix.python-version }}-dj${{ matrix.django-version }}
+                  path: demo/coverage.xml
+                  retention-days: 14

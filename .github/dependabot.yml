@@ -1,0 +1,19 @@
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    # Group minor/patch bumps into one PR instead of one-per-dependency
+    # noise; a major bump (e.g. Django 4 -> 5) still gets its own PR,
+    # since that's the kind of change worth reviewing individually.
+    groups:
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

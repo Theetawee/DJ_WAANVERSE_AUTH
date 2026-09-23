@@ -1,0 +1,19 @@
+[run]
+source = dj_waanverse_auth
+branch = True
+omit =
+    */migrations/*
+    */tests/*
+    */test_*.py
+    dj_waanverse_auth/apps.py
+    demo/*
+    manage.py
+    */__init__.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise NotImplementedError
+    if TYPE_CHECKING:
+    if __name__ == .__main__.:
