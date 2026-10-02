@@ -60,6 +60,8 @@ def issue_tokens_for_account(account, request=None) -> IssuedTokens:
 
     session.set_refresh_token(refresh_token)
     session.save(update_fields=["refresh_token_hash"])
+    account.last_login = timezone.now()
+    account.save(update_fields=["last_login"])
 
     return IssuedTokens(
         access_token=access_token,

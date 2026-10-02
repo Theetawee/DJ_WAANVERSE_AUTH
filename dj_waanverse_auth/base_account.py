@@ -119,6 +119,10 @@ class AbstractBaseAccount(AbstractBaseUser, PermissionsMixin):
     phone_verified = models.BooleanField(
         default=False,
     )
+    last_login = models.DateTimeField(
+        blank=True,
+        null=True,
+    )
 
     objects = AccountManager()
 

@@ -76,6 +76,7 @@ class LoginViewTests(TestCase):
             {"identifier": "wave@example.com"},
             content_type="application/json",
         )
+        self.assertEqual(self.active_account.last_login, None)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_rejects_blank_identifier(self):
@@ -100,8 +101,10 @@ class LoginViewTests(TestCase):
 
     def test_correct_email_credentials_log_in(self):
         response = self.login("wave@example.com")
+        self.active_account.refresh_from_db()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["msg"], "Login successful.")
+        self.assertIsNotNone(self.active_account.last_login)
 
     def test_email_login_is_case_insensitive(self):
         response = self.login("WAVE@EXAMPLE.COM")

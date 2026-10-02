@@ -1,16 +1,21 @@
 import os
-import shutil
+from pathlib import Path
 
-# Define paths
-base_folder = r"D:\PACKAGES\DJ_WAANVERSE_AUTH\DJ_WAANVERSE_AUTH_BACKEND"
-folders_to_delete = [
-    os.path.join(base_folder, "dist"),
-    os.path.join(base_folder, "build"),
-    os.path.join(base_folder, "dj_waanverse_auth.egg-info"),
-]
+BASE_DIR = Path(__file__).resolve().parent
 
-# Delete specified folders if they exist
-for folder in folders_to_delete:
-    if os.path.exists(folder):
-        shutil.rmtree(folder)
-        print(f"Deleted: {folder}")
+
+def clean_migrations():
+    for root, dirs, files in os.walk(BASE_DIR):
+        # Skip env directory
+        if "env" in root.split(os.sep):
+            continue
+        if os.path.basename(root) == "migrations":
+            for file in files:
+                if file != "__init__.py":
+                    file_path = os.path.join(root, file)
+                    os.remove(file_path)
+                    print(f"Deleted: {file_path}")
+
+
+if __name__ == "__main__":
+    clean_migrations()
