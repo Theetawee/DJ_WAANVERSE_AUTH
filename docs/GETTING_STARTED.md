@@ -49,6 +49,14 @@ REST_FRAMEWORK = {
 }
 ```
 
+Add an exception handler
+
+```python
+REST_FRAMEWORK = {
+    "EXCEPTION_HANDLER": "dj_waanverse_auth.exceptions.exception_handler",
+}
+```
+
 Every rate is optional — an omitted scope means DRF applies no limit
 for it. See [SECURITY.md](./SECURITY.md#throttling) for the reasoning
 behind these specific numbers.

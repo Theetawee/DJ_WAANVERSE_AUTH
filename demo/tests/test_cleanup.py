@@ -320,7 +320,6 @@ class CleanupPasswordResetCodesCommandTests(TestCase):
 
     def run_command(self, *args, **kwargs):
         output = StringIO()
-        print(args, kwargs, "arguments...")
         call_command(
             "cleanup_password_reset_codes",
             *args,
@@ -439,7 +438,6 @@ class CleanupAuthCommandTests(TestCase):
 
     def run_command(self, *args, **kwargs):
         output = StringIO()
-        print(args, kwargs, "arguments...")
         call_command(
             "cleanup_auth",
             *args,

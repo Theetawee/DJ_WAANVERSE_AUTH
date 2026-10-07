@@ -24,8 +24,6 @@ class Command(BaseCommand):
         inactive_days = options["inactive_days"]
         dry_run = options["dry_run"]
 
-        print(dry_run, "Here")
-
         self.stdout.write("Cleaning authentication records...\n")
 
         self.stdout.write(self.style.MIGRATE_HEADING("Sessions"))

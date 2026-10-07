@@ -5,6 +5,7 @@ from rest_framework.views import APIView
 from dj_waanverse_auth.throttles import SignupIdentifierThrottle, SignupIPThrottle
 from dj_waanverse_auth import settings as auth_config
 from django.utils.module_loading import import_string
+from rest_framework.exceptions import PermissionDenied
 
 
 class SignupView(APIView):
@@ -19,28 +20,17 @@ class SignupView(APIView):
 
     def post(self, request):
         if auth_config.disable_signup:
-            return Response(
-                {"msg": "Something went wrong. Please try again later."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
+            raise PermissionDenied("Something went wrong. Please try again later.")
         SerializerClass = self.get_serializer_class()
         serializer = SerializerClass(data=request.data, context={"request": request})
 
-        if serializer.is_valid():
-            resp = serializer.save()
-            registration_type = resp["registration_type"]
-            return Response(
-                {
-                    "msg": "Account created successfully.",
-                    "registration_type": registration_type,
-                },
-                status=status.HTTP_201_CREATED,
-            )
-
-        error_msg = "Invalid request payload."
-        if serializer.errors:
-            first_field = list(serializer.errors.keys())[0]
-            errors = serializer.errors[first_field]
-            error_msg = errors[0] if isinstance(errors, list) else str(errors)
-
-        return Response({"msg": error_msg}, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        resp = serializer.save()
+        registration_type = resp["registration_type"]
+        return Response(
+            {
+                "msg": "Account created successfully.",
+                "registration_type": registration_type,
+            },
+            status=status.HTTP_201_CREATED,
+        )

@@ -120,6 +120,7 @@ REST_FRAMEWORK = {
         # "dj_waanverse_auth.authentication.JWTAuthentication",
     ),
     "TEST_REQUEST_DEFAULT_FORMAT": "json",
+    "EXCEPTION_HANDLER": "dj_waanverse_auth.exceptions.exception_handler",
 }
 
 if TESTING:
